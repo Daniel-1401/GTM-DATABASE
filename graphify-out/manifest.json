@@ -1,0 +1,356 @@
+{
+  "docs-proyecto/DEFINITION_OF_DONE.md": {
+    "mtime": 1788525877.4408169,
+    "seen": 1788536236.0703065,
+    "ast_hash": "94cdce8f62a3b07efb4ddf1bb09435f9",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/STACK.md": {
+    "mtime": 1788511329.7939816,
+    "seen": 1788518542.86508,
+    "ast_hash": "d88f3e483579534e55e3ac3f21852fc6",
+    "semantic_hash": "d88f3e483579534e55e3ac3f21852fc6"
+  },
+  "docs-proyecto/approvals-log.md": {
+    "mtime": 1788550316.728695,
+    "seen": 1788554526.6293914,
+    "ast_hash": "476d9e88285a2cd47ec4bef31050883e",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/er-diagram-v1.md": {
+    "mtime": 1788511032.4238815,
+    "seen": 1788518542.86508,
+    "ast_hash": "52a0ccd1c7d3c814e16ab7e3e6185b1f",
+    "semantic_hash": "52a0ccd1c7d3c814e16ab7e3e6185b1f"
+  },
+  "docs-proyecto/requirements.md": {
+    "mtime": 1788511330.0933156,
+    "seen": 1788518542.86508,
+    "ast_hash": "12612c6eda4aa030f9ea46d363350772",
+    "semantic_hash": "12612c6eda4aa030f9ea46d363350772"
+  },
+  "lineamiento/00_DECISIONES_NUCLEO_RRHH.md": {
+    "mtime": 1788526277.6334765,
+    "seen": 1788536236.0703065,
+    "ast_hash": "7b7849e3c9547e65d480c009708045f2",
+    "semantic_hash": ""
+  },
+  "lineamiento/01_PROPUESTA_REESTRUCTURACION_BD_RRHH.md": {
+    "mtime": 1788462926.4848287,
+    "seen": 1788518542.86508,
+    "ast_hash": "6832fda056e41b1c6987e3438ade2a4b",
+    "semantic_hash": "6832fda056e41b1c6987e3438ade2a4b"
+  },
+  "lineamiento/referencias-modulos/Alimentacion/00_INDICE_Y_GOBIERNO.md": {
+    "mtime": 1788506961.6097639,
+    "seen": 1788518542.86508,
+    "ast_hash": "f9a20b383142343884f0ff72a65ec46d",
+    "semantic_hash": "f9a20b383142343884f0ff72a65ec46d"
+  },
+  "lineamiento/referencias-modulos/Alimentacion/01_CONTEXTO_Y_ALCANCE.md": {
+    "mtime": 1788506222.493524,
+    "seen": 1788518542.86508,
+    "ast_hash": "5a7a0ae01e1da3c990a976b38c974b66",
+    "semantic_hash": "5a7a0ae01e1da3c990a976b38c974b66"
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/00_INDICE_Y_GOBIERNO.md": {
+    "mtime": 1788468081.0254998,
+    "seen": 1788518542.86508,
+    "ast_hash": "880351fe0f1894b6dfacac12f2205cd0",
+    "semantic_hash": "880351fe0f1894b6dfacac12f2205cd0"
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/01_CONTEXTO_Y_ALCANCE.md": {
+    "mtime": 1788464987.9396498,
+    "seen": 1788518542.86508,
+    "ast_hash": "75412f53da5fb95de7588cb72b773375",
+    "semantic_hash": "75412f53da5fb95de7588cb72b773375"
+  },
+  "lineamiento/referencias-modulos/Alimentacion/02_ROLES_Y_PERMISOS.md": {
+    "mtime": 1788506222.7962952,
+    "seen": 1788525833.396355,
+    "ast_hash": "54588a7fb4adba05c8bbe2271ab51181",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Alimentacion/referencias-tecnicas/SQL_SERVER_BASELINE.md": {
+    "mtime": 1788506226.1404803,
+    "seen": 1788525833.396355,
+    "ast_hash": "b999806e303a928731c0ba27648bb82d",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/02_ROLES_Y_PERMISOS.md": {
+    "mtime": 1788464988.3007405,
+    "seen": 1788525833.396355,
+    "ast_hash": "c316ef712a482522f148e2a3a38ef975",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/funcionalidades/02_FORMATOS_DE_EVALUACION.md": {
+    "mtime": 1788466219.301363,
+    "seen": 1788525833.396355,
+    "ast_hash": "aefc2085d925507d7b8e2e7237f38906",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/funcionalidades/03_PERIODOS.md": {
+    "mtime": 1788468079.655406,
+    "seen": 1788525833.396355,
+    "ast_hash": "176e21d155672a5e5d148789d2a04b9b",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/funcionalidades/04_MIS_EVALUACIONES.md": {
+    "mtime": 1788466219.9927776,
+    "seen": 1788525833.396355,
+    "ast_hash": "f3979f064ef2918fa05f4ba06c860549",
+    "semantic_hash": ""
+  },
+  "lineamiento/referencias-modulos/Evaluaciones/referencias-tecnicas/SQL_SERVER_BASELINE.md": {
+    "mtime": 1788465928.349622,
+    "seen": 1788525833.396355,
+    "ast_hash": "9b342260d015a5724c2609bd03e5b3bf",
+    "semantic_hash": ""
+  },
+  "db/aplicar_migraciones_nucleo.sql": {
+    "mtime": 1788535154.764171,
+    "seen": 1788536236.0703065,
+    "ast_hash": "779d92b76da1e22e76b48aa51bc037b2",
+    "semantic_hash": ""
+  },
+  "db/migrations/001_crear_esquemas_nucleo.sql": {
+    "mtime": 1788536083.5966072,
+    "seen": 1788536236.0703065,
+    "ast_hash": "39df3d423cd36388d9084e2b485f75b6",
+    "semantic_hash": ""
+  },
+  "db/migrations/002_crear_catalogos_identidad_y_jefatura.sql": {
+    "mtime": 1788527042.0029292,
+    "seen": 1788536236.0703065,
+    "ast_hash": "a12f04f7e9c9739dc08ae53ee675a66a",
+    "semantic_hash": ""
+  },
+  "db/migrations/003_crear_personas_colaboradores_e_identidad_microsoft.sql": {
+    "mtime": 1788550200.05447,
+    "seen": 1788554526.628392,
+    "ast_hash": "69dd0cba0c2f0269049a10e6a1f5b27b",
+    "semantic_hash": ""
+  },
+  "db/migrations/004_crear_organizacion_y_centros_costo_sap.sql": {
+    "mtime": 1788550200.4219906,
+    "seen": 1788554526.628392,
+    "ast_hash": "c184316896006d9b2d37db4aeb322995",
+    "semantic_hash": ""
+  },
+  "db/migrations/005_crear_relaciones_laborales_y_referencias_empleado_sap.sql": {
+    "mtime": 1788534775.1807396,
+    "seen": 1788536236.0703065,
+    "ast_hash": "41b6ec7918854b6af5ebef4240aab02a",
+    "semantic_hash": ""
+  },
+  "db/migrations/006_crear_asignaciones_organizacionales_y_referencias_posicion_sap.sql": {
+    "mtime": 1788535079.0292666,
+    "seen": 1788536236.0703065,
+    "ast_hash": "5b2f120834e66d00c66332b1053d1cfc",
+    "semantic_hash": ""
+  },
+  "db/migrations/007_crear_horarios_laborales_y_vigencias.sql": {
+    "mtime": 1788535079.3449216,
+    "seen": 1788536236.0703065,
+    "ast_hash": "d0deeced13fe86f6915431c32e1da232",
+    "semantic_hash": ""
+  },
+  "db/migrations/008_crear_jefaturas_relaciones_laborales.sql": {
+    "mtime": 1788535079.6741102,
+    "seen": 1788536236.0703065,
+    "ast_hash": "dfc25a3f4eea185f4b579b9624981c46",
+    "semantic_hash": ""
+  },
+  "db/reversiones/revertir_nucleo_completo.sql": {
+    "mtime": 1788535155.0648108,
+    "seen": 1788536236.0703065,
+    "ast_hash": "09ea6370ebc9ec0869a3bb53b819cb23",
+    "semantic_hash": ""
+  },
+  "db/validar_paquete.ps1": {
+    "mtime": 1788538928.3503575,
+    "seen": 1788549846.8294377,
+    "ast_hash": "11faac95158a0dbcb6a340f964414cec",
+    "semantic_hash": ""
+  },
+  "db/README.md": {
+    "mtime": 1788550220.879051,
+    "seen": 1788554526.6293914,
+    "ast_hash": "178d36eef453d00f02c113bfdf514fcd",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/DEFINITION_OF_DONE_DB.md": {
+    "mtime": 1788535341.7188983,
+    "seen": 1788536236.0703065,
+    "ast_hash": "ab3c8aa04f046ba4670b757b85897fed",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/db-audit-report.md": {
+    "mtime": 1788536084.8305366,
+    "seen": 1788536236.0703065,
+    "ast_hash": "ea26096ccfc77fe7536d3c1904ac0c1d",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/db-scripts-log.md": {
+    "mtime": 1788554931.792937,
+    "seen": 1788555165.1065624,
+    "ast_hash": "7a6014396e25dc5b08337d38fa156431",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/er-diagram-fisico-v1.md": {
+    "mtime": 1788536084.2028706,
+    "seen": 1788536236.0703065,
+    "ast_hash": "98465c074fd36e9bcd684893bb3683fc",
+    "semantic_hash": ""
+  },
+  "db/aplicar_migraciones_gtm_alimentacion.sql": {
+    "mtime": 1788554931.4249752,
+    "seen": 1788555165.1065624,
+    "ast_hash": "1975a18b8a4d87b1c76c7eaa71845136",
+    "semantic_hash": ""
+  },
+  "db/migrations/009_crear_schema_y_configuracion_alimentacion.sql": {
+    "mtime": 1788549752.048,
+    "seen": 1788549846.8294377,
+    "ast_hash": "06469040bcdfe622a14339fd4988b48c",
+    "semantic_hash": ""
+  },
+  "db/migrations/010_crear_planificaciones_menus_y_consolidacion.sql": {
+    "mtime": 1788550200.7580364,
+    "seen": 1788554526.6293914,
+    "ast_hash": "4cbb6843d4a890fb871835f8cf0eff03",
+    "semantic_hash": ""
+  },
+  "db/migrations/011_crear_reservas_qr_y_entregas.sql": {
+    "mtime": 1788549772.979,
+    "seen": 1788549846.8294377,
+    "ast_hash": "35b68907ed20c2f5eec66bd048bc5980",
+    "semantic_hash": ""
+  },
+  "db/migrations/012_crear_idempotencia_y_auditoria_alimentacion.sql": {
+    "mtime": 1788550201.103562,
+    "seen": 1788554526.6293914,
+    "ast_hash": "cd6f594ce50c3cb48bda32c0a1338540",
+    "semantic_hash": ""
+  },
+  "db/reversiones/revertir_alimentacion_completo.sql": {
+    "mtime": 1788554971.433797,
+    "seen": 1788555165.1065624,
+    "ast_hash": "02922d1a9b91caca1f8b7812ea1b19e9",
+    "semantic_hash": ""
+  },
+  "db/validar_paquete_alimentacion.ps1": {
+    "mtime": 1788554966.97654,
+    "seen": 1788555165.1065624,
+    "ast_hash": "e38149a0fd3efc810c6049ed4e156bf4",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/DEFINITION_OF_DONE_DB_ALIMENTACION.md": {
+    "mtime": 1788550221.5885923,
+    "seen": 1788554526.6293914,
+    "ast_hash": "61baa48a901efe4e5aba0c7879b49c8e",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/db-audit-report-alimentacion.md": {
+    "mtime": 1788550221.2199914,
+    "seen": 1788554526.6293914,
+    "ast_hash": "395ad337cbf2307cd703f08d84424d75",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/er-diagram-fisico-alimentacion-v1.md": {
+    "mtime": 1788550221.9259636,
+    "seen": 1788554526.6293914,
+    "ast_hash": "ff304f8db147a11f986094c4d000ab05",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/review-gate-alimentacion.md": {
+    "mtime": 1788554932.1405168,
+    "seen": 1788555165.1065624,
+    "ast_hash": "92e0ea3fec5c55827d83088af23dee7d",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/review-gate-nucleo.md": {
+    "mtime": 1788537812.3926623,
+    "seen": 1788549846.8294377,
+    "ast_hash": "8e81386b83641ee0882ea57af306ca79",
+    "semantic_hash": ""
+  },
+  "db/procedures/013_planificaciones.sql": {
+    "mtime": 1788551645.8581698,
+    "seen": 1788554526.6293914,
+    "ast_hash": "33bd89c4b135d06e88c91132d90a3e85",
+    "semantic_hash": ""
+  },
+  "db/procedures/014_planificaciones_menu_estado.sql": {
+    "mtime": 1788551986.6104295,
+    "seen": 1788554526.6293914,
+    "ast_hash": "bcdb2c6787f9dba99678203822a66c38",
+    "semantic_hash": ""
+  },
+  "db/procedures/015_reservas.sql": {
+    "mtime": 1788552097.6943893,
+    "seen": 1788554526.6293914,
+    "ast_hash": "af3ebe238a2f598e653246aa60ac9d55",
+    "semantic_hash": ""
+  },
+  "db/procedures/016_restantes_fail_closed.sql": {
+    "mtime": 1788552159.9151027,
+    "seen": 1788554526.6293914,
+    "ast_hash": "6ac7417d37400567c43cff52eb684b47",
+    "semantic_hash": ""
+  },
+  "db/procedures/README.md": {
+    "mtime": 1788550325.5618875,
+    "seen": 1788554526.6293914,
+    "ast_hash": "be5105fb31591ddef3f8bde69f052bf9",
+    "semantic_hash": ""
+  },
+  "docs-proyecto/CHECKLIST_PARA_PRUEBAS_ALIMENTACION.md": {
+    "mtime": 1788553975.6585171,
+    "seen": 1788554526.6293914,
+    "ast_hash": "f16201fad5fd5e77b9c99f61b52ed0b4",
+    "semantic_hash": ""
+  },
+  "db/limpiar_seed_local_alimentacion.sql": {
+    "mtime": 1788554903.7815902,
+    "seen": 1788555165.1065624,
+    "ast_hash": "1da196c62c62ca7a11356936fece65b7",
+    "semantic_hash": ""
+  },
+  "db/migrations/017_crear_validacion_entrega.sql": {
+    "mtime": 1788554985.7080472,
+    "seen": 1788555165.1065624,
+    "ast_hash": "c769d100a840950fda9d0a46ff136853",
+    "semantic_hash": ""
+  },
+  "db/reversiones/revertir_validacion_entrega.sql": {
+    "mtime": 1788554901.353898,
+    "seen": 1788555165.1065624,
+    "ast_hash": "c0c53587884eda5df97fb01b453932af",
+    "semantic_hash": ""
+  },
+  "db/seed_local_alimentacion.sql": {
+    "mtime": 1788554903.3792577,
+    "seen": 1788555165.1065624,
+    "ast_hash": "c44e55aeb0c5a075ab33647e232da8fe",
+    "semantic_hash": ""
+  },
+  "db/tests/018_alimentacion_contracto.sql": {
+    "mtime": 1788554902.553081,
+    "seen": 1788555165.1065624,
+    "ast_hash": "b7d4d4615cdd6cecf568aeda941fd02b",
+    "semantic_hash": ""
+  },
+  "db/tests/019_alimentacion_concurrencia_idempotencia.sql": {
+    "mtime": 1788554902.9873686,
+    "seen": 1788555165.1065624,
+    "ast_hash": "77ac3fe8aae2b51f65a846136e891cd8",
+    "semantic_hash": ""
+  },
+  "db/validar_procedures_alimentacion.ps1": {
+    "mtime": 1788554901.8337028,
+    "seen": 1788555165.1065624,
+    "ast_hash": "c1899bb26ba186665b1f02be10f81c8a",
+    "semantic_hash": ""
+  }
+}
