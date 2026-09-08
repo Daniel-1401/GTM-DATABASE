@@ -108,9 +108,9 @@
     "semantic_hash": ""
   },
   "docs-proyecto/db-scripts-log.md": {
-    "mtime": 1788809274.8061883,
-    "seen": 1788809508.2114367,
-    "ast_hash": "0b22d147c032224fa2bbb999ca4055ef",
+    "mtime": 1788807584.9429133,
+    "seen": 1788809113.089333,
+    "ast_hash": "a62d3f237be13b3884c22886489286bc",
     "semantic_hash": ""
   },
   "docs-proyecto/er-diagram-fisico-v1.md": {
@@ -126,9 +126,9 @@
     "semantic_hash": ""
   },
   "docs-proyecto/er-diagram-fisico-alimentacion-v1.md": {
-    "mtime": 1788809262.378193,
-    "seen": 1788809508.2114367,
-    "ast_hash": "93053a2f8084a5a42a56e97e6829e6cd",
+    "mtime": 1788807600.4704106,
+    "seen": 1788809113.089333,
+    "ast_hash": "a796606f66ef9e1bb40201024e756165",
     "semantic_hash": ""
   },
   "db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql": {
@@ -147,6 +147,12 @@
     "mtime": 1788799458.1957562,
     "seen": 1788807219.94852,
     "ast_hash": "322ba86a0ef83647444c9496c2bc3a24",
+    "semantic_hash": ""
+  },
+  "db/migrations/alimentacion/017_crear_validacion_entrega.sql": {
+    "mtime": 1788805740.9718552,
+    "seen": 1788807219.94852,
+    "ast_hash": "a0e9323e55bb0694e574ff78330b774f",
     "semantic_hash": ""
   },
   "db/migrations/nucleo/001_crear_esquemas_nucleo.sql": {
@@ -198,9 +204,9 @@
     "semantic_hash": ""
   },
   "docs-proyecto/CONTRATO_STORES_BACKEND_ALIMENTACION.md": {
-    "mtime": 1788809262.0280416,
-    "seen": 1788809508.2114367,
-    "ast_hash": "dd5ec6a6d1b1284390fe767a2b07c0d8",
+    "mtime": 1788807584.2270477,
+    "seen": 1788809113.089333,
+    "ast_hash": "3eecc1e075a87ab6aec6d9a0101df224",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260904_222739_tienes_acceso_al_proyecto_de_projects_gtm_database.md": {
@@ -216,15 +222,9 @@
     "semantic_hash": ""
   },
   "docs-proyecto/ESTADO_OFICIAL_OBJETOS_DB.md": {
-    "mtime": 1788809275.1537664,
-    "seen": 1788809508.2114367,
-    "ast_hash": "cf230d70f7af8660e20ce775ead7fe8b",
-    "semantic_hash": ""
-  },
-  "db/migrations/alimentacion/012_crear_validacion_entrega.sql": {
-    "mtime": 1788809261.6780076,
-    "seen": 1788809508.2114367,
-    "ast_hash": "c9cb5c0215b79668ecccbf2f175a170f",
+    "mtime": 1788807625.6936488,
+    "seen": 1788809113.089333,
+    "ast_hash": "e9b5bd5eabddaba5c7f6fc496873da08",
     "semantic_hash": ""
   }
 }

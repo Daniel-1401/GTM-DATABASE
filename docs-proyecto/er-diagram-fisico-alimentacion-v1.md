@@ -2,8 +2,10 @@
 
 Fecha: 2026-09-04
 Motor: Microsoft SQL Server 2017
-Schema físico propuesto: **`[alimentacion]`**
-Estado: propuesta DB pendiente del gate Review y de aprobación humana del schema.
+Schema físico oficial: **`[alimentacion]`**
+Estado: catálogo oficial de tablas; los objetos programables siguen sin
+definición. No hay evidencia de ejecución DDL ni de tablas creadas en una
+instancia SQL Server.
 
 ## 1. Límites y fuentes
 
@@ -14,16 +16,13 @@ triggers, procedures ni funciones.
 
 Las únicas dependencias del núcleo son claves foráneas a:
 
-- `organizacion.Sede(IdSede)` para sede operativa;
-- `rrhh.Colaborador(IdColaborador)` para propietario y actores; y
-- `rrhh.HorarioLaboral(IdHorarioLaboral)` para mapear el horario maestro a un
-  servicio alimentario.
+- `organizacion.Sede(IdSede)` para sede operativa; y
+- `rrhh.Colaborador(IdColaborador)` para propietario y actores.
 
 ## 2. Diagrama
 
 ```mermaid
 erDiagram
-    RRHH_HORARIO_LABORAL ||--o{ CONFIGURACION_SERVICIO_HORARIO : determina
     ORGANIZACION_SEDE ||--o{ VENTANA_RETIRO_SERVICIO : configura
     ORGANIZACION_SEDE ||--o{ BEACON_AUTORIZADO : ubica
     BEACON_AUTORIZADO ||--o{ CONFIGURACION_PROXIMIDAD_BEACON : versiona
@@ -44,16 +43,12 @@ erDiagram
     CODIGO_QR ||--o| ENTREGA : consume
     RRHH_COLABORADOR ||--o{ ENTREGA : confirma
 
-    RRHH_COLABORADOR ||--o{ REGISTRO_IDEMPOTENCIA : inicia
-    RRHH_COLABORADOR o|--o{ EVENTO_AUDITORIA : actua
-    ORGANIZACION_SEDE o|--o{ EVENTO_AUDITORIA : contextualiza
 ```
 
 ## 3. Inventario físico
 
 | Grupo | Tabla | Propósito | Identidad / unicidad principal |
 |---|---|---|---|
-| Configuración | `ConfiguracionServicioHorario` | Mapea un horario central a desayuno, almuerzo o cena con vigencia. | Una configuración abierta por horario. |
 | Configuración | `VentanaRetiroServicio` | Define la ventana por sede y servicio. | Una ventana abierta por sede y servicio. |
 | Configuración | `BeaconAutorizado` | Registra UUID, major y minor sin secretos. | Identificador iBeacon único. |
 | Configuración | `ConfiguracionProximidadBeacon` | Versiona muestreo, permanencia, salida y umbral RSSI. | Una configuración abierta por beacon. |
@@ -65,8 +60,7 @@ erDiagram
 | Reserva | `Reserva` | Asistencia individual con contexto de menú, sede y servicio. | Una reserva `RESERVADA` por colaborador y fecha. |
 | QR | `CodigoQR` | Solo hash del valor opaco, vigencia máxima de cinco minutos y estado. | Un QR `VIGENTE` por reserva. |
 | Entrega | `Entrega` | Retiro presencial normal confirmado. | Una entrega por reserva y por QR. |
-| Técnica | `RegistroIdempotencia` | Huella de solicitud y resultado técnico acotado. | Clave UUID globalmente única. |
-| Auditoría | `EventoAuditoria` | Evento minimizado y separado de logs técnicos. | Identificador de evento único. |
+| Entrega | `ValidacionEntrega` | Validación breve previa al consumo del QR. | `ValidationId` y correlación únicos. |
 
 ## 4. Estados y temporalidad
 
@@ -104,27 +98,19 @@ reserva y validar unicidad; cancelar; editar/copiar menú con versión; cerrar,
 reabrir y consolidar; revocar y emitir QR; confirmar entrega cambiando Reserva a
 `ENTREGADA` y QR a `UTILIZADO`; y anexar la auditoría asociada.
 
-El alcance autorizado excluye triggers, procedures y permisos. Por ello el DDL
+El alcance oficial no define triggers, procedures, vistas, funciones ni permisos. Por ello el DDL
 no puede demostrar por sí solo transiciones entre estados, inmutabilidad de una
 planificación ya consolidada, ausencia de solapamientos históricos cerrados ni
 carácter append-only frente a un principal con permisos directos. Esas garantías
 deben revisarse con la implementación transaccional y el modelo de privilegios;
 no se declaran satisfechas por evidencia estática.
 
-## 7. Idempotencia
-
-`RegistroIdempotencia` conserva UUID, actor, operación, hash de payload, estado,
-resultado mínimo y expiración técnica. Reutilizar la misma clave con otro hash
-debe producir conflicto; la coordinación atómica con el cambio funcional queda
-en el límite transaccional del backend. `EventoAuditoria` almacena solo una
-huella no reutilizable cuando corresponda, además de la correlación.
-
-## 8. Reproducibilidad y reversión
+## 7. Reproducibilidad y reversión
 
 - `db/aplicar_migraciones_gtm_alimentacion.sql` incluye las migraciones declaradas
-  en orden (`001..012` y `017`) y
+  en orden (`001..011` y `012`) y
   permite construir núcleo + módulo desde una base vacía autorizada.
 - `db/reversiones/revertir_alimentacion_completo.sql` exige confirmación, nombre
-  exacto de base, rechazo de bases de sistema y huella de 15 tablas. Solo elimina
+  exacto de base, rechazo de bases de sistema y huella de 12 tablas. Solo elimina
   objetos de `[alimentacion]` y nunca objetos del núcleo.
 - Ningún archivo fue ejecutado o compilado contra SQL Server.

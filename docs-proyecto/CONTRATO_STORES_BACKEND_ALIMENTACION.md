@@ -1,63 +1,52 @@
-# Catálogo de tablas y solicitud de stores — Alimentación
+# Catálogo oficial de tablas y objetos programables pendientes — Alimentación
 
-Fecha: 2026-09-07  
-Motor objetivo: SQL Server 2017  
-Schema: `[alimentacion]`  
-Estado: contrato de trabajo para Backend; revisión humana y ejecución DDL
-pendientes.
+Fecha: 2026-09-07
+Motor objetivo: SQL Server 2017
+Schema objetivo: `[alimentacion]`
+Estado: las tablas descritas son oficiales; los objetos programables no están
+definidos. La ejecución DDL sigue pendiente y ninguna tabla de este documento
+se acredita como existente en una base de datos por evidencia de este
+repositorio.
 
 ## 1. Propósito
 
-Este documento describe las tablas disponibles para que Backend solicite la
-creación de stores para sus endpoints. El catálogo refleja las migraciones
-`009`, `010`, `011`, `012` y `017` y contiene 15 tablas del módulo.
+Este documento describe las tablas oficiales del módulo. El catálogo refleja
+las migraciones no ejecutadas `009`, `010`, `011` y `012`, que declaran las 12
+tablas oficiales de Alimentación.
 
 La planificación no es mensual: una fila de `Planificacion` puede contener
 cualquier conjunto de fechas mediante `Menu.FechaServicio`. Las fechas no tienen
 que ser consecutivas ni pertenecer al mismo mes.
 
-La fuente ejecutable sigue siendo `db/migrations/alimentacion`. Este documento
-no autoriza ejecutar DDL, crear procedures ni conceder permisos.
+La fuente de DDL sigue siendo `db/migrations/alimentacion`. Este documento no
+autoriza ejecutar DDL ni define procedures, triggers, vistas, funciones o
+permisos.
 
-## 2. Convenciones obligatorias de los stores
+## 2. Objetos programables pendientes de definición
 
-- Usar transacciones explícitas para cada mutación de negocio.
-- Recibir `IdCorrelacion` en operaciones mutables y escribir `EventoAuditoria`.
-- Las mutaciones repetibles deben comenzar resolviendo `RegistroIdempotencia` por
-  `ClaveIdempotencia` y comparar `HashSolicitud` antes de repetir efectos.
-- No aceptar `Anio`, `Mes` ni una regla de fechas consecutivas. La fecha se toma
-  de `Menu.FechaServicio`.
-- Validar estado, sede, actor y pertenencia entre las claves compuestas antes
-  de insertar o actualizar.
-- No guardar QR en claro: `CodigoQR.HashCodigo` y
-  `ValidacionEntrega.HashCodigo` almacenan únicamente el hash.
-- Los nombres `usp_Alimentacion_*` que se proponen abajo son identificadores de
-  trabajo; deben aprobarse con el contrato API antes de implementarse.
+No se definen stores, triggers, vistas, funciones, permisos ni sus convenciones
+de implementación. Cualquier referencia previa a nombres `usp_*` es un
+antecedente no oficial y no puede ser consumida por Backend. Su definición
+requerirá un contrato aprobado independiente del catálogo de tablas.
 
 ## 3. Dependencias del núcleo
 
-Los stores pueden consultar estas tablas existentes, pero no deben duplicarlas
-en `[alimentacion]`:
+Cuando el DDL se apruebe y ejecute, los futuros objetos programables podrán
+consultar estas tablas del núcleo; no deben duplicarlas en `[alimentacion]`:
 
 | Tabla | Uso | Clave referenciada |
 |---|---|---|
 | `organizacion.Sede` | Validar sede de planificación, ventanas, beacon, auditoría y entrega. | `IdSede` |
 | `rrhh.Colaborador` | Resolver actor, colaborador que reserva y operador de entrega. | `IdColaborador` |
-| `rrhh.HorarioLaboral` | Asociar la configuración de servicio al horario maestro. | `IdHorarioLaboral` |
+
+`rrhh.HorarioLaboral.TipoTurno` clasifica el horario como `MANANA`, `TARDE`,
+`NOCHE` o `MADRUGADA`. Alimentación no lo relaciona ni lo usa para determinar
+desayuno, almuerzo o cena: esos servicios los configura directamente el personal
+en cada `Menu` por fecha.
 
 ## 4. Catálogo físico de tablas
 
 ### 4.1 Configuración operativa
-
-#### `alimentacion.ConfiguracionServicioHorario`
-
-- Propósito: asociar un horario laboral a `DESAYUNO`, `ALMUERZO` o `CENA`.
-- PK: `IdConfiguracionServicioHorario`.
-- Columnas: `IdHorarioLaboral`, `TipoServicio`, `FechaInicioVigencia`,
-  `FechaFinVigencia`, `FechaCreacionUtc`.
-- FK: `rrhh.HorarioLaboral(IdHorarioLaboral)`.
-- Reglas: una configuración abierta por horario; fecha final nula o posterior a
-  la inicial; tipo de servicio válido.
 
 #### `alimentacion.VentanaRetiroServicio`
 
@@ -195,75 +184,14 @@ en `[alimentacion]`:
 - Reglas: vencimiento máximo de dos minutos; `CAMARA` o `LECTOR_HID`; hash sin QR
   en claro.
 
-### 4.5 Soporte técnico y auditoría
+## 5. Límites y pendientes
 
-#### `alimentacion.RegistroIdempotencia`
-
-- Propósito: evitar efectos duplicados en mutaciones.
-- PK: `IdRegistroIdempotencia`.
-- Columnas: `ClaveIdempotencia`, `IdActorColaborador`, `Operacion`,
-  `HashSolicitud`, `IdCorrelacion`, `EstadoProcesamiento`, `CodigoResultado`,
-  `IdentificadorResultado`, `FechaRegistroUtc`, `FechaFinalizacionUtc`,
-  `FechaExpiracionUtc`.
-- FK: `rrhh.Colaborador(IdColaborador)`.
-- Unicidad: `ClaveIdempotencia` e `IdCorrelacion`.
-- Estados: `EN_PROCESO`, `COMPLETADO`, `FALLIDO`.
-
-#### `alimentacion.EventoAuditoria`
-
-- Propósito: evento funcional minimizado, separado de logs técnicos.
-- PK: `IdEventoAuditoria`.
-- Columnas: `IdentificadorEvento`, `TipoEvento`, `FechaHoraOficialUtc`,
-  `IdActorColaborador`, `AplicacionOrigen`, `RolContexto`, `TipoObjeto`,
-  `IdentificadorObjeto`, `IdSede`, `TipoServicio`, `FechaNegocio`,
-  `EstadoAnterior`, `EstadoResultante`, `Resultado`, `MotivoSeguro`,
-  `FiltrosMinimizados`, `IdCorrelacion`, `HuellaIdempotencia`.
-- FK opcionales: colaborador y sede.
-- Resultados: `ACEPTADO` o `RECHAZADO`.
-- No almacenar secretos, QR claro ni datos personales innecesarios.
-
-## 5. Solicitud propuesta de stores por endpoint
-
-Los siguientes nombres son una matriz de solicitud para Backend. El contrato
-HTTP definitivo debe fijar autorización, paginación, códigos de error y DTOs.
-
-| Área / endpoint lógico | Store solicitado | Tablas principales | Transacción |
-|---|---|---|---|
-| Configuración de servicio | `usp_Alimentacion_ConfigurarServicioHorario` | `ConfiguracionServicioHorario`, `HorarioLaboral` | Sí |
-| Ventanas de retiro | `usp_Alimentacion_GestionarVentanaRetiro` | `VentanaRetiroServicio`, `Sede` | Sí |
-| Beacons | `usp_Alimentacion_GestionarBeacon` | `BeaconAutorizado`, `Sede` | Sí |
-| Proximidad | `usp_Alimentacion_GestionarProximidadBeacon` | `ConfiguracionProximidadBeacon`, `BeaconAutorizado` | Sí |
-| Crear/listar planificación | `usp_Alimentacion_Planificacion_Guardar` / `_Listar` | `Planificacion` | Sí / lectura |
-| Menús por fecha | `usp_Alimentacion_Menu_Guardar` / `_Listar` | `Menu`, `ComponenteMenu`, `Planificacion` | Sí / lectura |
-| Publicar/cerrar planificación | `usp_Alimentacion_Planificacion_CambiarEstado` | `Planificacion`, `EventoAuditoria` | Sí |
-| Consolidar | `usp_Alimentacion_Planificacion_Consolidar` | `ConsolidacionPlanificacion`, `CantidadConsolidadaMenu`, `Planificacion`, `EventoAuditoria` | Sí |
-| Crear/cancelar reserva | `usp_Alimentacion_Reserva_Crear` / `_Cancelar` | `Reserva`, `Menu`, `Planificacion`, `RegistroIdempotencia`, `EventoAuditoria` | Sí |
-| Emitir/revocar QR | `usp_Alimentacion_QR_Emitir` / `_Revocar` | `CodigoQR`, `Reserva`, `RegistroIdempotencia`, `EventoAuditoria` | Sí |
-| Validar QR | `usp_Alimentacion_Entrega_Validar` | `ValidacionEntrega`, `CodigoQR`, `Reserva`, `RegistroIdempotencia`, `EventoAuditoria` | Sí |
-| Confirmar entrega | `usp_Alimentacion_Entrega_Confirmar` | `Entrega`, `Reserva`, `CodigoQR`, `EventoAuditoria` | Sí |
-| Consulta de auditoría | `usp_Alimentacion_Auditoria_Listar` | `EventoAuditoria` | Lectura |
-
-## 6. Contrato mínimo de entrada/salida para Backend
-
-Cada store mutable debe documentar como mínimo:
-
-1. Parámetros de actor (`IdActorColaborador`), sede, correlación e idempotencia.
-2. Precondiciones de estado y ownership de las claves.
-3. Tablas afectadas y orden de escritura.
-4. Resultado (`CodigoResultado`, identificador público y estado resultante).
-5. Errores de negocio: conflicto de versión, duplicidad, estado inválido,
-   fecha/servicio inexistente, QR vencido o QR ya consumido.
-6. Evento de auditoría emitido y huella de idempotencia asociada.
-
-Las consultas de listado deben devolver DTOs estables y paginables; no deben
-exponer directamente columnas internas que no formen parte del contrato.
-
-## 7. Límites y pendientes
-
-- Este catálogo no demuestra compilación ni ejecución contra SQL Server.
-- La carpeta `db/procedures` no se modifica con este documento; sus stores deben
-  solicitarse y revisarse contra este modelo corregido.
+- Este catálogo no demuestra compilación ni ejecución contra SQL Server; ninguna
+  tabla ha sido creada por estos scripts.
+- La carpeta `db/procedures` no define objetos oficiales y no debe ser consumida
+  por Backend.
 - No existen en este módulo tablas para inventario, compras, recetas, costos,
   cupos/capacidad ni reportes materializados.
-- Antes de implementar Backend se requiere aprobación del contrato de endpoints,
-  autorización de roles/sedes y un checkpoint separado para DDL/procedures.
+- Antes de implementar Backend se requiere aprobar el contrato de endpoints,
+  autorización de roles/sedes y, si corresponde, un checkpoint separado para
+  definir objetos programables y para ejecutar DDL.

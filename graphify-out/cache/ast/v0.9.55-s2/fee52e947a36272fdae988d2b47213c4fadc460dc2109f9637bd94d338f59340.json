@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_db_migrations_nucleo_001_crear_esquemas_nucleo_sql", "label": "001_crear_esquemas_nucleo.sql", "file_type": "code", "source_file": "db/migrations/nucleo/001_crear_esquemas_nucleo.sql", "source_location": null}], "edges": []}

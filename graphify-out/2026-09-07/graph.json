@@ -782,14 +782,14 @@
       "source_location": "L1"
     },
     {
-      "id": "docs_proyecto_db_scripts_log_012_crear_validacion_entrega_sql_2026_09_04",
-      "label": "012_crear_validacion_entrega.sql \u2014 2026-09-04",
+      "id": "docs_proyecto_db_scripts_log_017_crear_validacion_entrega_sql_2026_09_04",
+      "label": "017_crear_validacion_entrega.sql \u2014 2026-09-04",
       "_origin": "ast",
       "community": 17,
       "community_name": "Registro de scripts DB \u2014 GTM",
       "file_type": "document",
       "node_kind": "heading",
-      "norm_label": "012_crear_validacion_entrega.sql \u2014 2026-09-04",
+      "norm_label": "017_crear_validacion_entrega.sql \u2014 2026-09-04",
       "source_file": "docs-proyecto/db-scripts-log.md",
       "source_location": "L39"
     },
@@ -1220,25 +1220,25 @@
       "source_location": "L31"
     },
     {
-      "id": "db_migrations_alimentacion_012_crear_validacion_entrega",
-      "label": "012_crear_validacion_entrega.sql",
+      "id": "db_migrations_alimentacion_017_crear_validacion_entrega",
+      "label": "017_crear_validacion_entrega.sql",
       "_origin": "ast",
       "community": 23,
-      "community_name": "012_crear_validacion_entrega.sql",
+      "community_name": "017_crear_validacion_entrega.sql",
       "file_type": "code",
-      "norm_label": "012_crear_validacion_entrega.sql",
-      "source_file": "db/migrations/alimentacion/012_crear_validacion_entrega.sql",
+      "norm_label": "017_crear_validacion_entrega.sql",
+      "source_file": "db/migrations/alimentacion/017_crear_validacion_entrega.sql",
       "source_location": null
     },
     {
-      "id": "db_migrations_alimentacion_012_crear_validacion_entrega_alimentacion_validacionentrega",
+      "id": "db_migrations_alimentacion_017_crear_validacion_entrega_alimentacion_validacionentrega",
       "label": "alimentacion].[ValidacionEntrega",
       "_origin": "ast",
       "community": 23,
-      "community_name": "012_crear_validacion_entrega.sql",
+      "community_name": "017_crear_validacion_entrega.sql",
       "file_type": "code",
       "norm_label": "alimentacion].[validacionentrega",
-      "source_file": "db/migrations/alimentacion/012_crear_validacion_entrega.sql",
+      "source_file": "db/migrations/alimentacion/017_crear_validacion_entrega.sql",
       "source_location": "L12"
     },
     {
@@ -2769,13 +2769,13 @@
       "weight": 1.0
     },
     {
-      "source": "db_migrations_alimentacion_012_crear_validacion_entrega",
-      "target": "db_migrations_alimentacion_012_crear_validacion_entrega_alimentacion_validacionentrega",
+      "source": "db_migrations_alimentacion_017_crear_validacion_entrega",
+      "target": "db_migrations_alimentacion_017_crear_validacion_entrega_alimentacion_validacionentrega",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "db/migrations/alimentacion/012_crear_validacion_entrega.sql",
+      "source_file": "db/migrations/alimentacion/017_crear_validacion_entrega.sql",
       "source_location": "L12",
       "weight": 1.0
     },
@@ -3210,7 +3210,7 @@
     },
     {
       "source": "docs_proyecto_db_scripts_log_registro_de_scripts_db_gtm",
-      "target": "docs_proyecto_db_scripts_log_012_crear_validacion_entrega_sql_2026_09_04",
+      "target": "docs_proyecto_db_scripts_log_017_crear_validacion_entrega_sql_2026_09_04",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",

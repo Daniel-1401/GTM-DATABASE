@@ -1,7 +1,7 @@
 # Graph Report - gtm-database  (2026-09-07)
 
 ## Corpus Check
-- 38 files · ~25,742 words
+- 38 files · ~25,744 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -38,7 +38,7 @@
 - 011_crear_reservas_qr_y_entregas.sql
 - 002_crear_catalogos_identidad_y_jefatura.sql
 - 007_crear_horarios_laborales_y_vigencias.sql
-- 012_crear_validacion_entrega.sql
+- 017_crear_validacion_entrega.sql
 - 005_crear_relaciones_laborales_y_referencias_empleado_sap.sql
 - 006_crear_asignaciones_organizacionales_y_referencias_posicion_sap.sql
 - 008_crear_jefaturas_relaciones_laborales.sql
@@ -143,7 +143,7 @@ Nodes (7): Acciones por estado, Funcionalidad — períodos de evaluación, Orig
 
 ### Community 17 - "Registro de scripts DB — GTM"
 Cohesion: 0.50
-Nodes (3): 012_crear_validacion_entrega.sql — 2026-09-04, Ajustes de auditoría DB-NUCLEO-002, Registro de scripts DB — GTM
+Nodes (3): 017_crear_validacion_entrega.sql — 2026-09-04, Ajustes de auditoría DB-NUCLEO-002, Registro de scripts DB — GTM
 
 ### Community 18 - "Q: explicame como funciona la tabla CuentaMicrosoftCorporativa"
 Cohesion: 0.40

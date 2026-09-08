@@ -20,8 +20,7 @@ SET XACT_ABORT ON;
 -- IF SCHEMA_ID(N'alimentacion') IS NULL
 --     THROW 51003, 'Reversión bloqueada: no existe el schema esperado [alimentacion].', 1;
 
-IF OBJECT_ID(N'[alimentacion].[ConfiguracionServicioHorario]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
+IF OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[BeaconAutorizado]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[ConfiguracionProximidadBeacon]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[Planificacion]', N'U') IS NULL
@@ -33,8 +32,6 @@ IF OBJECT_ID(N'[alimentacion].[ConfiguracionServicioHorario]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[CodigoQR]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[Entrega]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[ValidacionEntrega]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[RegistroIdempotencia]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[EventoAuditoria]', N'U') IS NULL
     THROW 51004, 'Reversión bloqueada: la huella estructural completa de Alimentación no coincide.', 1;
 
 IF EXISTS
@@ -46,12 +43,11 @@ IF EXISTS
       AND objeto.type IN (N'U', N'V', N'P', N'FN', N'IF', N'TF', N'TR')
       AND objeto.name NOT IN
       (
-          N'ConfiguracionServicioHorario', N'VentanaRetiroServicio',
+          N'VentanaRetiroServicio',
           N'BeaconAutorizado', N'ConfiguracionProximidadBeacon',
           N'Planificacion', N'Menu', N'ComponenteMenu',
           N'ConsolidacionPlanificacion', N'CantidadConsolidadaMenu',
-          N'Reserva', N'CodigoQR', N'Entrega', N'ValidacionEntrega',
-          N'RegistroIdempotencia', N'EventoAuditoria'
+          N'Reserva', N'CodigoQR', N'Entrega', N'ValidacionEntrega'
       )
 )
     THROW 51005, 'Reversión bloqueada: existen objetos no reconocidos dentro de [alimentacion].', 1;
@@ -59,8 +55,6 @@ IF EXISTS
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    DROP TABLE [alimentacion].[EventoAuditoria];
-    DROP TABLE [alimentacion].[RegistroIdempotencia];
     DROP TABLE [alimentacion].[Entrega];
     DROP TABLE [alimentacion].[ValidacionEntrega];
     DROP TABLE [alimentacion].[CodigoQR];
@@ -73,7 +67,6 @@ BEGIN TRY
     DROP TABLE [alimentacion].[ConfiguracionProximidadBeacon];
     DROP TABLE [alimentacion].[BeaconAutorizado];
     DROP TABLE [alimentacion].[VentanaRetiroServicio];
-    DROP TABLE [alimentacion].[ConfiguracionServicioHorario];
     DROP SCHEMA [alimentacion];
 
     COMMIT TRANSACTION;

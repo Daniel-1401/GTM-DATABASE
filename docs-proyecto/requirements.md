@@ -88,7 +88,8 @@ dependencias hacia el núcleo y no autorizan trasladar sus entidades internas.
 ### 4.3 Horarios e integración SAP
 
 - **Horario laboral**: maestro local de códigos de horario necesario para operar
-  sin consulta SAP en tiempo real.
+  sin consulta SAP en tiempo real; clasifica cada horario como mañana, tarde,
+  noche o madrugada.
 - **Vigencia de horario**: asignación de un código de horario a una relación
   laboral y fecha. Cada relación admite como máximo un código por día; el mismo
   código puede repetirse todos los días del mes que corresponda.
@@ -360,8 +361,9 @@ de que un DB Agent refine el modelo físico:
 10. **Sincronización SAP**: ¿la carga será por API, lote, archivo o proceso
     manual? ¿Qué sistema es autoridad para cada atributo y cómo se tratan
     correcciones retroactivas?
-11. **Horarios diarios**: el alcance actual registra un código por relación y
-    fecha; ciclos, calendarios y excepciones quedan fuera del modelo.
+11. **Horarios diarios**: el alcance actual registra un código y su tipo de
+    turno por relación y fecha; ciclos, calendarios y excepciones quedan fuera
+    del modelo.
 12. **Jefaturas**: ¿una jefatura puede cruzar empresas? ¿El límite de dos incluye
     todos los tipos y es obligatorio distinguir exactamente una principal
     cuando exista alguna?

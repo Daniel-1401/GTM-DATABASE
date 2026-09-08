@@ -2,15 +2,15 @@
 
 ## 1. Estado y alcance
 
-Propuesta para revisión humana sobre Microsoft SQL Server 2017. Refina el ER
-conceptual aprobado sin crear una base, conectarse a una instancia ni aplicar
-DDL. Los únicos schemas propios son `catalogo`, `rrhh`, `organizacion` e
+Catálogo oficial de tablas del núcleo para Microsoft SQL Server 2017. No hay
+evidencia de creación de una base, conexión a una instancia ni aplicación DDL.
+Los únicos schemas propios son `catalogo`, `rrhh`, `organizacion` e
 `integracion`.
 
 No contiene entidades internas de Seguridad, Alimentación, Evaluaciones,
 Marcaciones, Notificaciones o Declaraciones Juradas.
 
-## 2. Modelo físico propuesto
+## 2. Modelo físico oficial
 
 ```mermaid
 erDiagram
@@ -121,6 +121,7 @@ erDiagram
         int IdHorarioLaboral PK
         nvarchar CodigoHorarioGTM UK
         nvarchar CodigoHorarioSAP UK
+        nvarchar TipoTurno
         nvarchar NombreHorario
         nvarchar Descripcion
         bit EstaActivo
@@ -187,8 +188,9 @@ están en las migraciones y conservan la forma `[schema].[Objeto]`.
 - PM-08/09/10: se conservan `CodigoSAP` en `rrhh.Colaborador` y
   `CodigoHorarioSAP` en `rrhh.HorarioLaboral`; ambos son obligatorios y únicos.
   No se crean tablas SAP separadas ni se asume un mecanismo de sincronización.
-- PM-11: el horario se asigna por día mediante un código. No se crean ciclos,
-  calendarios, turnos ni excepciones adicionales.
+- PM-11: el horario se asigna por día mediante un código y se clasifica como
+  `MANANA`, `TARDE`, `NOCHE` o `MADRUGADA`. No se crean ciclos, calendarios ni
+  excepciones adicionales.
 - PM-12: no se prohíben jefaturas entre empresas ni se exige una principal. El
   máximo histórico de dos queda pendiente; solo se declaran prioridades 1 y 2 y
   una fila con extremo abierto por cada prioridad.

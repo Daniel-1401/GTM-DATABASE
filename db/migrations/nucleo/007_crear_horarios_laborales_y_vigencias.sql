@@ -2,7 +2,7 @@
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.HorarioLaboral, rrhh.VigenciaHorario
 -- Referencia: er-diagram-v1 / STACK.md
--- Motivo: Mantener el maestro local de códigos de horario y su asignación diaria por relación laboral.
+-- Motivo: Mantener el maestro local de códigos y tipo de turno de horario, y su asignación diaria por relación laboral.
 
 -- UP
 SET XACT_ABORT ON;
@@ -13,6 +13,7 @@ CREATE TABLE [rrhh].[HorarioLaboral]
     [IdHorarioLaboral] INT IDENTITY(1,1) NOT NULL,
     [CodigoHorarioGTM] NVARCHAR(30) NOT NULL,
     [CodigoHorarioSAP] NVARCHAR(50) NOT NULL,
+    [TipoTurno] NVARCHAR(20) NOT NULL,
     [NombreHorario] NVARCHAR(150) NOT NULL,
     [Descripcion] NVARCHAR(500) NULL,
     [EstaActivo] BIT NOT NULL CONSTRAINT [VP_HorarioLaboral_EstaActivo] DEFAULT (1),
@@ -23,6 +24,7 @@ CREATE TABLE [rrhh].[HorarioLaboral]
     CONSTRAINT [CU_HorarioLaboral_CodigoSAP] UNIQUE ([CodigoHorarioSAP]),
     CONSTRAINT [RV_HorarioLaboral_CodigoNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoHorarioGTM]))) > 0),
     CONSTRAINT [RV_HorarioLaboral_CodigoSAPNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoHorarioSAP]))) > 0),
+    CONSTRAINT [RV_HorarioLaboral_TipoTurno] CHECK ([TipoTurno] IN (N'MANANA', N'TARDE', N'NOCHE', N'MADRUGADA')),
     CONSTRAINT [RV_HorarioLaboral_NombreNoVacio] CHECK (LEN(LTRIM(RTRIM([NombreHorario]))) > 0)
 );
 

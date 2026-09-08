@@ -22,7 +22,7 @@
   "20": "011_crear_reservas_qr_y_entregas.sql",
   "21": "002_crear_catalogos_identidad_y_jefatura.sql",
   "22": "007_crear_horarios_laborales_y_vigencias.sql",
-  "23": "012_crear_validacion_entrega.sql",
+  "23": "017_crear_validacion_entrega.sql",
   "24": "005_crear_relaciones_laborales_y_referencias_empleado_sap.sql",
   "25": "006_crear_asignaciones_organizacionales_y_referencias_posicion_sap.sql",
   "26": "008_crear_jefaturas_relaciones_laborales.sql",

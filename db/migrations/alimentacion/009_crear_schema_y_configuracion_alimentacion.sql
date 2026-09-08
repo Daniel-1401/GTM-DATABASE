@@ -1,8 +1,8 @@
 -- Migración: 009_crear_schema_y_configuracion_alimentacion
 -- Fecha: 2026-09-04T12:00:00-05:00
--- Entidad(es) afectada(s): alimentacion, alimentacion.ConfiguracionServicioHorario, alimentacion.VentanaRetiroServicio, alimentacion.BeaconAutorizado, alimentacion.ConfiguracionProximidadBeacon
+-- Entidad(es) afectada(s): alimentacion, alimentacion.VentanaRetiroServicio, alimentacion.BeaconAutorizado, alimentacion.ConfiguracionProximidadBeacon
 -- Referencia: Lineamientos/Alimentacion/referencias-tecnicas/SQL_SERVER_BASELINE.md / STACK.md
--- Motivo: Crear el límite lógico y la configuración operativa inicial de Alimentación sin duplicar horarios ni sedes del núcleo GTM.
+-- Motivo: Crear el límite lógico y la configuración operativa inicial de Alimentación sin duplicar sedes ni horarios del núcleo GTM.
 
 -- UP
 SET XACT_ABORT ON;
@@ -10,28 +10,6 @@ BEGIN TRANSACTION;
 
 IF SCHEMA_ID(N'alimentacion') IS NULL
     EXEC(N'CREATE SCHEMA [alimentacion] AUTHORIZATION [dbo]');
-
-CREATE TABLE [alimentacion].[ConfiguracionServicioHorario]
-(
-    [IdConfiguracionServicioHorario] BIGINT IDENTITY(1,1) NOT NULL,
-    [IdHorarioLaboral] INT NOT NULL,
-    [TipoServicio] NVARCHAR(20) NOT NULL,
-    [FechaInicioVigencia] DATE NOT NULL,
-    [FechaFinVigencia] DATE NULL,
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConfiguracionServicioHorario_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT [CP_ConfiguracionServicioHorario] PRIMARY KEY CLUSTERED ([IdConfiguracionServicioHorario]),
-    CONSTRAINT [CE_ConfiguracionServicioHorario_HorarioLaboral] FOREIGN KEY ([IdHorarioLaboral]) REFERENCES [rrhh].[HorarioLaboral] ([IdHorarioLaboral]),
-    CONSTRAINT [RV_ConfiguracionServicioHorario_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
-    CONSTRAINT [RV_ConfiguracionServicioHorario_Vigencia] CHECK ([FechaFinVigencia] IS NULL OR [FechaFinVigencia] > [FechaInicioVigencia])
-);
-
-CREATE UNIQUE INDEX [IN_ConfiguracionServicioHorario_Abierta]
-    ON [alimentacion].[ConfiguracionServicioHorario] ([IdHorarioLaboral])
-    WHERE [FechaFinVigencia] IS NULL;
-
-CREATE INDEX [IN_ConfiguracionServicioHorario_HorarioVigencia]
-    ON [alimentacion].[ConfiguracionServicioHorario] ([IdHorarioLaboral], [FechaInicioVigencia], [FechaFinVigencia])
-    INCLUDE ([TipoServicio]);
 
 CREATE TABLE [alimentacion].[VentanaRetiroServicio]
 (
@@ -108,12 +86,11 @@ COMMIT TRANSACTION;
 GO
 
 -- DOWN
--- Reversión destructiva declarada. Debe ejecutarse después de revertir 012 a 010.
+-- Reversión destructiva declarada. Debe ejecutarse después de revertir las migraciones posteriores.
 /*
 DROP TABLE IF EXISTS [alimentacion].[ConfiguracionProximidadBeacon];
 DROP TABLE IF EXISTS [alimentacion].[BeaconAutorizado];
 DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
-DROP TABLE IF EXISTS [alimentacion].[ConfiguracionServicioHorario];
 IF SCHEMA_ID(N'alimentacion') IS NOT NULL EXEC(N'DROP SCHEMA [alimentacion]');
 GO
 */
