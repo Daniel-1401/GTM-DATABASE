@@ -114,6 +114,7 @@ erDiagram
         int IdSede FK
         int IdArea FK
         int IdCargo FK
+        nvarchar CodigoPosicionSAP
         date FechaInicio
         date FechaFin
     }
@@ -172,6 +173,7 @@ están en las migraciones y conservan la forma `[schema].[Objeto]`.
 | Como máximo una cuenta Microsoft con extremo abierto por Colaborador | Índice filtrado `IN_CuentaMicrosoftCorporativa_Abierta`. |
 | Empresa explícita por relación laboral | FK obligatoria `RelacionLaboral.IdEmpresa`. |
 | Como máximo una asignación con extremo abierto por relación | Índice filtrado `IN_AsignacionOrganizacional_Abierta`. |
+| Una posición SAP abierta corresponde a una sola asignación | Índice filtrado `IN_AsignacionOrganizacional_PosicionSAPAbierta`; el código es obligatorio y no vacío. |
 | Un horario por relación laboral y día | Índice único `IN_VigenciaHorario_RelacionFecha`; el mismo código puede repetirse en fechas distintas. |
 | Dos prioridades posibles de jefatura y una fila abierta por prioridad | Check `Prioridad IN (1,2)` e índice filtrado correspondiente. |
 
@@ -185,9 +187,12 @@ están en las migraciones y conservan la forma `[schema].[Objeto]`.
 - PM-04/05: no se agrega estado derivado/administrado ni tabla Planilla.
 - PM-06/07: Área y Cargo son maestros corporativos planos; su pertenencia y
   jerarquía no se anticipan.
-- PM-08/09/10: se conservan `CodigoSAP` en `rrhh.Colaborador` y
-  `CodigoHorarioSAP` en `rrhh.HorarioLaboral`; ambos son obligatorios y únicos.
-  No se crean tablas SAP separadas ni se asume un mecanismo de sincronización.
+- PM-08/09/10: se conservan `CodigoSAP` en `rrhh.Colaborador`,
+  `CodigoPosicionSAP` en `rrhh.AsignacionOrganizacional` y
+  `CodigoHorarioSAP` en `rrhh.HorarioLaboral`. Los tres son obligatorios; el
+  código de colaborador y el de horario son únicos, y una posición SAP no puede
+  estar abierta en más de una asignación. No se crean tablas SAP separadas ni
+  se asume un mecanismo de sincronización.
 - PM-11: el horario se asigna por día mediante un código y se clasifica como
   `MANANA`, `TARDE`, `NOCHE` o `MADRUGADA`. No se crean ciclos, calendarios ni
   excepciones adicionales.

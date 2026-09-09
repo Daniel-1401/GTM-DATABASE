@@ -1,1 +1,0 @@
-{"nodes": [], "edges": [{"source": "lineamiento_referencias_modulos_alimentacion_00_indice_y_gobierno", "target": "gtm_core_colaborador", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "lineamiento/referencias-modulos/Alimentacion/01_CONTEXTO_Y_ALCANCE.md"}], "hyperedges": []}

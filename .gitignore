@@ -1,0 +1,39 @@
+# Gradle and generated build output
+.gradle/
+.gradle-user-home/
+.kotlin/
+**/build/
+/captures/
+/.externalNativeBuild/
+/.cxx/
+
+# Local Android SDK and environment configuration
+/local.properties
+/local.properties.*
+!/local.properties.example
+.env
+.env.*
+!.env.example
+
+# Signing material and per-machine signing configuration
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Android Studio / IntelliJ IDEA local state
+.idea/
+*.iml
+
+# JVM crash diagnostics and local build logs
+hs_err_pid*.log
+replay_pid*.log
+.codex-local-build.*.log
+*.hprof
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Local Graphify generated artifacts
+/graphify-out/

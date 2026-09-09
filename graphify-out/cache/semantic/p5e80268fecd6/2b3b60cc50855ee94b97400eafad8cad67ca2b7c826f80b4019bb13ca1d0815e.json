@@ -1,1 +1,0 @@
-{"nodes": [{"id": "lineamiento_01_propuesta_reestructuracion_bd_rrhh", "label": "DB Restructuring Proposal", "file_type": "document", "source_file": "lineamiento/01_PROPUESTA_REESTRUCTURACION_BD_RRHH.md", "rationale": "Initial planning document suggesting the separation of Persona and Colaborador."}], "edges": [], "hyperedges": []}

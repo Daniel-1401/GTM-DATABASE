@@ -2,7 +2,7 @@
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.AsignacionOrganizacional
 -- Referencia: er-diagram-v1 / STACK.md
--- Motivo: Historiar el contexto de sede, área, cargo y centro de costo de cada relación laboral sin anticipar reglas procedurales.
+-- Motivo: Historiar sede, área, cargo y posición SAP de cada relación laboral sin anticipar reglas procedurales.
 
 -- UP
 SET XACT_ABORT ON;
@@ -15,6 +15,7 @@ CREATE TABLE [rrhh].[AsignacionOrganizacional]
     [IdSede] INT NOT NULL,
     [IdArea] INT NOT NULL,
     [IdCargo] INT NOT NULL,
+    [CodigoPosicionSAP] NVARCHAR(50) NOT NULL,
     [FechaInicio] DATE NOT NULL,
     [FechaFin] DATE NULL,
     [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_AsignacionOrganizacional_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
@@ -24,6 +25,7 @@ CREATE TABLE [rrhh].[AsignacionOrganizacional]
     CONSTRAINT [CE_AsignacionOrganizacional_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [CE_AsignacionOrganizacional_Area] FOREIGN KEY ([IdArea]) REFERENCES [organizacion].[Area] ([IdArea]),
     CONSTRAINT [CE_AsignacionOrganizacional_Cargo] FOREIGN KEY ([IdCargo]) REFERENCES [organizacion].[Cargo] ([IdCargo]),
+    CONSTRAINT [RV_AsignacionOrganizacional_CodigoPosicionSAPNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoPosicionSAP]))) > 0),
     CONSTRAINT [RV_AsignacionOrganizacional_Vigencia] CHECK ([FechaFin] IS NULL OR [FechaFin] > [FechaInicio])
 );
 
@@ -31,9 +33,13 @@ CREATE UNIQUE INDEX [IN_AsignacionOrganizacional_Abierta]
     ON [rrhh].[AsignacionOrganizacional] ([IdRelacionLaboral])
     WHERE [FechaFin] IS NULL;
 
+CREATE UNIQUE INDEX [IN_AsignacionOrganizacional_PosicionSAPAbierta]
+    ON [rrhh].[AsignacionOrganizacional] ([CodigoPosicionSAP])
+    WHERE [FechaFin] IS NULL;
+
 CREATE INDEX [IN_AsignacionOrganizacional_RelacionVigencia]
     ON [rrhh].[AsignacionOrganizacional] ([IdRelacionLaboral], [FechaInicio], [FechaFin])
-    INCLUDE ([IdSede], [IdArea], [IdCargo]);
+    INCLUDE ([IdSede], [IdArea], [IdCargo], [CodigoPosicionSAP]);
 
 COMMIT TRANSACTION;
 GO
