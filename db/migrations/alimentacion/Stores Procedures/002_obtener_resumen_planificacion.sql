@@ -33,8 +33,8 @@ BEGIN
         COUNT([Menu].[IdMenu]) AS [CantidadMenusRegistrados],
         SUM(CASE WHEN [Menu].[EstaDisponible] = 1 THEN 1 ELSE 0 END) AS [CantidadMenusCreados],
         SUM(CASE WHEN [Menu].[EstaDisponible] = 0 THEN 1 ELSE 0 END) AS [CantidadServiciosSinAtencion],
-        [Planificacion].[FechaCreacionUtc],
-        [Planificacion].[FechaModificacionUtc]
+        [Planificacion].[FechaCreacion],
+        [Planificacion].[FechaModificacion]
     FROM [alimentacion].[Planificacion] AS [Planificacion]
     INNER JOIN [organizacion].[Sede] AS [Sede]
         ON [Sede].[IdSede] = [Planificacion].[IdSede]
@@ -52,7 +52,7 @@ BEGIN
         [Planificacion].[FechaFin],
         [Planificacion].[Estado],
         [Planificacion].[VersionRegistro],
-        [Planificacion].[FechaCreacionUtc],
-        [Planificacion].[FechaModificacionUtc];
+        [Planificacion].[FechaCreacion],
+        [Planificacion].[FechaModificacion];
 END;
 GO

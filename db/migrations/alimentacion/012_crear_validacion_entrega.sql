@@ -17,9 +17,9 @@ CREATE TABLE [alimentacion].[ValidacionEntrega]
     [IdOperadorColaborador] BIGINT NOT NULL,
     [IdSede] INT NOT NULL,
     [MetodoLectura] NVARCHAR(20) NOT NULL,
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ValidacionEntrega_Creacion] DEFAULT (SYSUTCDATETIME()),
-    [FechaVencimientoUtc] DATETIME2(3) NOT NULL,
-    [FechaConsumoUtc] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_ValidacionEntrega_Creacion] DEFAULT (SYSDATETIME()),
+    [FechaVencimiento] DATETIME2(3) NOT NULL,
+    [FechaConsumo] DATETIME2(3) NULL,
     [IdCorrelacion] UNIQUEIDENTIFIER NOT NULL,
     [HashCodigo] VARBINARY(64) NOT NULL,
     CONSTRAINT [CP_ValidacionEntrega] PRIMARY KEY CLUSTERED ([ValidationId]),
@@ -29,12 +29,12 @@ CREATE TABLE [alimentacion].[ValidacionEntrega]
     CONSTRAINT [CE_ValidacionEntrega_Operador] FOREIGN KEY ([IdOperadorColaborador]) REFERENCES [rrhh].[Colaborador] ([IdColaborador]),
     CONSTRAINT [CE_ValidacionEntrega_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [RV_ValidacionEntrega_Metodo] CHECK ([MetodoLectura] IN (N'CAMARA', N'LECTOR_HID')),
-    CONSTRAINT [RV_ValidacionEntrega_Vigencia] CHECK ([FechaVencimientoUtc] > [FechaCreacionUtc] AND [FechaVencimientoUtc] <= DATEADD(MINUTE, 2, [FechaCreacionUtc])),
-    CONSTRAINT [RV_ValidacionEntrega_Consumo] CHECK ([FechaConsumoUtc] IS NULL OR [FechaConsumoUtc] >= [FechaCreacionUtc])
+    CONSTRAINT [RV_ValidacionEntrega_Vigencia] CHECK ([FechaVencimiento] > [FechaCreacion] AND [FechaVencimiento] <= DATEADD(MINUTE, 2, [FechaCreacion])),
+    CONSTRAINT [RV_ValidacionEntrega_Consumo] CHECK ([FechaConsumo] IS NULL OR [FechaConsumo] >= [FechaCreacion])
 );
 
 CREATE INDEX [IN_ValidacionEntrega_ReservaVigencia]
-    ON [alimentacion].[ValidacionEntrega] ([IdReserva], [FechaVencimientoUtc], [FechaConsumoUtc]);
+    ON [alimentacion].[ValidacionEntrega] ([IdReserva], [FechaVencimiento], [FechaConsumo]);
 CREATE INDEX [IN_ValidacionEntrega_Hash]
     ON [alimentacion].[ValidacionEntrega] ([HashCodigo]);
 

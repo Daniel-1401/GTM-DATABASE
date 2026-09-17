@@ -116,7 +116,7 @@ Confirma el retiro presencial normal. Su clave es `IdEntrega`; tiene FKs compues
 
 - Una entrega por reserva, por QR y por correlación.
 - Métodos permitidos: `CAMARA` y `LECTOR_HID`.
-- Conserva el contexto de sede, fecha y servicio, el operador y la fecha UTC de entrega.
+- Conserva el contexto de sede, fecha y servicio, el operador y la fecha local de entrega.
 
 ### `alimentacion.ValidacionEntrega`
 

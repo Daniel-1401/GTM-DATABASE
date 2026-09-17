@@ -29,7 +29,7 @@ vacíos. La combinación planificación, fecha y servicio se puede crear una sol
 ## Salida
 
 Devuelve una fila con el UUID público del menú, UUID de planificación, contenido,
-vigencia, colaborador registrador, versión y fecha de creación UTC.
+vigencia, colaborador registrador, versión y fecha de creación local.
 
 ## Errores SQL
 

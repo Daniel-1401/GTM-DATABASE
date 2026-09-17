@@ -60,8 +60,8 @@ Devuelve **un único recordset**. Las filas se ordenan por `FechaInicio DESC`,
 | `CantidadDias` | integer | Días calendario inclusivos del período. |
 | `Estado` | string | Estado actual de la planificación. |
 | `VersionRegistro` | integer de 64 bits | Versión para control de concurrencia; devolverla si el cliente la necesitará en operaciones posteriores. |
-| `FechaCreacionUtc` | timestamp UTC | Fecha de creación. |
-| `FechaModificacionUtc` | timestamp UTC o `null` | Última modificación, si existe. |
+| `FechaCreacion` | timestamp local | Fecha de creación. |
+| `FechaModificacion` | timestamp local o `null` | Última modificación, si existe. |
 | `TotalRegistros` | integer de 64 bits | Total de planificaciones que cumplen los filtros, antes de paginar. Se repite en cada fila de la página. |
 
 Si no hay filas, el recordset está vacío y no contiene `TotalRegistros`.

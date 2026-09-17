@@ -58,8 +58,8 @@ BEGIN
         [Planificacion].[EstaActivo],
         [Planificacion].[IdColaboradorRegistro],
         [Planificacion].[VersionRegistro],
-        [Planificacion].[FechaCreacionUtc],
-        [Planificacion].[FechaModificacionUtc],
+        [Planificacion].[FechaCreacion],
+        [Planificacion].[FechaModificacion],
         COUNT_BIG(*) OVER () AS [TotalRegistros]
     FROM [alimentacion].[Planificacion] AS [Planificacion]
     INNER JOIN [organizacion].[Sede] AS [Sede]

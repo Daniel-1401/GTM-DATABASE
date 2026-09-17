@@ -195,7 +195,7 @@ BEGIN
         [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
         [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistro],
         [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
-        [Menu].[VersionRegistro], [Menu].[FechaCreacionUtc]
+        [Menu].[VersionRegistro], [Menu].[FechaCreacion]
     FROM @MenusInsertados AS [Insertado]
     INNER JOIN [alimentacion].[Menu] AS [Menu]
         ON [Menu].[IdMenu] = [Insertado].[IdMenu]

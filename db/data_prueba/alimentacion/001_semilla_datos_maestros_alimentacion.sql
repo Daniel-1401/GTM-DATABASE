@@ -161,11 +161,11 @@ IF NOT EXISTS
     SELECT 1
     FROM [proximidad].[ConfiguracionBeacon]
     WHERE [IdBeaconAutorizado] = @IdBeaconPrueba
-      AND [FechaInicioVigenciaUtc] = '2024-01-01T00:00:00.000'
+AND [FechaInicioVigencia] = '2024-01-01T00:00:00.000'
 )
     INSERT INTO [proximidad].[ConfiguracionBeacon]
         ([IdBeaconAutorizado], [CantidadMinimaEmisiones], [VentanaConfirmacionMilisegundos],
-         [TiempoSalidaRangoMilisegundos], [UmbralRssi], [FechaInicioVigenciaUtc])
+[TiempoSalidaRangoMilisegundos], [UmbralRssi], [FechaInicioVigencia])
     VALUES
         (@IdBeaconPrueba, 3, 5000, 10000, -75, '2024-01-01T00:00:00.000');
 

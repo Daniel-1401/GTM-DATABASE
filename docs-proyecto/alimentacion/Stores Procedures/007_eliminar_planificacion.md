@@ -5,7 +5,7 @@
 Elimina lógicamente una planificación que se encuentre en `BORRADOR`. La
 operación conserva la cabecera, sus menús, componentes y cualquier relación histórica: cambia
 el estado a `ELIMINADA`, desactiva la planificación, sus menús y sus componentes, aumenta
-la versión de los registros modificables y registra la fecha de modificación UTC.
+la versión de los registros modificables y registra la fecha de modificación local.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/007_eliminar_planificacion.sql`.
 
@@ -39,7 +39,7 @@ Devuelve un único recordset con una fila:
 | `IdPlanificacion` | UUID | Identificador público de la planificación eliminada. |
 | `Estado` | string | Siempre `ELIMINADA`. |
 | `VersionRegistro` | integer de 64 bits | Versión incrementada tras la eliminación lógica. |
-| `FechaModificacionUtc` | timestamp UTC | Instante UTC en que se realizó la eliminación. |
+| `FechaModificacion` | timestamp local | Instante local en que se realizó la eliminación. |
 
 ## Manejo de errores
 

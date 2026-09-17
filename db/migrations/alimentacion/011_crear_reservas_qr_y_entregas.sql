@@ -19,8 +19,8 @@ CREATE TABLE [alimentacion].[Reserva]
     [FechaServicio] DATE NOT NULL,
     [TipoServicio] NVARCHAR(20) NOT NULL,
     [Estado] NVARCHAR(20) NOT NULL CONSTRAINT [VP_Reserva_Estado] DEFAULT (N'RESERVADA'),
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_Reserva_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
-    [FechaModificacionUtc] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_Reserva_FechaCreacion] DEFAULT (SYSDATETIME()),
+    [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_Reserva] PRIMARY KEY CLUSTERED ([IdReserva]),
     CONSTRAINT [CU_Reserva_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
     CONSTRAINT [CU_Reserva_Contexto] UNIQUE ([IdReserva], [IdPlanificacion], [IdSede], [FechaServicio], [TipoServicio]),
@@ -49,10 +49,10 @@ CREATE TABLE [alimentacion].[CodigoQR]
     [IdReserva] BIGINT NOT NULL,
     [HashCodigo] VARBINARY(64) NOT NULL,
     [Estado] NVARCHAR(20) NOT NULL CONSTRAINT [VP_CodigoQR_Estado] DEFAULT (N'VIGENTE'),
-    [FechaEmisionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_CodigoQR_FechaEmisionUtc] DEFAULT (SYSUTCDATETIME()),
-    [FechaVencimientoUtc] DATETIME2(3) NOT NULL,
-    [FechaUsoUtc] DATETIME2(3) NULL,
-    [FechaRevocacionUtc] DATETIME2(3) NULL,
+    [FechaEmision] DATETIME2(3) NOT NULL CONSTRAINT [VP_CodigoQR_FechaEmision] DEFAULT (SYSDATETIME()),
+    [FechaVencimiento] DATETIME2(3) NOT NULL,
+    [FechaUso] DATETIME2(3) NULL,
+    [FechaRevocacion] DATETIME2(3) NULL,
     [MotivoRevocacion] NVARCHAR(100) NULL,
     [IdCorrelacion] UNIQUEIDENTIFIER NOT NULL,
     CONSTRAINT [CP_CodigoQR] PRIMARY KEY CLUSTERED ([IdCodigoQR]),
@@ -60,13 +60,13 @@ CREATE TABLE [alimentacion].[CodigoQR]
     CONSTRAINT [CU_CodigoQR_IdReserva] UNIQUE ([IdCodigoQR], [IdReserva]),
     CONSTRAINT [CE_CodigoQR_Reserva] FOREIGN KEY ([IdReserva]) REFERENCES [alimentacion].[Reserva] ([IdReserva]),
     CONSTRAINT [RV_CodigoQR_Estado] CHECK ([Estado] IN (N'VIGENTE', N'VENCIDO', N'UTILIZADO', N'REVOCADO')),
-    CONSTRAINT [RV_CodigoQR_Vigencia] CHECK ([FechaVencimientoUtc] > [FechaEmisionUtc] AND [FechaVencimientoUtc] <= DATEADD(MINUTE, 5, [FechaEmisionUtc])),
+    CONSTRAINT [RV_CodigoQR_Vigencia] CHECK ([FechaVencimiento] > [FechaEmision] AND [FechaVencimiento] <= DATEADD(MINUTE, 5, [FechaEmision])),
     CONSTRAINT [RV_CodigoQR_Transicion] CHECK
     (
-        ([Estado] = N'VIGENTE' AND [FechaUsoUtc] IS NULL AND [FechaRevocacionUtc] IS NULL)
-        OR ([Estado] = N'VENCIDO' AND [FechaUsoUtc] IS NULL AND [FechaRevocacionUtc] IS NULL)
-        OR ([Estado] = N'UTILIZADO' AND [FechaUsoUtc] IS NOT NULL AND [FechaRevocacionUtc] IS NULL)
-        OR ([Estado] = N'REVOCADO' AND [FechaUsoUtc] IS NULL AND [FechaRevocacionUtc] IS NOT NULL)
+        ([Estado] = N'VIGENTE' AND [FechaUso] IS NULL AND [FechaRevocacion] IS NULL)
+        OR ([Estado] = N'VENCIDO' AND [FechaUso] IS NULL AND [FechaRevocacion] IS NULL)
+        OR ([Estado] = N'UTILIZADO' AND [FechaUso] IS NOT NULL AND [FechaRevocacion] IS NULL)
+        OR ([Estado] = N'REVOCADO' AND [FechaUso] IS NULL AND [FechaRevocacion] IS NOT NULL)
     ),
     CONSTRAINT [RV_CodigoQR_MotivoRevocacion] CHECK
     (
@@ -80,7 +80,7 @@ CREATE UNIQUE INDEX [IN_CodigoQR_VigentePorReserva]
     WHERE [Estado] = N'VIGENTE';
 
 CREATE INDEX [IN_CodigoQR_ReservaEstadoVencimiento]
-    ON [alimentacion].[CodigoQR] ([IdReserva], [Estado], [FechaVencimientoUtc]);
+    ON [alimentacion].[CodigoQR] ([IdReserva], [Estado], [FechaVencimiento]);
 
 CREATE TABLE [alimentacion].[Entrega]
 (
@@ -94,7 +94,7 @@ CREATE TABLE [alimentacion].[Entrega]
     [FechaServicio] DATE NOT NULL,
     [TipoServicio] NVARCHAR(20) NOT NULL,
     [MecanismoLectura] NVARCHAR(20) NOT NULL,
-    [FechaEntregaUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_Entrega_FechaEntregaUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaEntrega] DATETIME2(3) NOT NULL CONSTRAINT [VP_Entrega_FechaEntrega] DEFAULT (SYSDATETIME()),
     [IdCorrelacion] UNIQUEIDENTIFIER NOT NULL,
     CONSTRAINT [CP_Entrega] PRIMARY KEY CLUSTERED ([IdEntrega]),
     CONSTRAINT [CU_Entrega_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
@@ -110,10 +110,10 @@ CREATE TABLE [alimentacion].[Entrega]
 
 CREATE INDEX [IN_Entrega_SedeFechaServicio]
     ON [alimentacion].[Entrega] ([IdSede], [FechaServicio], [TipoServicio])
-    INCLUDE ([IdReserva], [FechaEntregaUtc]);
+    INCLUDE ([IdReserva], [FechaEntrega]);
 
 CREATE INDEX [IN_Entrega_OperadorFecha]
-    ON [alimentacion].[Entrega] ([IdOperadorColaborador], [FechaEntregaUtc]);
+    ON [alimentacion].[Entrega] ([IdOperadorColaborador], [FechaEntrega]);
 
 COMMIT TRANSACTION;
 GO

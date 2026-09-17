@@ -38,8 +38,8 @@ planificación no existe, devuelve un recordset vacío.
 | `Descripcion` | string o `null` | Descripción del menú. |
 | `ReferenciaImagen` | string o `null` | Referencia de imagen del menú. |
 | `VersionRegistro` | `BIGINT` / integer de 64 bits o `null` | Versión del menú. |
-| `FechaCreacionUtc` | `DATETIME2(3)` / timestamp UTC o `null` | Fecha de creación del menú. |
-| `FechaModificacionUtc` | `DATETIME2(3)` / timestamp UTC o `null` | Fecha de última modificación del menú. |
+| `FechaCreacion` | `DATETIME2(3)` / timestamp local o `null` | Fecha de creación del menú. |
+| `FechaModificacion` | `DATETIME2(3)` / timestamp local o `null` | Fecha de última modificación del menú. |
 
 ## Estados de una fecha
 

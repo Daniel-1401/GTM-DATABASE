@@ -20,8 +20,8 @@ CREATE TABLE [alimentacion].[Planificacion]
     [Estado] NVARCHAR(25) NOT NULL CONSTRAINT [VP_Planificacion_Estado] DEFAULT (N'BORRADOR'),
     [EstaActivo] BIT NOT NULL CONSTRAINT [VP_Planificacion_EstaActivo] DEFAULT (1),
     [VersionRegistro] BIGINT NOT NULL CONSTRAINT [VP_Planificacion_VersionRegistro] DEFAULT (1),
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_Planificacion_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
-    [FechaModificacionUtc] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_Planificacion_FechaCreacion] DEFAULT (SYSDATETIME()),
+    [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_Planificacion] PRIMARY KEY CLUSTERED ([IdPlanificacion]),
     CONSTRAINT [CU_Planificacion_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
     CONSTRAINT [CU_Planificacion_IdSede] UNIQUE ([IdPlanificacion], [IdSede]),
@@ -39,7 +39,7 @@ CREATE TABLE [alimentacion].[Planificacion]
 
 CREATE INDEX [IN_Planificacion_SedePeriodoEstado]
     ON [alimentacion].[Planificacion] ([IdSede], [FechaInicio], [FechaFin], [Estado])
-    INCLUDE ([Nombre], [VersionRegistro], [FechaModificacionUtc]);
+INCLUDE ([Nombre], [VersionRegistro], [FechaModificacion]);
 
 CREATE TABLE [alimentacion].[Menu]
 (
@@ -55,8 +55,8 @@ CREATE TABLE [alimentacion].[Menu]
     [Descripcion] NVARCHAR(1000) NULL,
     [ReferenciaImagen] NVARCHAR(500) NULL,
     [VersionRegistro] BIGINT NOT NULL CONSTRAINT [VP_Menu_VersionRegistro] DEFAULT (1),
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_Menu_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
-    [FechaModificacionUtc] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_Menu_FechaCreacion] DEFAULT (SYSDATETIME()),
+    [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_Menu] PRIMARY KEY CLUSTERED ([IdMenu]),
     CONSTRAINT [CU_Menu_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
     CONSTRAINT [CU_Menu_PlanificacionFechaServicio] UNIQUE ([IdPlanificacion], [FechaServicio], [TipoServicio]),
@@ -85,7 +85,7 @@ CREATE TABLE [alimentacion].[ComponenteMenu]
     [Orden] SMALLINT NOT NULL,
     [DescripcionComponente] NVARCHAR(300) NOT NULL,
     [EstaActivo] BIT NOT NULL CONSTRAINT [VP_ComponenteMenu_EstaActivo] DEFAULT (1),
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ComponenteMenu_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_ComponenteMenu_FechaCreacion] DEFAULT (SYSDATETIME()),
     CONSTRAINT [CP_ComponenteMenu] PRIMARY KEY CLUSTERED ([IdComponenteMenu]),
     CONSTRAINT [CU_ComponenteMenu_MenuOrden] UNIQUE ([IdMenu], [Orden]),
     CONSTRAINT [CE_ComponenteMenu_Menu] FOREIGN KEY ([IdMenu]) REFERENCES [alimentacion].[Menu] ([IdMenu]),
@@ -100,7 +100,7 @@ CREATE TABLE [alimentacion].[ConsolidacionPlanificacion]
     [IdActorColaborador] BIGINT NOT NULL,
     [EstadoAnterior] NVARCHAR(25) NOT NULL,
     [VersionPlanificacion] BIGINT NOT NULL,
-    [FechaConsolidacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConsolidacionPlanificacion_FechaConsolidacionUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaConsolidacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConsolidacionPlanificacion_FechaConsolidacion] DEFAULT (SYSDATETIME()),
     [IdCorrelacion] UNIQUEIDENTIFIER NOT NULL,
     CONSTRAINT [CP_ConsolidacionPlanificacion] PRIMARY KEY CLUSTERED ([IdConsolidacionPlanificacion]),
     CONSTRAINT [CU_ConsolidacionPlanificacion_Planificacion] UNIQUE ([IdPlanificacion]),

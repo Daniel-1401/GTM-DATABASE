@@ -40,8 +40,8 @@ no existe, devuelve un recordset vacío.
 | `CantidadMenusRegistrados` | integer | Filas existentes en `Menu`, sin importar disponibilidad. |
 | `CantidadMenusCreados` | integer | Menús con `EstaDisponible = 1`. |
 | `CantidadServiciosSinAtencion` | integer | Registros con `EstaDisponible = 0`. |
-| `FechaCreacionUtc` | `DATETIME2(3)` / timestamp UTC | Fecha de creación. |
-| `FechaModificacionUtc` | `DATETIME2(3)` / timestamp UTC o `null` | Fecha de última modificación. |
+| `FechaCreacion` | `DATETIME2(3)` / timestamp local | Fecha de creación. |
+| `FechaModificacion` | `DATETIME2(3)` / timestamp local o `null` | Fecha de última modificación. |
 
 ## Errores SQL
 

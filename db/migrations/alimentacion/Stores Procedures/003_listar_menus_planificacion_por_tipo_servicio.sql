@@ -68,8 +68,8 @@ BEGIN
         [Menu].[Descripcion],
         [Menu].[ReferenciaImagen],
         [Menu].[VersionRegistro],
-        [Menu].[FechaCreacionUtc],
-        [Menu].[FechaModificacionUtc]
+        [Menu].[FechaCreacion],
+        [Menu].[FechaModificacion]
     FROM [FechasPeriodo]
     LEFT JOIN [alimentacion].[Menu] AS [Menu]
         ON [Menu].[IdPlanificacion] = [FechasPeriodo].[IdPlanificacion]

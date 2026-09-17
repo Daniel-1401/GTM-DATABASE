@@ -20,7 +20,7 @@ Script fuente: `db/migrations/alimentacion/Stores Procedures/004_crear_planifica
 ## Salida
 
 Devuelve una fila con `IdPlanificacion` (UUID público), sede, nombre, período,
-estado `BORRADOR`, vigencia, colaborador registrador, versión y fecha de creación UTC.
+estado `BORRADOR`, vigencia, colaborador registrador, versión y fecha de creación local.
 
 ## Errores SQL
 

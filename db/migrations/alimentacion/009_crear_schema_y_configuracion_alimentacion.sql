@@ -22,7 +22,7 @@ CREATE TABLE [alimentacion].[VentanaRetiroServicio]
     [HoraFin] TIME(0) NOT NULL,
     [FechaInicioVigencia] DATE NOT NULL,
     [FechaFinVigencia] DATE NULL,
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_VentanaRetiroServicio_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_VentanaRetiroServicio_FechaCreacion] DEFAULT (SYSDATETIME()),
     CONSTRAINT [CP_VentanaRetiroServicio] PRIMARY KEY CLUSTERED ([IdVentanaRetiroServicio]),
     CONSTRAINT [CE_VentanaRetiroServicio_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [RV_VentanaRetiroServicio_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
@@ -45,8 +45,8 @@ CREATE TABLE [proximidad].[BeaconAutorizado]
     [NumeroMajor] INT NOT NULL,
     [NumeroMinor] INT NOT NULL,
     [EstaActivo] BIT NOT NULL CONSTRAINT [VP_BeaconAutorizado_EstaActivo] DEFAULT (1),
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_BeaconAutorizado_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
-    [FechaModificacionUtc] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_BeaconAutorizado_FechaCreacion] DEFAULT (SYSDATETIME()),
+    [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_BeaconAutorizado] PRIMARY KEY CLUSTERED ([IdBeaconAutorizado]),
     CONSTRAINT [CU_BeaconAutorizado_Identificador] UNIQUE ([IdentificadorUuid], [NumeroMajor], [NumeroMinor]),
     CONSTRAINT [CE_BeaconAutorizado_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
@@ -65,24 +65,24 @@ CREATE TABLE [proximidad].[ConfiguracionBeacon]
     [VentanaConfirmacionMilisegundos] INT NOT NULL,
     [TiempoSalidaRangoMilisegundos] INT NOT NULL,
     [UmbralRssi] SMALLINT NULL,
-    [FechaInicioVigenciaUtc] DATETIME2(3) NOT NULL,
-    [FechaFinVigenciaUtc] DATETIME2(3) NULL,
-    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConfiguracionProximidadBeacon_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaInicioVigencia] DATETIME2(3) NOT NULL,
+    [FechaFinVigencia] DATETIME2(3) NULL,
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConfiguracionProximidadBeacon_FechaCreacion] DEFAULT (SYSDATETIME()),
     CONSTRAINT [CP_ConfiguracionProximidadBeacon] PRIMARY KEY CLUSTERED ([IdConfiguracionProximidadBeacon]),
     CONSTRAINT [CE_ConfiguracionProximidadBeacon_Beacon] FOREIGN KEY ([IdBeaconAutorizado]) REFERENCES [proximidad].[BeaconAutorizado] ([IdBeaconAutorizado]),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Emisiones] CHECK ([CantidadMinimaEmisiones] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Ventana] CHECK ([VentanaConfirmacionMilisegundos] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_SalidaRango] CHECK ([TiempoSalidaRangoMilisegundos] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Rssi] CHECK ([UmbralRssi] IS NULL OR [UmbralRssi] BETWEEN -127 AND 0),
-    CONSTRAINT [RV_ConfiguracionProximidadBeacon_Vigencia] CHECK ([FechaFinVigenciaUtc] IS NULL OR [FechaFinVigenciaUtc] > [FechaInicioVigenciaUtc])
+CONSTRAINT [RV_ConfiguracionProximidadBeacon_Vigencia] CHECK ([FechaFinVigencia] IS NULL OR [FechaFinVigencia] > [FechaInicioVigencia])
 );
 
 CREATE UNIQUE INDEX [IN_ConfiguracionProximidadBeacon_Abierta]
     ON [proximidad].[ConfiguracionBeacon] ([IdBeaconAutorizado])
-    WHERE [FechaFinVigenciaUtc] IS NULL;
+WHERE [FechaFinVigencia] IS NULL;
 
 CREATE INDEX [IN_ConfiguracionProximidadBeacon_BeaconVigencia]
-    ON [proximidad].[ConfiguracionBeacon] ([IdBeaconAutorizado], [FechaInicioVigenciaUtc], [FechaFinVigenciaUtc]);
+ON [proximidad].[ConfiguracionBeacon] ([IdBeaconAutorizado], [FechaInicioVigencia], [FechaFinVigencia]);
 
 COMMIT TRANSACTION;
 GO

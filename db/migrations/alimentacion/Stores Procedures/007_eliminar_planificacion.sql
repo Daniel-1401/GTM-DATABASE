@@ -21,7 +21,7 @@ BEGIN
     END;
     DECLARE @IdPlanificacionInterno BIGINT;
     DECLARE @EstadoPlanificacion NVARCHAR(25);
-    DECLARE @FechaEliminacionUtc DATETIME2(3);
+    DECLARE @FechaEliminacion DATETIME2(3);
 
     BEGIN TRANSACTION;
 
@@ -46,7 +46,7 @@ BEGIN
         ;THROW 50253, N'Solo se pueden eliminar planificaciones en BORRADOR.', 1;
     END;
 
-    SET @FechaEliminacionUtc = SYSUTCDATETIME();
+    SET @FechaEliminacion = SYSDATETIME();
 
     UPDATE [Componente]
     SET [EstaActivo] = 0
@@ -60,7 +60,7 @@ BEGIN
     SET
         [EstaActivo] = 0,
         [VersionRegistro] = [VersionRegistro] + 1,
-        [FechaModificacionUtc] = @FechaEliminacionUtc
+        [FechaModificacion] = @FechaEliminacion
     WHERE [IdPlanificacion] = @IdPlanificacionInterno
       AND [EstaActivo] = 1;
 
@@ -69,7 +69,7 @@ BEGIN
         [Estado] = N'ELIMINADA',
         [EstaActivo] = 0,
         [VersionRegistro] = [VersionRegistro] + 1,
-        [FechaModificacionUtc] = @FechaEliminacionUtc
+        [FechaModificacion] = @FechaEliminacion
     WHERE [IdPlanificacion] = @IdPlanificacionInterno;
 
     COMMIT TRANSACTION;
@@ -79,7 +79,7 @@ BEGIN
         [Estado],
         [EstaActivo],
         [VersionRegistro],
-        [FechaModificacionUtc]
+        [FechaModificacion]
     FROM [alimentacion].[Planificacion]
     WHERE [IdPlanificacion] = @IdPlanificacionInterno;
 END;

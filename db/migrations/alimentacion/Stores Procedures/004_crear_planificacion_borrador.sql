@@ -68,7 +68,7 @@ BEGIN
 
     SELECT
         [IdentificadorPublico] AS [IdPlanificacion], [IdSede], [Nombre],
-        [FechaInicio], [FechaFin], [Estado], [EstaActivo], [IdColaboradorRegistro], [VersionRegistro], [FechaCreacionUtc]
+        [FechaInicio], [FechaFin], [Estado], [EstaActivo], [IdColaboradorRegistro], [VersionRegistro], [FechaCreacion]
     FROM [alimentacion].[Planificacion]
     WHERE [IdPlanificacion] = @IdPlanificacionInterno;
 END;
