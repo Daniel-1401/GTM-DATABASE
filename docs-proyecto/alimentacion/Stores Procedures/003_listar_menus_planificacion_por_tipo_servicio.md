@@ -7,12 +7,28 @@ servicio. Incluye los días que no tienen una fila registrada en `Menu`.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/003_listar_menus_planificacion_por_tipo_servicio.sql`.
 
+## Contrato de salida
+
+Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
+`@Mensaje NVARCHAR(500) OUTPUT`. Mantiene sin cambios el recordset existente.
+
+| Código | Mensaje seguro | Cuándo ocurre |
+|---|---|---|
+| `OK` | `null` | Consulta ejecutada correctamente, incluso si no existe la planificación. |
+| `VALIDATION_ERROR` | Mensaje de validación seguro | Identificador ausente o tipo de servicio inválido. |
+| `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
+
+Usa `SET XACT_ABORT ON` y `TRY/CATCH`; no abre una transacción de escritura.
+
 ## Ejecución
 
 ```sql
+DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_ListarMenusPlanificacionPorTipoServicio]
     @IdPlanificacion = @IdPlanificacion,
-    @TipoServicio = @TipoServicio;
+    @TipoServicio = @TipoServicio,
+    @Codigo = @Codigo OUTPUT,
+    @Mensaje = @Mensaje OUTPUT;
 ```
 
 ## Parámetros de entrada

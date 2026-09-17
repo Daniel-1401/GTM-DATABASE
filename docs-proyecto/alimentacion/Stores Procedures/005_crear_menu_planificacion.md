@@ -9,12 +9,32 @@ la misma transacción.
 Scripts fuente: `db/migrations/alimentacion/014_crear_tipo_tabla_componentes_menu.sql` y
 `db/migrations/alimentacion/Stores Procedures/005_crear_menu_planificacion.sql`.
 
+## Contrato de salida
+
+Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
+`@Mensaje NVARCHAR(500) OUTPUT`. El recordset de creación se conserva sin
+cambios.
+
+| Código | Mensaje seguro | Cuándo ocurre |
+|---|---|---|
+| `CREATED` | `null` | El menú fue creado. |
+| `VALIDATION_ERROR` | Mensaje de validación seguro | Datos requeridos, servicio o componentes inválidos. |
+| `BUSINESS_RULE_VIOLATION` | Mensaje de regla de negocio seguro | Contenido incompatible o fecha fuera del período. |
+| `PLAN_NOT_FOUND` | `La planificación indicada no existe.` | No existe la planificación. |
+| `INVALID_PLAN_STATE` | `La planificación no permite crear menús.` | La planificación no está en borrador. |
+| `MENU_ALREADY_EXISTS` | Mensaje de conflicto seguro | Ya existe menú para la fecha y servicio. |
+| `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
+
+La creación de menú y componentes es atómica con `SET XACT_ABORT ON` y
+`TRY/CATCH`; todo error después de iniciar la transacción hace rollback solo si
+`XACT_STATE() <> 0`. La existencia del colaborador no se valida aquí.
+
 ## Parámetros de entrada
 
 | Parámetro | Tipo SQL | Obligatorio | Descripción |
 |---|---|---:|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | UUID público devuelto al crear la planificación. |
-| `@IdColaboradorRegistro` | `BIGINT` | Sí | Colaborador existente que registra el menú y sus componentes. |
+| `@IdColaboradorRegistro` | `BIGINT` | Sí | Identificador que registra el menú y sus componentes. |
 | `@FechaServicio` | `DATE` | Sí | Debe estar dentro del período de la planificación. |
 | `@TipoServicio` | `NVARCHAR(20)` | Sí | `DESAYUNO`, `ALMUERZO` o `CENA`. |
 | `@EstaDisponible` | `BIT` | Sí | `1` para menú disponible; `0` para servicio sin atención. |
@@ -33,6 +53,6 @@ vigencia, colaborador registrador, versión y fecha de creación local.
 
 ## Errores SQL
 
-Los códigos `50210` a `50224` cubren datos obligatorios, servicio inválido,
-contenido inconsistente, componentes inválidos, planificación inexistente o
-fuera de `BORRADOR`, fecha fuera del período y menú duplicado.
+Los códigos funcionales posibles son `VALIDATION_ERROR`,
+`BUSINESS_RULE_VIOLATION`, `PLAN_NOT_FOUND`, `INVALID_PLAN_STATE`,
+`MENU_ALREADY_EXISTS` e `INTERNAL_ERROR`, conforme a la tabla anterior.

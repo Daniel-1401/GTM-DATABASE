@@ -18,11 +18,16 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenuPlanificacion]
     @Nombre NVARCHAR(200) = NULL,
     @Descripcion NVARCHAR(1000) = NULL,
     @ReferenciaImagen NVARCHAR(500) = NULL,
-    @Componentes [alimentacion].[TipoComponenteMenuCreacion] READONLY
+    @Componentes [alimentacion].[TipoComponenteMenuCreacion] READONLY,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
+
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
 
     SET @TipoServicio = UPPER(NULLIF(LTRIM(RTRIM(@TipoServicio)), N''));
     SET @Nombre = NULLIF(LTRIM(RTRIM(@Nombre)), N'');
@@ -31,31 +36,45 @@ BEGIN
 
     IF @IdPlanificacion IS NULL
     BEGIN
-        ;THROW 50210, N'El identificador de planificación es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El identificador de planificación es obligatorio.';
+        RETURN;
     END;
     IF @FechaServicio IS NULL
     BEGIN
-        ;THROW 50211, N'La fecha de servicio es obligatoria.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'La fecha de servicio es obligatoria.';
+        RETURN;
     END;
     IF @IdColaboradorRegistro IS NULL
     BEGIN
-        ;THROW 50216, N'El colaborador que registra el menu es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El colaborador que registra el menú es obligatorio.';
+        RETURN;
     END;
     IF @TipoServicio NOT IN (N'DESAYUNO', N'ALMUERZO', N'CENA')
     BEGIN
-        ;THROW 50212, N'El tipo de servicio debe ser DESAYUNO, ALMUERZO o CENA.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El tipo de servicio no es válido.';
+        RETURN;
     END;
     IF @EstaDisponible IS NULL
     BEGIN
-        ;THROW 50213, N'Debe indicar si el servicio está disponible.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Debe indicar si el servicio está disponible.';
+        RETURN;
     END;
     IF @EstaDisponible = 1 AND @Nombre IS NULL
     BEGIN
-        ;THROW 50214, N'El nombre es obligatorio cuando el servicio está disponible.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El nombre es obligatorio cuando el servicio está disponible.';
+        RETURN;
     END;
     IF @EstaDisponible = 0 AND (@Nombre IS NOT NULL OR @Descripcion IS NOT NULL OR @ReferenciaImagen IS NOT NULL)
     BEGIN
-        ;THROW 50215, N'Un servicio sin atención no puede contener nombre, descripción ni imagen.', 1;
+        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+        SET @Mensaje = N'Un servicio sin atención no puede contener contenido.';
+        RETURN;
     END;
     IF EXISTS
     (
@@ -63,16 +82,22 @@ BEGIN
         WHERE [Orden] <= 0 OR NULLIF(LTRIM(RTRIM([DescripcionComponente])), N'') IS NULL
     )
     BEGIN
-        ;THROW 50217, N'Cada componente debe tener orden positivo y descripción de hasta 300 caracteres.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Los componentes enviados no son válidos.';
+        RETURN;
     END;
 
     IF EXISTS (SELECT [Orden] FROM @Componentes GROUP BY [Orden] HAVING COUNT(*) > 1)
     BEGIN
-        ;THROW 50218, N'No se permiten órdenes de componente repetidos.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Los componentes no pueden repetir el orden.';
+        RETURN;
     END;
     IF @EstaDisponible = 0 AND EXISTS (SELECT 1 FROM @Componentes)
     BEGIN
-        ;THROW 50219, N'Un servicio sin atención no puede contener componentes.', 1;
+        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+        SET @Mensaje = N'Un servicio sin atención no puede contener componentes.';
+        RETURN;
     END;
 
     DECLARE @IdPlanificacionInterno BIGINT;
@@ -81,12 +106,8 @@ BEGIN
     DECLARE @EstadoPlanificacion NVARCHAR(25);
     DECLARE @IdMenuInterno BIGINT;
 
-    IF NOT EXISTS (SELECT 1 FROM [rrhh].[Colaborador] WHERE [IdColaborador] = @IdColaboradorRegistro)
-    BEGIN
-        ;THROW 50224, N'El colaborador que registra el menu no existe.', 1;
-    END;
-
-    BEGIN TRANSACTION;
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
     SELECT
         @IdPlanificacionInterno = [IdPlanificacion],
@@ -98,15 +119,24 @@ BEGIN
 
     IF @IdPlanificacionInterno IS NULL
     BEGIN
-        ;THROW 50220, N'La planificación indicada no existe.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'PLAN_NOT_FOUND';
+        SET @Mensaje = N'La planificación indicada no existe.';
+        RETURN;
     END;
     IF @EstadoPlanificacion <> N'BORRADOR'
     BEGIN
-        ;THROW 50221, N'Solo se pueden crear menús en una planificación en BORRADOR.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'INVALID_PLAN_STATE';
+        SET @Mensaje = N'La planificación no permite crear menús.';
+        RETURN;
     END;
     IF @FechaServicio NOT BETWEEN @FechaInicio AND @FechaFin
     BEGIN
-        ;THROW 50222, N'La fecha de servicio debe pertenecer al período de la planificación.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+        SET @Mensaje = N'La fecha de servicio no pertenece al período de la planificación.';
+        RETURN;
     END;
     IF EXISTS
     (
@@ -115,7 +145,10 @@ BEGIN
           AND [FechaServicio] = @FechaServicio AND [TipoServicio] = @TipoServicio
     )
     BEGIN
-        ;THROW 50223, N'Ya existe un menú para la fecha y tipo de servicio indicados.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'MENU_ALREADY_EXISTS';
+        SET @Mensaje = N'Ya existe un menú para la fecha y tipo de servicio indicados.';
+        RETURN;
     END;
 
     INSERT INTO [alimentacion].[Menu]
@@ -135,18 +168,35 @@ BEGIN
     SELECT @IdMenuInterno, @IdColaboradorRegistro, [Orden], LTRIM(RTRIM([DescripcionComponente]))
     FROM @Componentes;
 
-    COMMIT TRANSACTION;
+        COMMIT TRANSACTION;
 
-    SELECT
-        [Menu].[IdentificadorPublico] AS [IdMenu],
-        [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
-        [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistro],
-        [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
-        [Menu].[VersionRegistro], [Menu].[FechaCreacion]
-    FROM [alimentacion].[Menu] AS [Menu]
-    INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
-        ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
-    WHERE [Menu].[IdMenu] = @IdMenuInterno;
+        SET @Codigo = N'CREATED';
+        SET @Mensaje = NULL;
+
+        SELECT
+            [Menu].[IdentificadorPublico] AS [IdMenu],
+            [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
+            [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistro],
+            [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
+            [Menu].[VersionRegistro], [Menu].[FechaCreacion]
+        FROM [alimentacion].[Menu] AS [Menu]
+        INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
+        WHERE [Menu].[IdMenu] = @IdMenuInterno;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_CrearMenuPlanificacion',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO
 

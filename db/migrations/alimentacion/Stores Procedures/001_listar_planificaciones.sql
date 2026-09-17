@@ -15,36 +15,51 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarPlanificaciones]
     @FechaHasta DATE = NULL,
     @TerminoBusqueda NVARCHAR(200) = NULL,
     @NumeroPagina INT = 1,
-    @TamanoPagina INT = 20
+    @TamanoPagina INT = 20,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
 
     SET @TerminoBusqueda = NULLIF(LTRIM(RTRIM(@TerminoBusqueda)), N'');
 
     IF (@NumeroPagina < 1)
     BEGIN
-        ;THROW 50001, N'El número de página debe ser mayor o igual a uno.', 1;
+        SET @Codigo = N'INVALID_FILTER';
+        SET @Mensaje = N'El número de página debe ser mayor o igual a uno.';
+        RETURN;
     END;
 
     IF (@TamanoPagina NOT BETWEEN 1 AND 100)
     BEGIN
-        ;THROW 50002, N'El tamaño de página debe estar entre uno y cien.', 1;
+        SET @Codigo = N'INVALID_FILTER';
+        SET @Mensaje = N'El tamaño de página debe estar entre uno y cien.';
+        RETURN;
     END;
 
     IF @Estado IS NOT NULL
        AND @Estado NOT IN (N'BORRADOR', N'PUBLICADA_ABIERTA', N'PUBLICADA_CERRADA', N'CONSOLIDADA')
     BEGIN
-        ;THROW 50003, N'El estado de planificación no es válido.', 1;
+        SET @Codigo = N'INVALID_FILTER';
+        SET @Mensaje = N'El estado de planificación no es válido.';
+        RETURN;
     END;
 
     IF @FechaDesde IS NOT NULL
        AND @FechaHasta IS NOT NULL
        AND @FechaDesde > @FechaHasta
     BEGIN
-        ;THROW 50004, N'La fecha desde no puede ser posterior a la fecha hasta.', 1;
+        SET @Codigo = N'INVALID_FILTER';
+        SET @Mensaje = N'La fecha desde no puede ser posterior a la fecha hasta.';
+        RETURN;
     END;
 
+    BEGIN TRY
     SELECT
         [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
         [Planificacion].[Nombre],
@@ -57,6 +72,7 @@ BEGIN
         [Planificacion].[Estado],
         [Planificacion].[EstaActivo],
         [Planificacion].[IdColaboradorRegistro],
+        [Planificacion].[IdColaboradorModificacion],
         [Planificacion].[VersionRegistro],
         [Planificacion].[FechaCreacion],
         [Planificacion].[FechaModificacion],
@@ -79,10 +95,25 @@ BEGIN
     OFFSET (@NumeroPagina - 1) * @TamanoPagina ROWS
     FETCH NEXT @TamanoPagina ROWS ONLY
     OPTION (RECOMPILE);
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_ListarPlanificaciones',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO
 
 -- Ejemplo:
+-- DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 -- EXEC [alimentacion].[usp_ListarPlanificaciones]
 --     @IdSede = 1,
 --     @Estado = N'PUBLICADA_ABIERTA',
@@ -90,4 +121,7 @@ GO
 --     @FechaHasta = '2026-09-30',
 --     @TerminoBusqueda = N'setiembre',
 --     @NumeroPagina = 1,
---     @TamanoPagina = 20;
+--     @TamanoPagina = 20,
+--     @Codigo = @Codigo OUTPUT,
+--     @Mensaje = @Mensaje OUTPUT;
+-- SELECT @Codigo AS [Codigo], @Mensaje AS [Mensaje];

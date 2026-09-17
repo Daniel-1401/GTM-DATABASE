@@ -9,21 +9,29 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_EliminarPlanificacion]
-    @IdPlanificacion UNIQUEIDENTIFIER
+    @IdPlanificacion UNIQUEIDENTIFIER,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
+
     IF @IdPlanificacion IS NULL
     BEGIN
-        ;THROW 50250, N'El identificador de planificación es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El identificador de planificación es obligatorio.';
+        RETURN;
     END;
     DECLARE @IdPlanificacionInterno BIGINT;
     DECLARE @EstadoPlanificacion NVARCHAR(25);
     DECLARE @FechaEliminacion DATETIME2(3);
 
-    BEGIN TRANSACTION;
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
     SELECT
         @IdPlanificacionInterno = [IdPlanificacion],
@@ -33,17 +41,26 @@ BEGIN
 
     IF @IdPlanificacionInterno IS NULL
     BEGIN
-        ;THROW 50251, N'La planificación indicada no existe.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'PLAN_NOT_FOUND';
+        SET @Mensaje = N'La planificación indicada no existe.';
+        RETURN;
     END;
 
     IF @EstadoPlanificacion = N'ELIMINADA'
     BEGIN
-        ;THROW 50252, N'La planificación ya fue eliminada.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'STATE_CONFLICT';
+        SET @Mensaje = N'La planificación ya fue eliminada.';
+        RETURN;
     END;
 
     IF @EstadoPlanificacion <> N'BORRADOR'
     BEGIN
-        ;THROW 50253, N'Solo se pueden eliminar planificaciones en BORRADOR.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'INVALID_PLAN_STATE';
+        SET @Mensaje = N'La planificación no permite esta operación.';
+        RETURN;
     END;
 
     SET @FechaEliminacion = SYSDATETIME();
@@ -72,16 +89,33 @@ BEGIN
         [FechaModificacion] = @FechaEliminacion
     WHERE [IdPlanificacion] = @IdPlanificacionInterno;
 
-    COMMIT TRANSACTION;
+        COMMIT TRANSACTION;
 
-    SELECT
-        [IdentificadorPublico] AS [IdPlanificacion],
-        [Estado],
-        [EstaActivo],
-        [VersionRegistro],
-        [FechaModificacion]
-    FROM [alimentacion].[Planificacion]
-    WHERE [IdPlanificacion] = @IdPlanificacionInterno;
+        SET @Codigo = N'SUCCESS';
+        SET @Mensaje = NULL;
+
+        SELECT
+            [IdentificadorPublico] AS [IdPlanificacion],
+            [Estado],
+            [EstaActivo],
+            [VersionRegistro],
+            [FechaModificacion]
+        FROM [alimentacion].[Planificacion]
+        WHERE [IdPlanificacion] = @IdPlanificacionInterno;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_EliminarPlanificacion',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO
 

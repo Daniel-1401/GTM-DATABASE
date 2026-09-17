@@ -20,49 +20,65 @@ SET XACT_ABORT ON;
 -- IF SCHEMA_ID(N'alimentacion') IS NULL
 --     THROW 51003, 'Reversión bloqueada: no existe el schema esperado [alimentacion].', 1;
 
-IF OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[Planificacion]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[Menu]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[ComponenteMenu]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[ConsolidacionPlanificacion]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[CantidadConsolidadaMenu]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[Reserva]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[CodigoQR]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[Entrega]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[ValidacionEntrega]', N'U') IS NULL
-    THROW 51004, 'Reversión bloqueada: la huella estructural completa de Alimentación no coincide.', 1;
-
-IF EXISTS
-(
-    SELECT 1
-    FROM sys.objects AS objeto
-    WHERE objeto.schema_id = SCHEMA_ID(N'alimentacion')
-      AND objeto.parent_object_id = 0
-      AND objeto.type IN (N'U', N'V', N'P', N'FN', N'IF', N'TF', N'TR')
-      AND objeto.name NOT IN
-      (
-          N'VentanaRetiroServicio',
-          N'Planificacion', N'Menu', N'ComponenteMenu',
-          N'ConsolidacionPlanificacion', N'CantidadConsolidadaMenu',
-          N'Reserva', N'CodigoQR', N'Entrega', N'ValidacionEntrega'
-      )
-)
-    THROW 51005, 'Reversión bloqueada: existen objetos no reconocidos dentro de [alimentacion].', 1;
+IF SCHEMA_ID(N'alimentacion') IS NULL
+    THROW 51004, 'Reversión bloqueada: no existe el schema [alimentacion].', 1;
 
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    DROP TABLE [alimentacion].[Entrega];
-    DROP TABLE [alimentacion].[ValidacionEntrega];
-    DROP TABLE [alimentacion].[CodigoQR];
-    DROP TABLE [alimentacion].[Reserva];
-    DROP TABLE [alimentacion].[CantidadConsolidadaMenu];
-    DROP TABLE [alimentacion].[ConsolidacionPlanificacion];
-    DROP TABLE [alimentacion].[ComponenteMenu];
-    DROP TABLE [alimentacion].[Menu];
-    DROP TABLE [alimentacion].[Planificacion];
-    DROP TABLE [alimentacion].[VentanaRetiroServicio];
-    DROP SCHEMA [alimentacion];
+    -- Los procedimientos deben eliminarse antes de sus tipos tabla y del schema.
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ActualizarNombreSedePlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_EliminarPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CrearMenusPlanificacionLote];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CrearMenuPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CrearPlanificacionBorrador];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarMenusPlanificacionPorTipoServicio];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ObtenerResumenPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarPlanificaciones];
+
+    -- Las vistas se eliminan antes que las tablas que consultan.
+    DROP VIEW IF EXISTS [proximidad].[VistaMatrizInformativaBeacon];
+
+    -- Orden inverso de las dependencias de claves foráneas.
+    DROP TABLE IF EXISTS [alimentacion].[ValidacionEntrega];
+    DROP TABLE IF EXISTS [alimentacion].[Entrega];
+    DROP TABLE IF EXISTS [alimentacion].[CodigoQR];
+    DROP TABLE IF EXISTS [alimentacion].[Reserva];
+    DROP TABLE IF EXISTS [alimentacion].[CantidadConsolidadaMenu];
+    DROP TABLE IF EXISTS [alimentacion].[ConsolidacionPlanificacion];
+    DROP TABLE IF EXISTS [alimentacion].[ComponenteMenu];
+    DROP TABLE IF EXISTS [alimentacion].[Menu];
+    DROP TABLE IF EXISTS [alimentacion].[Planificacion];
+    DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
+
+    DROP TABLE IF EXISTS [proximidad].[ConfiguracionBeacon];
+    DROP TABLE IF EXISTS [proximidad].[BeaconAutorizado];
+    DROP TABLE IF EXISTS [proximidad].[MajorAreaBeacon];
+    DROP TABLE IF EXISTS [proximidad].[MatrizInformativaBeacon];
+
+    DROP TYPE IF EXISTS [alimentacion].[TipoComponenteMenuLoteCreacion];
+    DROP TYPE IF EXISTS [alimentacion].[TipoMenuPlanificacionLoteCreacion];
+    DROP TYPE IF EXISTS [alimentacion].[TipoComponenteMenuCreacion];
+
+    -- La infraestructura de auditoría fue creada por la migración 016.
+    DROP PROCEDURE IF EXISTS [auditoria].[usp_RegistrarErrorProcedimiento];
+    DROP TABLE IF EXISTS [auditoria].[ErrorProcedimiento];
+
+    -- Solo se eliminan schemas que queden vacíos; objetos ajenos los preservan.
+    IF SCHEMA_ID(N'alimentacion') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM sys.objects WHERE schema_id = SCHEMA_ID(N'alimentacion'))
+       AND NOT EXISTS (SELECT 1 FROM sys.table_types WHERE schema_id = SCHEMA_ID(N'alimentacion'))
+        DROP SCHEMA [alimentacion];
+
+    IF SCHEMA_ID(N'proximidad') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM sys.objects WHERE schema_id = SCHEMA_ID(N'proximidad'))
+       AND NOT EXISTS (SELECT 1 FROM sys.table_types WHERE schema_id = SCHEMA_ID(N'proximidad'))
+        DROP SCHEMA [proximidad];
+
+    IF SCHEMA_ID(N'auditoria') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM sys.objects WHERE schema_id = SCHEMA_ID(N'auditoria'))
+       AND NOT EXISTS (SELECT 1 FROM sys.table_types WHERE schema_id = SCHEMA_ID(N'auditoria'))
+        DROP SCHEMA [auditoria];
 
     COMMIT TRANSACTION;
 END TRY

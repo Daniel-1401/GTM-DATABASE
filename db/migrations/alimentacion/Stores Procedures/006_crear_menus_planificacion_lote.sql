@@ -13,30 +13,36 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion UNIQUEIDENTIFIER,
     @IdColaboradorRegistro BIGINT,
     @Menus [alimentacion].[TipoMenuPlanificacionLoteCreacion] READONLY,
-    @Componentes [alimentacion].[TipoComponenteMenuLoteCreacion] READONLY
+    @Componentes [alimentacion].[TipoComponenteMenuLoteCreacion] READONLY,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
+
     IF @IdPlanificacion IS NULL
     BEGIN
-        ;THROW 50230, N'El identificador de planificación es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El identificador de planificación es obligatorio.';
+        RETURN;
     END;
 
     IF NOT EXISTS (SELECT 1 FROM @Menus)
     BEGIN
-        ;THROW 50231, N'Debe enviar al menos un menú.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Debe enviar al menos un menú.';
+        RETURN;
     END;
     IF @IdColaboradorRegistro IS NULL
     BEGIN
-        ;THROW 50242, N'El colaborador que registra los menus es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El colaborador que registra los menús es obligatorio.';
+        RETURN;
     END;
-    IF NOT EXISTS (SELECT 1 FROM [rrhh].[Colaborador] WHERE [IdColaborador] = @IdColaboradorRegistro)
-    BEGIN
-        ;THROW 50243, N'El colaborador que registra los menus no existe.', 1;
-    END;
-
     IF EXISTS
     (
         SELECT 1
@@ -49,12 +55,16 @@ BEGIN
                 OR NULLIF(LTRIM(RTRIM([ReferenciaImagen])), N'') IS NOT NULL))
     )
     BEGIN
-        ;THROW 50232, N'Uno o más menús contienen servicio o contenido inválido.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Uno o más menús contienen datos no válidos.';
+        RETURN;
     END;
 
     IF EXISTS (SELECT [IdReferencia] FROM @Menus GROUP BY [IdReferencia] HAVING COUNT(*) > 1)
     BEGIN
-        ;THROW 50233, N'No se permiten referencias temporales de menú repetidas.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'No se permiten referencias temporales de menú repetidas.';
+        RETURN;
     END;
 
     IF EXISTS
@@ -65,7 +75,9 @@ BEGIN
         HAVING COUNT(*) > 1
     )
     BEGIN
-        ;THROW 50234, N'No se permiten menús repetidos para la misma fecha y tipo de servicio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'No se permiten menús repetidos para la misma fecha y tipo de servicio.';
+        RETURN;
     END;
 
     IF EXISTS
@@ -79,7 +91,9 @@ BEGIN
            OR NULLIF(LTRIM(RTRIM([Componente].[DescripcionComponente])), N'') IS NULL
     )
     BEGIN
-        ;THROW 50235, N'Uno o más componentes no son válidos o no pertenecen a un menú del lote.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'Uno o más componentes no son válidos.';
+        RETURN;
     END;
 
     IF EXISTS
@@ -90,7 +104,9 @@ BEGIN
         HAVING COUNT(*) > 1
     )
     BEGIN
-        ;THROW 50236, N'No se permiten órdenes de componente repetidos dentro del mismo menú.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'No se permiten órdenes de componente repetidos dentro del mismo menú.';
+        RETURN;
     END;
 
     IF EXISTS
@@ -102,7 +118,9 @@ BEGIN
         WHERE [Menu].[EstaDisponible] = 0
     )
     BEGIN
-        ;THROW 50237, N'Un servicio sin atención no puede contener componentes.', 1;
+        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+        SET @Mensaje = N'Un servicio sin atención no puede contener componentes.';
+        RETURN;
     END;
 
     DECLARE @IdPlanificacionInterno BIGINT;
@@ -115,7 +133,8 @@ BEGIN
         [IdMenu] BIGINT NOT NULL
     );
 
-    BEGIN TRANSACTION;
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
     SELECT
         @IdPlanificacionInterno = [IdPlanificacion],
@@ -127,17 +146,26 @@ BEGIN
 
     IF @IdPlanificacionInterno IS NULL
     BEGIN
-        ;THROW 50238, N'La planificación indicada no existe.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'PLAN_NOT_FOUND';
+        SET @Mensaje = N'La planificación indicada no existe.';
+        RETURN;
     END;
 
     IF @EstadoPlanificacion <> N'BORRADOR'
     BEGIN
-        ;THROW 50239, N'Solo se pueden crear menús en una planificación en BORRADOR.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'INVALID_PLAN_STATE';
+        SET @Mensaje = N'La planificación no permite crear menús.';
+        RETURN;
     END;
 
     IF EXISTS (SELECT 1 FROM @Menus WHERE [FechaServicio] NOT BETWEEN @FechaInicio AND @FechaFin)
     BEGIN
-        ;THROW 50240, N'La fecha de cada menú debe pertenecer al período de la planificación.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+        SET @Mensaje = N'La fecha de cada menú no pertenece al período de la planificación.';
+        RETURN;
     END;
 
     IF EXISTS
@@ -150,7 +178,10 @@ BEGIN
         WHERE [Menu].[IdPlanificacion] = @IdPlanificacionInterno
     )
     BEGIN
-        ;THROW 50241, N'El lote contiene un menú que ya existe en la planificación.', 1;
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        SET @Codigo = N'MENU_ALREADY_EXISTS';
+        SET @Mensaje = N'El lote contiene un menú que ya existe en la planificación.';
+        RETURN;
     END;
 
     INSERT INTO [alimentacion].[Menu]
@@ -187,9 +218,12 @@ BEGIN
     INNER JOIN @MenusInsertados AS [Insertado]
         ON [Insertado].[IdReferencia] = [Componente].[IdReferenciaMenu];
 
-    COMMIT TRANSACTION;
+        COMMIT TRANSACTION;
 
-    SELECT
+        SET @Codigo = N'CREATED';
+        SET @Mensaje = NULL;
+
+        SELECT
         [Insertado].[IdReferencia] AS [IdReferenciaMenu],
         [Menu].[IdentificadorPublico] AS [IdMenu],
         [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
@@ -201,6 +235,20 @@ BEGIN
         ON [Menu].[IdMenu] = [Insertado].[IdMenu]
     INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
         ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
-    ORDER BY [Menu].[FechaServicio], [Menu].[TipoServicio];
+        ORDER BY [Menu].[FechaServicio], [Menu].[TipoServicio];
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_CrearMenusPlanificacionLote',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO

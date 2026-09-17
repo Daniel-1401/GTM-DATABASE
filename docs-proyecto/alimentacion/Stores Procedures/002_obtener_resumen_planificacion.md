@@ -7,11 +7,27 @@ todo el período comprendido entre `FechaInicio` y `FechaFin`.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/002_obtener_resumen_planificacion.sql`.
 
+## Contrato de salida
+
+Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
+`@Mensaje NVARCHAR(500) OUTPUT`. El recordset se describe más adelante.
+
+| Código | Mensaje seguro | Cuándo ocurre |
+|---|---|---|
+| `OK` | `null` | Consulta ejecutada correctamente, incluso si no existe la planificación. |
+| `VALIDATION_ERROR` | `El identificador de planificación es obligatorio.` | No se recibió identificador. |
+| `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
+
+Usa `SET XACT_ABORT ON` y `TRY/CATCH`; no abre una transacción de escritura.
+
 ## Ejecución
 
 ```sql
+DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_ObtenerResumenPlanificacion]
-    @IdPlanificacion = @IdPlanificacion;
+    @IdPlanificacion = @IdPlanificacion,
+    @Codigo = @Codigo OUTPUT,
+    @Mensaje = @Mensaje OUTPUT;
 ```
 
 ## Parámetros de entrada
@@ -21,6 +37,8 @@ EXEC [alimentacion].[usp_ObtenerResumenPlanificacion]
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | Identificador público de la planificación. |
 
 ## Recordsets de salida
+
+Incluye `IdColaboradorModificacion` (`BIGINT` o `null`): colaborador de la última modificación.
 
 Devuelve **un único recordset** con una fila cuando existe la planificación. Si
 no existe, devuelve un recordset vacío.

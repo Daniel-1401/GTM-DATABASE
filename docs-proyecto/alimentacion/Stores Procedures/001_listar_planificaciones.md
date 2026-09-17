@@ -8,9 +8,24 @@ incluye menús, componentes, reservas ni consolidaciones.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/001_listar_planificaciones.sql`.
 
+## Contrato de salida
+
+Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
+`@Mensaje NVARCHAR(500) OUTPUT`. El procedimiento inicializa `OK` y `NULL`.
+No cambia el recordset descrito más adelante.
+
+| Código | Mensaje seguro | Cuándo ocurre |
+|---|---|---|
+| `OK` | `null` | Consulta ejecutada correctamente, incluso sin filas. |
+| `INVALID_FILTER` | Mensaje de validación del filtro | Página, tamaño, estado o período inválido. |
+| `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
+
+Usa `SET XACT_ABORT ON` y `TRY/CATCH`; no abre una transacción de escritura.
+
 ## Ejecución
 
 ```sql
+DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_ListarPlanificaciones]
     @IdSede = @IdSede,
     @Estado = @Estado,
@@ -18,7 +33,9 @@ EXEC [alimentacion].[usp_ListarPlanificaciones]
     @FechaHasta = @FechaHasta,
     @TerminoBusqueda = @TerminoBusqueda,
     @NumeroPagina = @NumeroPagina,
-    @TamanoPagina = @TamanoPagina;
+    @TamanoPagina = @TamanoPagina,
+    @Codigo = @Codigo OUTPUT,
+    @Mensaje = @Mensaje OUTPUT;
 ```
 
 Todos los filtros son opcionales. Una llamada sin parámetros devuelve la primera
@@ -44,6 +61,8 @@ planificación se devuelve cuando su intervalo inclusivo `[FechaInicio, FechaFin
 intersecta el intervalo solicitado `[FechaDesde, FechaHasta]`.
 
 ## Recordsets de salida
+
+Incluye `IdColaboradorModificacion` (`BIGINT` o `null`): colaborador de la última modificación.
 
 Devuelve **un único recordset**. Las filas se ordenan por `FechaInicio DESC`,
 `FechaFin DESC`, `Nombre ASC` e identificador interno descendente.

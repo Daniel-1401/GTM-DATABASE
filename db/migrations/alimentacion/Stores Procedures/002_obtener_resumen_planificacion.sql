@@ -9,16 +9,25 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ObtenerResumenPlanificacion]
-    @IdPlanificacion UNIQUEIDENTIFIER
+    @IdPlanificacion UNIQUEIDENTIFIER,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
 
     IF @IdPlanificacion IS NULL
     BEGIN
-        ;THROW 50100, N'El identificador de planificación es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El identificador de planificación es obligatorio.';
+        RETURN;
     END;
 
+    BEGIN TRY
     SELECT
         [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
         [Planificacion].[Nombre],
@@ -29,6 +38,7 @@ BEGIN
         [Planificacion].[FechaFin],
         DATEDIFF(DAY, [Planificacion].[FechaInicio], [Planificacion].[FechaFin]) + 1 AS [CantidadDias],
         [Planificacion].[Estado],
+        [Planificacion].[IdColaboradorModificacion],
         [Planificacion].[VersionRegistro],
         COUNT([Menu].[IdMenu]) AS [CantidadMenusRegistrados],
         SUM(CASE WHEN [Menu].[EstaDisponible] = 1 THEN 1 ELSE 0 END) AS [CantidadMenusCreados],
@@ -51,8 +61,23 @@ BEGIN
         [Planificacion].[FechaInicio],
         [Planificacion].[FechaFin],
         [Planificacion].[Estado],
+        [Planificacion].[IdColaboradorModificacion],
         [Planificacion].[VersionRegistro],
         [Planificacion].[FechaCreacion],
         [Planificacion].[FechaModificacion];
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_ObtenerResumenPlanificacion',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO

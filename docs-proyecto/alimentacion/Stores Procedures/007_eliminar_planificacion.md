@@ -9,11 +9,33 @@ la versión de los registros modificables y registra la fecha de modificación l
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/007_eliminar_planificacion.sql`.
 
+## Contrato de salida
+
+Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
+`@Mensaje NVARCHAR(500) OUTPUT`. El recordset de resultado se conserva sin
+cambios.
+
+| Código | Mensaje seguro | Cuándo ocurre |
+|---|---|---|
+| `SUCCESS` | `null` | La planificación fue eliminada lógicamente. |
+| `VALIDATION_ERROR` | `El identificador de planificación es obligatorio.` | No se recibió identificador. |
+| `PLAN_NOT_FOUND` | `La planificación indicada no existe.` | No existe la planificación. |
+| `STATE_CONFLICT` | `La planificación ya fue eliminada.` | La planificación ya está eliminada. |
+| `INVALID_PLAN_STATE` | `La planificación no permite esta operación.` | La planificación no está en borrador. |
+| `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
+
+La eliminación lógica, sus menús y componentes se actualizan atómicamente con
+`SET XACT_ABORT ON` y `TRY/CATCH`; todo error posterior al inicio revierte solo
+si `XACT_STATE() <> 0`.
+
 ## Ejecución
 
 ```sql
+DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_EliminarPlanificacion]
-    @IdPlanificacion = @IdPlanificacion;
+    @IdPlanificacion = @IdPlanificacion,
+    @Codigo = @Codigo OUTPUT,
+    @Mensaje = @Mensaje OUTPUT;
 ```
 
 ## Parámetros de entrada
@@ -45,7 +67,8 @@ Devuelve un único recordset con una fila:
 
 | Error SQL | Condición |
 |---:|---|
-| `50250` | `IdPlanificacion` ausente. |
-| `50251` | La planificación no existe. |
-| `50252` | La planificación ya está eliminada. |
-| `50253` | La planificación no está en estado `BORRADOR`. |
+| `VALIDATION_ERROR` | El identificador de planificación es obligatorio. |
+| `PLAN_NOT_FOUND` | La planificación indicada no existe. |
+| `STATE_CONFLICT` | La planificación ya fue eliminada. |
+| `INVALID_PLAN_STATE` | La planificación no permite esta operación. |
+| `INTERNAL_ERROR` | No fue posible completar la operación. |

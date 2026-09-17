@@ -11,14 +11,22 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarMenusPlanificacionPorTipoServicio]
     @IdPlanificacion UNIQUEIDENTIFIER,
-    @TipoServicio NVARCHAR(20)
+    @TipoServicio NVARCHAR(20),
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
 
     IF @IdPlanificacion IS NULL
     BEGIN
-        ;THROW 50100, N'El identificador de planificación es obligatorio.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El identificador de planificación es obligatorio.';
+        RETURN;
     END;
 
     SET @TipoServicio = UPPER(NULLIF(LTRIM(RTRIM(@TipoServicio)), N''));
@@ -26,9 +34,12 @@ BEGIN
     IF @TipoServicio IS NULL
        OR @TipoServicio NOT IN (N'DESAYUNO', N'ALMUERZO', N'CENA')
     BEGIN
-        ;THROW 50101, N'El tipo de servicio debe ser DESAYUNO, ALMUERZO o CENA.', 1;
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El tipo de servicio no es válido.';
+        RETURN;
     END;
 
+    BEGIN TRY
     ;WITH [PeriodoPlanificacion] AS
     (
         SELECT
@@ -77,5 +88,19 @@ BEGIN
        AND [Menu].[TipoServicio] = @TipoServicio
     ORDER BY [FechasPeriodo].[FechaServicio]
     OPTION (MAXRECURSION 0, RECOMPILE);
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_ListarMenusPlanificacionPorTipoServicio',
+            @NumeroError = @NumeroErrorCapturado, @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado, @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operación.';
+    END CATCH;
 END;
 GO

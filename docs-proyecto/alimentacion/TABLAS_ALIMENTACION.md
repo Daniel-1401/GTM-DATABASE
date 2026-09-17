@@ -6,7 +6,7 @@ Schema propio: `alimentacion`
 
 ## Alcance y fuente de verdad
 
-Este documento describe las 12 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `015` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
+Este documento describe las 12 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `016` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
 
 No se definen aquí tablas de inventario, compras, recetas, costos, cupos, usuarios, roles ni permisos. Esta documentación no acredita que el DDL haya sido aplicado en una instancia.
 
@@ -48,6 +48,7 @@ La configuración de beacons y proximidad es transversal y se administra en el e
 Agrupa días de servicio elegidos libremente para una sede y controla su estado. Su clave es `IdPlanificacion`, con identificador público único y FK a `organizacion.Sede`.
 
 - Estados: `BORRADOR`, `PUBLICADA_ABIERTA`, `PUBLICADA_CERRADA`, `CONSOLIDADA`, `ELIMINADA`.
+- `IdColaboradorModificacion` registra el último colaborador que modificó la planificación y referencia a `rrhh.Colaborador`.
 - Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`); una planificación eliminada queda inactiva.
 - `VersionRegistro` debe ser mayor que cero.
 - Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`).
