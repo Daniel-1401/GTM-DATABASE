@@ -1,11 +1,11 @@
 # Tablas del núcleo GTM
 
-Fecha de actualización: 2026-09-08  
+Fecha de actualización: 2026-09-09
 Motor objetivo: Microsoft SQL Server 2017
 
 ## Alcance y fuente de verdad
 
-Este documento describe las 15 tablas vigentes del núcleo común de GTM. La fuente de verdad son las migraciones `001` a `008` en `db/migrations/nucleo/`; ante cualquier diferencia, prevalecen esas migraciones. No incluye tablas de Alimentación, Evaluaciones, Seguridad, Marcaciones, Notificaciones ni otros módulos.
+Este documento describe las 16 tablas vigentes del núcleo común de GTM. La fuente de verdad son las migraciones `001` a `008` en `db/migrations/nucleo/`; ante cualquier diferencia, prevalecen esas migraciones. No incluye tablas de Alimentación, Evaluaciones, Seguridad, Marcaciones, Notificaciones ni otros módulos.
 
 Es documentación de modelo, no evidencia de que el DDL o la semilla de datos de prueba hayan sido ejecutados en una instancia.
 
@@ -15,7 +15,7 @@ Es documentación de modelo, no evidencia de que el DDL o la semilla de datos de
 |---|---|---|
 | `catalogo` | `TipoDocumento`, `TipoJefatura` | Clasificaciones extensibles de identidad y jefatura. |
 | `rrhh` | `Persona`, `Colaborador`, `DocumentoPersona`, `RelacionLaboral`, `AsignacionOrganizacional`, `HorarioLaboral`, `VigenciaHorario`, `JefaturaRelacionLaboral` | Identidad, vida laboral, asignación, horarios y jerarquía. |
-| `organizacion` | `Empresa`, `Sede`, `Area`, `Cargo` | Maestros organizacionales propios de GTM. |
+| `organizacion` | `Empresa`, `Sede`, `Area`, `Cargo`, `CargoJefatura` | Maestros organizacionales y estructura de jefaturas entre cargos. |
 | `integracion` | `CuentaMicrosoftCorporativa` | Referencia de identidad corporativa de Microsoft/Entra. |
 
 ## Catálogos
@@ -62,7 +62,11 @@ Maestro corporativo plano de áreas propias de GTM. `IdArea` es la clave y `Codi
 
 ### `organizacion.Cargo`
 
-Maestro corporativo plano de cargos propios de GTM. `IdCargo` es la clave y `CodigoCargo` es único. Registra nombre, descripción, estado y marcas técnicas. Un cargo GTM no es sustituido por una posición o código SAP.
+Maestro corporativo de cargos propios de GTM. `IdCargo` es la clave y `CodigoCargo` es único. Registra nombre, descripción, estado y marcas técnicas. Un cargo GTM no es sustituido por una posición o código SAP.
+
+### `organizacion.CargoJefatura`
+
+Representa la estructura formal entre un cargo subordinado y otro cargo que actúa como jefatura. Conserva tipo, prioridad positiva y vigencia. No existe un máximo funcional de jefaturas por cargo; el índice filtrado permite una sola relación abierta por cargo subordinado y valor de prioridad, e impide repetir simultáneamente la misma pareja de cargos. No permite que un cargo sea jefe de sí mismo.
 
 ## Vida laboral, asignación y horario
 
@@ -84,6 +88,8 @@ Asigna un horario a una relación laboral en una fecha concreta. Tiene FKs a `rr
 
 ## Jerarquía
 
+La estructura organizacional oficial se registra en `organizacion.CargoJefatura`. La tabla `rrhh.JefaturaRelacionLaboral` queda disponible para excepciones o asignaciones explícitas entre personas y no reemplaza la jerarquía de cargos.
+
 ### `rrhh.JefaturaRelacionLaboral`
 
 Relaciona una relación laboral subordinada con otra que actúa como jefatura. Tiene tres FKs: relación subordinada, relación de jefatura y tipo de jefatura. Conserva prioridad y vigencia; no permite que ambas relaciones sean la misma. La prioridad está limitada a `1` o `2`, y el índice filtrado `IN_JefaturaRelacionLaboral_PrioridadAbierta` permite una fila abierta por relación subordinada y prioridad.
@@ -98,6 +104,7 @@ Persona ── 0..1 Colaborador ──< RelacionLaboral >── Empresa ──< 
                                       └──< JefaturaRelacionLaboral >── TipoJefatura
 
 Colaborador ──< CuentaMicrosoftCorporativa
+Cargo ──< CargoJefatura >── Cargo
 ```
 
 Las vigencias de relación laboral, asignación y jefatura usan el intervalo semiabierto `[FechaInicio, FechaFin)`; `NULL` en la fecha final significa que la fila permanece abierta.
@@ -108,9 +115,9 @@ Las vigencias de relación laboral, asignación y jefatura usan el intervalo sem
 - No se garantiza de forma declarativa la ausencia de solapamientos históricos cerrados ni la cobertura continua entre vigencias relacionadas.
 - No se valida que una sede asignada pertenezca a la empresa de la relación laboral.
 - No se impone una jefatura principal obligatoria ni el máximo histórico de dos jefaturas para cualquier fecha pasada.
+- No se impide declarativamente un ciclo indirecto de cargos como `A → B → C → A`; esa validación requiere una operación controlada en una fase posterior.
 
 ## Referencias
 
 - `db/migrations/nucleo/001_crear_esquemas_nucleo.sql` a `008_crear_jefaturas_relaciones_laborales.sql`.
-- `docs-proyecto/er-diagram-fisico-v1.md`.
-- `docs-proyecto/ESTADO_OFICIAL_OBJETOS_DB.md`.
+- `docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md`, para las dependencias del módulo de Alimentación sobre el núcleo.

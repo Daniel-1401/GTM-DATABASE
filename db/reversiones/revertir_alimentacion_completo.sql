@@ -21,8 +21,6 @@ SET XACT_ABORT ON;
 --     THROW 51003, 'Reversión bloqueada: no existe el schema esperado [alimentacion].', 1;
 
 IF OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[BeaconAutorizado]', N'U') IS NULL
- OR OBJECT_ID(N'[alimentacion].[ConfiguracionProximidadBeacon]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[Planificacion]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[Menu]', N'U') IS NULL
  OR OBJECT_ID(N'[alimentacion].[ComponenteMenu]', N'U') IS NULL
@@ -44,7 +42,6 @@ IF EXISTS
       AND objeto.name NOT IN
       (
           N'VentanaRetiroServicio',
-          N'BeaconAutorizado', N'ConfiguracionProximidadBeacon',
           N'Planificacion', N'Menu', N'ComponenteMenu',
           N'ConsolidacionPlanificacion', N'CantidadConsolidadaMenu',
           N'Reserva', N'CodigoQR', N'Entrega', N'ValidacionEntrega'
@@ -64,8 +61,6 @@ BEGIN TRY
     DROP TABLE [alimentacion].[ComponenteMenu];
     DROP TABLE [alimentacion].[Menu];
     DROP TABLE [alimentacion].[Planificacion];
-    DROP TABLE [alimentacion].[ConfiguracionProximidadBeacon];
-    DROP TABLE [alimentacion].[BeaconAutorizado];
     DROP TABLE [alimentacion].[VentanaRetiroServicio];
     DROP SCHEMA [alimentacion];
 

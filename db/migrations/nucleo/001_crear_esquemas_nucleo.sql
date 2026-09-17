@@ -1,7 +1,7 @@
 -- Migración: 001_crear_esquemas_nucleo
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): catalogo, rrhh, organizacion, integracion
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Separar los dominios lógicos del núcleo GTM sin crear una base de datos ni tocar objetos externos.
 
 -- UP

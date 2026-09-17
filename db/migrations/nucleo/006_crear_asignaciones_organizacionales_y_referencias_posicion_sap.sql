@@ -1,7 +1,7 @@
 -- Migración: 006_crear_asignaciones_organizacionales_y_referencias_posicion_sap
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.AsignacionOrganizacional
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Historiar sede, área, cargo y posición SAP de cada relación laboral sin anticipar reglas procedurales.
 
 -- UP

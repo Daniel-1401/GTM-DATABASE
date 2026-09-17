@@ -1,7 +1,7 @@
 -- Migracion: 012_crear_validacion_entrega
 -- Fecha: 2026-09-04T12:00:00-05:00
 -- Entidad(es) afectada(s): alimentacion.ValidacionEntrega
--- Referencia: docs-proyecto/CONTRATO_STORES_BACKEND_ALIMENTACION.md
+-- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Persistir la validacion temporal sin guardar el QR en claro.
 -- UP
 -- No ejecutar desde este repositorio sin aprobacion DDL y base Local autorizada.

@@ -82,7 +82,7 @@ de entrega deberá justificarse en el futuro modelo y aplicar minimización.
 
 El modelo deberá representar:
 
-- una planificación mensual por sede;
+- una planificación identificable por sede, nombre y período explícito (`FechaInicio` y `FechaFin`);
 - estado `BORRADOR`, `PUBLICADA_ABIERTA`, `PUBLICADA_CERRADA` o `CONSOLIDADA`;
 - versión para control de concurrencia;
 - una combinación de fecha, sede y tipo de servicio;
@@ -262,7 +262,7 @@ fuentes históricas.
 Cuando el usuario autorice iniciar diseño y desarrollo:
 
 1. Analyst convertirá este baseline y los requisitos oficiales en un primer
-   diagrama ER y registrará SQL Server en `STACK.md`.
+   modelo físico y registrará SQL Server en la documentación oficial vigente.
 2. El usuario confirmará el stack.
 3. DB Agent inspeccionará en solo lectura la estructura real autorizada, si ya
    existe, y presentará diferencias.

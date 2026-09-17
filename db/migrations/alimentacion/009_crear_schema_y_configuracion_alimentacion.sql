@@ -1,7 +1,7 @@
 -- Migración: 009_crear_schema_y_configuracion_alimentacion
 -- Fecha: 2026-09-04T12:00:00-05:00
--- Entidad(es) afectada(s): alimentacion, alimentacion.VentanaRetiroServicio, alimentacion.BeaconAutorizado, alimentacion.ConfiguracionProximidadBeacon
--- Referencia: Lineamientos/Alimentacion/referencias-tecnicas/SQL_SERVER_BASELINE.md / STACK.md
+-- Entidad(es) afectada(s): alimentacion, alimentacion.VentanaRetiroServicio, proximidad, proximidad.BeaconAutorizado, proximidad.ConfiguracionBeacon
+-- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Crear el límite lógico y la configuración operativa inicial de Alimentación sin duplicar sedes ni horarios del núcleo GTM.
 
 -- UP
@@ -10,6 +10,8 @@ BEGIN TRANSACTION;
 
 IF SCHEMA_ID(N'alimentacion') IS NULL
     EXEC(N'CREATE SCHEMA [alimentacion] AUTHORIZATION [dbo]');
+IF SCHEMA_ID(N'proximidad') IS NULL
+    EXEC(N'CREATE SCHEMA [proximidad] AUTHORIZATION [dbo]');
 
 CREATE TABLE [alimentacion].[VentanaRetiroServicio]
 (
@@ -35,7 +37,7 @@ CREATE UNIQUE INDEX [IN_VentanaRetiroServicio_Abierta]
 CREATE INDEX [IN_VentanaRetiroServicio_SedeVigencia]
     ON [alimentacion].[VentanaRetiroServicio] ([IdSede], [TipoServicio], [FechaInicioVigencia], [FechaFinVigencia]);
 
-CREATE TABLE [alimentacion].[BeaconAutorizado]
+CREATE TABLE [proximidad].[BeaconAutorizado]
 (
     [IdBeaconAutorizado] BIGINT IDENTITY(1,1) NOT NULL,
     [IdSede] INT NOT NULL,
@@ -53,9 +55,9 @@ CREATE TABLE [alimentacion].[BeaconAutorizado]
 );
 
 CREATE INDEX [IN_BeaconAutorizado_SedeActivo]
-    ON [alimentacion].[BeaconAutorizado] ([IdSede], [EstaActivo]);
+    ON [proximidad].[BeaconAutorizado] ([IdSede], [EstaActivo]);
 
-CREATE TABLE [alimentacion].[ConfiguracionProximidadBeacon]
+CREATE TABLE [proximidad].[ConfiguracionBeacon]
 (
     [IdConfiguracionProximidadBeacon] BIGINT IDENTITY(1,1) NOT NULL,
     [IdBeaconAutorizado] BIGINT NOT NULL,
@@ -67,7 +69,7 @@ CREATE TABLE [alimentacion].[ConfiguracionProximidadBeacon]
     [FechaFinVigenciaUtc] DATETIME2(3) NULL,
     [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ConfiguracionProximidadBeacon_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT [CP_ConfiguracionProximidadBeacon] PRIMARY KEY CLUSTERED ([IdConfiguracionProximidadBeacon]),
-    CONSTRAINT [CE_ConfiguracionProximidadBeacon_Beacon] FOREIGN KEY ([IdBeaconAutorizado]) REFERENCES [alimentacion].[BeaconAutorizado] ([IdBeaconAutorizado]),
+    CONSTRAINT [CE_ConfiguracionProximidadBeacon_Beacon] FOREIGN KEY ([IdBeaconAutorizado]) REFERENCES [proximidad].[BeaconAutorizado] ([IdBeaconAutorizado]),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Emisiones] CHECK ([CantidadMinimaEmisiones] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Ventana] CHECK ([VentanaConfirmacionMilisegundos] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_SalidaRango] CHECK ([TiempoSalidaRangoMilisegundos] > 0),
@@ -76,11 +78,11 @@ CREATE TABLE [alimentacion].[ConfiguracionProximidadBeacon]
 );
 
 CREATE UNIQUE INDEX [IN_ConfiguracionProximidadBeacon_Abierta]
-    ON [alimentacion].[ConfiguracionProximidadBeacon] ([IdBeaconAutorizado])
+    ON [proximidad].[ConfiguracionBeacon] ([IdBeaconAutorizado])
     WHERE [FechaFinVigenciaUtc] IS NULL;
 
 CREATE INDEX [IN_ConfiguracionProximidadBeacon_BeaconVigencia]
-    ON [alimentacion].[ConfiguracionProximidadBeacon] ([IdBeaconAutorizado], [FechaInicioVigenciaUtc], [FechaFinVigenciaUtc]);
+    ON [proximidad].[ConfiguracionBeacon] ([IdBeaconAutorizado], [FechaInicioVigenciaUtc], [FechaFinVigenciaUtc]);
 
 COMMIT TRANSACTION;
 GO
@@ -88,8 +90,8 @@ GO
 -- DOWN
 -- Reversión destructiva declarada. Debe ejecutarse después de revertir las migraciones posteriores.
 /*
-DROP TABLE IF EXISTS [alimentacion].[ConfiguracionProximidadBeacon];
-DROP TABLE IF EXISTS [alimentacion].[BeaconAutorizado];
+DROP TABLE IF EXISTS [proximidad].[ConfiguracionBeacon];
+DROP TABLE IF EXISTS [proximidad].[BeaconAutorizado];
 DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
 IF SCHEMA_ID(N'alimentacion') IS NOT NULL EXEC(N'DROP SCHEMA [alimentacion]');
 GO

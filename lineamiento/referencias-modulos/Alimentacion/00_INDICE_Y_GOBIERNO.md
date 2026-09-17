@@ -158,7 +158,7 @@ La migración solo podrá declararse cerrada cuando:
 | 2026-09-03 | Se oficializa la UX/UI transversal, se incorpora la referencia móvil trazable y se reserva el espacio controlado para los diseños web A&B. | Usuario propietario de la documentación |
 | 2026-09-03 | Se oficializan el contrato REST canónico bajo `/api/v1/alimentacion` y su especificación OpenAPI v1, sin rutas paralelas por consumidor. | Usuario propietario de la documentación |
 | 2026-09-04 | Se oficializa el baseline conceptual de una base SQL Server GTM con núcleo común y límites lógicos por módulo, sin aprobar aún modelo físico ni DDL. | Usuario propietario de la documentación |
-| 2026-09-04 | Se oficializa la asignación de `hub-gtm`, `front-gtm` y `AppMovilGoldenGtm`, con backend como autoridad aplicativa y stack concreto sujeto a `STACK.md`. | Usuario propietario de la documentación |
+| 2026-09-04 | Se oficializa la asignación de `hub-gtm`, `front-gtm` y `AppMovilGoldenGtm`, con backend como autoridad aplicativa y stack concreto sujeto a la documentación oficial vigente. | Usuario propietario de la documentación |
 | 2026-09-04 | Se oficializa el baseline Android y BLE con MOKO M2/iBeacon como referencia inicial, parámetros configurables y validación física posterior. | Usuario propietario de la documentación |
 | 2026-09-04 | Se oficializa el catálogo consolidado de criterios y pruebas, sin atribuir ejecuciones ni inventar umbrales técnicos. | Usuario propietario de la documentación |
 | 2026-09-04 | Se oficializa el historial central de decisiones vigentes, sustituidas, excluidas y diferidas. | Usuario propietario de la documentación |

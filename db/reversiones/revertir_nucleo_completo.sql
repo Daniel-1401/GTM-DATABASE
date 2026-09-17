@@ -35,6 +35,7 @@ IF SCHEMA_ID(N'catalogo') IS NULL
    OR OBJECT_ID(N'[organizacion].[Sede]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Area]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Cargo]', N'U') IS NULL
+   OR OBJECT_ID(N'[organizacion].[CargoJefatura]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[RelacionLaboral]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[AsignacionOrganizacional]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[HorarioLaboral]', N'U') IS NULL
@@ -50,6 +51,7 @@ BEGIN TRY
     DROP TABLE IF EXISTS [rrhh].[HorarioLaboral];
     DROP TABLE IF EXISTS [rrhh].[AsignacionOrganizacional];
     DROP TABLE IF EXISTS [rrhh].[RelacionLaboral];
+    DROP TABLE IF EXISTS [organizacion].[CargoJefatura];
     DROP TABLE IF EXISTS [organizacion].[Cargo];
     DROP TABLE IF EXISTS [organizacion].[Area];
     DROP TABLE IF EXISTS [organizacion].[Sede];

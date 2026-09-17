@@ -1,7 +1,7 @@
 -- Migración: 002_crear_catalogos_identidad_y_jefatura
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): catalogo.TipoDocumento, catalogo.TipoJefatura
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Crear catálogos extensibles sin fijar valores todavía no aprobados.
 
 -- UP

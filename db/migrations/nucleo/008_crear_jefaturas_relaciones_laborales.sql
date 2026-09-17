@@ -1,7 +1,7 @@
 -- Migración: 008_crear_jefaturas_relaciones_laborales
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.JefaturaRelacionLaboral
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Vincular relaciones laborales subordinada y supervisora con historia, tipo y dos prioridades posibles.
 
 -- UP

@@ -1,7 +1,7 @@
 -- Migración: 010_crear_planificaciones_menus_y_consolidacion
 -- Fecha: 2026-09-04T12:00:00-05:00
 -- Entidad(es) afectada(s): alimentacion.Planificacion, alimentacion.Menu, alimentacion.ComponenteMenu, alimentacion.ConsolidacionPlanificacion, alimentacion.CantidadConsolidadaMenu
--- Referencia: Lineamientos/Alimentacion/funcionalidades/01_MENUS_Y_PUBLICACION.md / STACK.md
+-- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Persistir una planificación con días elegidos libremente (no necesariamente consecutivos ni del mismo mes), el menú informativo y la fotografía irreversible de cantidades consolidadas.
 
 -- UP
@@ -13,7 +13,12 @@ CREATE TABLE [alimentacion].[Planificacion]
     [IdPlanificacion] BIGINT IDENTITY(1,1) NOT NULL,
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Planificacion_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
     [IdSede] INT NOT NULL,
+    [IdColaboradorRegistro] BIGINT NOT NULL,
+    [Nombre] NVARCHAR(200) NOT NULL,
+    [FechaInicio] DATE NOT NULL,
+    [FechaFin] DATE NOT NULL,
     [Estado] NVARCHAR(25) NOT NULL CONSTRAINT [VP_Planificacion_Estado] DEFAULT (N'BORRADOR'),
+    [EstaActivo] BIT NOT NULL CONSTRAINT [VP_Planificacion_EstaActivo] DEFAULT (1),
     [VersionRegistro] BIGINT NOT NULL CONSTRAINT [VP_Planificacion_VersionRegistro] DEFAULT (1),
     [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_Planificacion_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
     [FechaModificacionUtc] DATETIME2(3) NULL,
@@ -21,21 +26,31 @@ CREATE TABLE [alimentacion].[Planificacion]
     CONSTRAINT [CU_Planificacion_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
     CONSTRAINT [CU_Planificacion_IdSede] UNIQUE ([IdPlanificacion], [IdSede]),
     CONSTRAINT [CE_Planificacion_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
-    CONSTRAINT [RV_Planificacion_Estado] CHECK ([Estado] IN (N'BORRADOR', N'PUBLICADA_ABIERTA', N'PUBLICADA_CERRADA', N'CONSOLIDADA')),
+    CONSTRAINT [RV_Planificacion_NombreNoVacio] CHECK (LEN(LTRIM(RTRIM([Nombre]))) > 0),
+    CONSTRAINT [RV_Planificacion_Periodo] CHECK ([FechaFin] >= [FechaInicio]),
+    CONSTRAINT [RV_Planificacion_Estado] CHECK ([Estado] IN (N'BORRADOR', N'PUBLICADA_ABIERTA', N'PUBLICADA_CERRADA', N'CONSOLIDADA', N'ELIMINADA')),
+    CONSTRAINT [RV_Planificacion_ActivoEstado] CHECK
+    (
+        ([EstaActivo] = 1 AND [Estado] <> N'ELIMINADA')
+        OR ([EstaActivo] = 0 AND [Estado] = N'ELIMINADA')
+    ),
     CONSTRAINT [RV_Planificacion_VersionRegistro] CHECK ([VersionRegistro] > 0)
 );
 
-CREATE INDEX [IN_Planificacion_SedeEstado]
-    ON [alimentacion].[Planificacion] ([IdSede], [Estado]) INCLUDE ([VersionRegistro]);
+CREATE INDEX [IN_Planificacion_SedePeriodoEstado]
+    ON [alimentacion].[Planificacion] ([IdSede], [FechaInicio], [FechaFin], [Estado])
+    INCLUDE ([Nombre], [VersionRegistro], [FechaModificacionUtc]);
 
 CREATE TABLE [alimentacion].[Menu]
 (
     [IdMenu] BIGINT IDENTITY(1,1) NOT NULL,
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Menu_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
     [IdPlanificacion] BIGINT NOT NULL,
+    [IdColaboradorRegistro] BIGINT NOT NULL,
     [FechaServicio] DATE NOT NULL,
     [TipoServicio] NVARCHAR(20) NOT NULL,
     [EstaDisponible] BIT NOT NULL,
+    [EstaActivo] BIT NOT NULL CONSTRAINT [VP_Menu_EstaActivo] DEFAULT (1),
     [Nombre] NVARCHAR(200) NULL,
     [Descripcion] NVARCHAR(1000) NULL,
     [ReferenciaImagen] NVARCHAR(500) NULL,
@@ -66,8 +81,10 @@ CREATE TABLE [alimentacion].[ComponenteMenu]
 (
     [IdComponenteMenu] BIGINT IDENTITY(1,1) NOT NULL,
     [IdMenu] BIGINT NOT NULL,
+    [IdColaboradorRegistro] BIGINT NOT NULL,
     [Orden] SMALLINT NOT NULL,
     [DescripcionComponente] NVARCHAR(300) NOT NULL,
+    [EstaActivo] BIT NOT NULL CONSTRAINT [VP_ComponenteMenu_EstaActivo] DEFAULT (1),
     [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_ComponenteMenu_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT [CP_ComponenteMenu] PRIMARY KEY CLUSTERED ([IdComponenteMenu]),
     CONSTRAINT [CU_ComponenteMenu_MenuOrden] UNIQUE ([IdMenu], [Orden]),

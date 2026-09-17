@@ -1,6 +1,6 @@
 -- Limpieza de datos: núcleo GTM
 -- Motor objetivo: Microsoft SQL Server 2017
--- Alcance: elimina datos de las 15 tablas de catalogo, rrhh, organizacion e integracion.
+-- Alcance: elimina datos de las 16 tablas de catalogo, rrhh, organizacion e integracion.
 -- Advertencia: operación destructiva. No ejecutarlo en producción.
 
 SET XACT_ABORT ON;
@@ -12,6 +12,7 @@ IF @ConfirmarLimpieza <> 1
     THROW 51040, N'Operación cancelada. Establezca @ConfirmarLimpieza = 1 para eliminar los datos del núcleo.', 1;
 
 IF OBJECT_ID(N'[rrhh].[JefaturaRelacionLaboral]', N'U') IS NULL
+   OR OBJECT_ID(N'[organizacion].[CargoJefatura]', N'U') IS NULL
    OR OBJECT_ID(N'[integracion].[CuentaMicrosoftCorporativa]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Empresa]', N'U') IS NULL
    OR OBJECT_ID(N'[catalogo].[TipoDocumento]', N'U') IS NULL
@@ -20,6 +21,7 @@ IF OBJECT_ID(N'[rrhh].[JefaturaRelacionLaboral]', N'U') IS NULL
 BEGIN TRANSACTION;
 
 DELETE FROM [rrhh].[JefaturaRelacionLaboral];
+DELETE FROM [organizacion].[CargoJefatura];
 DELETE FROM [rrhh].[VigenciaHorario];
 DELETE FROM [rrhh].[AsignacionOrganizacional];
 DELETE FROM [rrhh].[RelacionLaboral];
@@ -36,6 +38,7 @@ DELETE FROM [catalogo].[TipoJefatura];
 DELETE FROM [catalogo].[TipoDocumento];
 
 DBCC CHECKIDENT (N'[rrhh].[JefaturaRelacionLaboral]', RESEED, 0) WITH NO_INFOMSGS;
+DBCC CHECKIDENT (N'[organizacion].[CargoJefatura]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[rrhh].[VigenciaHorario]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[rrhh].[AsignacionOrganizacional]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[rrhh].[RelacionLaboral]', RESEED, 0) WITH NO_INFOMSGS;

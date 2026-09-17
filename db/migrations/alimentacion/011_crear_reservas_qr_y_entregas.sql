@@ -1,7 +1,7 @@
 -- Migración: 011_crear_reservas_qr_y_entregas
 -- Fecha: 2026-09-04T12:00:00-05:00
 -- Entidad(es) afectada(s): alimentacion.Reserva, alimentacion.CodigoQR, alimentacion.Entrega
--- Referencia: Lineamientos/Alimentacion/funcionalidades/02_RESERVAS.md, 03_QR_Y_BLE.md y 04_ENTREGA_PRESENCIAL.md / STACK.md
+-- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Persistir reservas individuales, QR opacos de un uso y entregas presenciales normales sin excepciones.
 
 -- UP

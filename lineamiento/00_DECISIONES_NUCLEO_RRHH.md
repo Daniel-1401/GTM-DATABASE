@@ -9,14 +9,9 @@ Estado: entrada aprobada para la etapa Analyst
 Producir únicamente la primera definición conceptual del núcleo general de datos
 de GTM, previa al diseño físico de base de datos.
 
-Entregables esperados:
-
-- `docs-proyecto/requirements.md`;
-- `docs-proyecto/STACK.md`;
-- `docs-proyecto/DEFINITION_OF_DONE.md`;
-- `docs-proyecto/er-diagram-v1.md`;
-- preguntas materiales pendientes; y
-- checkpoint humano para aprobar stack y modelo conceptual.
+Los entregables históricos de esta etapa fueron consolidados posteriormente en
+`docs-proyecto/nucleo/TABLAS_NUCLEO.md` y `docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md`, que
+constituyen la documentación oficial vigente.
 
 No se generará ni ejecutará SQL, DDL, DML, migraciones o conexiones a motores.
 No se iniciará el DB Agent, Backend Agent ni agentes Frontend.

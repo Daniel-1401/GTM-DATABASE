@@ -12,7 +12,7 @@ No ejecutes DDL, DML, migraciones ni reversiones contra una instancia SQL Server
 Preserva el estado del checkout y basa la revisión en evidencia verificable.
 
 Verifica:
-- Cumplimiento de STACK.md, requirements.md, ER aprobado, Definition of Done DB y registro de aprobaciones.
+- Cumplimiento de `docs-proyecto/TABLAS_NUCLEO.md` y `docs-proyecto/TABLAS_ALIMENTACION.md`.
 - Compatibilidad con Microsoft SQL Server 2017 y uso consistente de nombres en español.
 - Secuencia, versionado, determinismo, idempotencia aplicable y trazabilidad de cada migración.
 - Correspondencia entre UP, DOWN, consolidadores, scripts de reversión y objetos documentados.
@@ -21,7 +21,7 @@ Verifica:
 - Seguridad, mínimo privilegio, ausencia de secretos y protección de datos sensibles.
 - Guardas de las reversiones destructivas: confirmación explícita, base esperada, rechazo de bases de sistema y huella estructural.
 - Resultados de los validadores PowerShell aplicables, git diff --check y validación equivalente de archivos no rastreados.
-- Coherencia del ER físico, README, auditorías, log de scripts y demás trazabilidad DB.
+- Coherencia entre las migraciones y los catálogos oficiales de tablas.
 - Separación explícita entre evidencia estática, compilación SQL, ejecución en motor, concurrencia, reversión y aprobación humana.
 - Existencia de los checkpoints humanos de schema y de creación física; ninguno puede inferirse del otro ni del silencio.
 

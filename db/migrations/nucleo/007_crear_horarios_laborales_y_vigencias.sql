@@ -1,7 +1,7 @@
 -- Migración: 007_crear_horarios_laborales_y_vigencias
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.HorarioLaboral, rrhh.VigenciaHorario
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Mantener el maestro local de códigos y tipo de turno de horario, y su asignación diaria por relación laboral.
 
 -- UP

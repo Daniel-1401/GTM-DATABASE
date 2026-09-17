@@ -1,8 +1,8 @@
 -- Migración: 004_crear_organizacion_y_centros_costo_sap
 -- Fecha: 2026-09-04T08:00:21-05:00
--- Entidad(es) afectada(s): organizacion.Empresa, organizacion.Sede, organizacion.Area, organizacion.Cargo
--- Referencia: er-diagram-v1 / STACK.md
--- Motivo: Crear los maestros GTM de organización.
+-- Entidad(es) afectada(s): organizacion.Empresa, organizacion.Sede, organizacion.Area, organizacion.Cargo, organizacion.CargoJefatura
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
+-- Motivo: Crear los maestros GTM de organización y la estructura de jefaturas entre cargos.
 
 -- UP
 SET XACT_ABORT ON;
@@ -73,12 +73,49 @@ CREATE TABLE [organizacion].[Cargo]
     CONSTRAINT [RV_Cargo_NombreNoVacio] CHECK (LEN(LTRIM(RTRIM([NombreCargo]))) > 0)
 );
 
+CREATE TABLE [organizacion].[CargoJefatura]
+(
+    [IdCargoJefatura] BIGINT IDENTITY(1,1) NOT NULL,
+    [IdCargoSubordinado] INT NOT NULL,
+    [IdCargoJefe] INT NOT NULL,
+    [IdTipoJefatura] SMALLINT NOT NULL,
+    [Prioridad] SMALLINT NOT NULL,
+    [FechaInicio] DATE NOT NULL,
+    [FechaFin] DATE NULL,
+    [FechaCreacionUtc] DATETIME2(3) NOT NULL CONSTRAINT [VP_CargoJefatura_FechaCreacionUtc] DEFAULT (SYSUTCDATETIME()),
+    [FechaModificacionUtc] DATETIME2(3) NULL,
+    CONSTRAINT [CP_CargoJefatura] PRIMARY KEY CLUSTERED ([IdCargoJefatura]),
+    CONSTRAINT [CE_CargoJefatura_CargoSubordinado] FOREIGN KEY ([IdCargoSubordinado]) REFERENCES [organizacion].[Cargo] ([IdCargo]),
+    CONSTRAINT [CE_CargoJefatura_CargoJefe] FOREIGN KEY ([IdCargoJefe]) REFERENCES [organizacion].[Cargo] ([IdCargo]),
+    CONSTRAINT [CE_CargoJefatura_TipoJefatura] FOREIGN KEY ([IdTipoJefatura]) REFERENCES [catalogo].[TipoJefatura] ([IdTipoJefatura]),
+    CONSTRAINT [RV_CargoJefatura_CargosDistintos] CHECK ([IdCargoSubordinado] <> [IdCargoJefe]),
+    CONSTRAINT [RV_CargoJefatura_Prioridad] CHECK ([Prioridad] >= 1),
+    CONSTRAINT [RV_CargoJefatura_Vigencia] CHECK ([FechaFin] IS NULL OR [FechaFin] > [FechaInicio])
+);
+
+CREATE UNIQUE INDEX [IN_CargoJefatura_PrioridadAbierta]
+    ON [organizacion].[CargoJefatura] ([IdCargoSubordinado], [Prioridad])
+    WHERE [FechaFin] IS NULL;
+
+CREATE UNIQUE INDEX [IN_CargoJefatura_ParAbierto]
+    ON [organizacion].[CargoJefatura] ([IdCargoSubordinado], [IdCargoJefe])
+    WHERE [FechaFin] IS NULL;
+
+CREATE INDEX [IN_CargoJefatura_SubordinadoVigencia]
+    ON [organizacion].[CargoJefatura] ([IdCargoSubordinado], [FechaInicio], [FechaFin])
+    INCLUDE ([IdCargoJefe], [IdTipoJefatura], [Prioridad]);
+
+CREATE INDEX [IN_CargoJefatura_JefeVigencia]
+    ON [organizacion].[CargoJefatura] ([IdCargoJefe], [FechaInicio], [FechaFin])
+    INCLUDE ([IdCargoSubordinado], [IdTipoJefatura], [Prioridad]);
+
 COMMIT TRANSACTION;
 GO
 
 -- DOWN
 -- Reversión destructiva declarada. Requiere revertir primero las relaciones y asignaciones posteriores.
 /*
+DROP TABLE IF EXISTS [organizacion].[CargoJefatura];
 DROP TABLE IF EXISTS [organizacion].[Cargo];
 DROP TABLE IF EXISTS [organizacion].[Area];
 DROP TABLE IF EXISTS [organizacion].[Sede];

@@ -6,7 +6,7 @@ Schema propio: `alimentacion`
 
 ## Alcance y fuente de verdad
 
-Este documento describe las 12 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `012` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
+Este documento describe las 12 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `015` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
 
 No se definen aquí tablas de inventario, compras, recetas, costos, cupos, usuarios, roles ni permisos. Esta documentación no acredita que el DDL haya sido aplicado en una instancia.
 
@@ -23,7 +23,7 @@ Alimentación reutiliza, sin duplicarlos, los siguientes datos del núcleo:
 
 | Grupo | Tablas |
 |---|---|
-| Configuración operativa | `VentanaRetiroServicio`, `BeaconAutorizado`, `ConfiguracionProximidadBeacon` |
+| Configuración operativa | `VentanaRetiroServicio` |
 | Planificación y menú | `Planificacion`, `Menu`, `ComponenteMenu` |
 | Consolidación | `ConsolidacionPlanificacion`, `CantidadConsolidadaMenu` |
 | Reserva, QR y entrega | `Reserva`, `CodigoQR`, `Entrega`, `ValidacionEntrega` |
@@ -39,20 +39,7 @@ Configura una ventana de retiro por sede y servicio. Su clave es `IdVentanaRetir
 - El fin de vigencia debe ser posterior al inicio.
 - El índice filtrado `IN_VentanaRetiroServicio_Abierta` permite una sola ventana abierta por sede y servicio.
 
-### `alimentacion.BeaconAutorizado`
-
-Registra un beacon permitido para una sede. Su clave es `IdBeaconAutorizado`; tiene FK a `organizacion.Sede`. Conserva UUID, Major, Minor, actividad y marcas técnicas.
-
-- La combinación UUID, Major y Minor es única.
-- Major y Minor están limitados a valores entre 0 y 65535.
-
-### `alimentacion.ConfiguracionProximidadBeacon`
-
-Versiona los parámetros de detección de un beacon. Su clave es `IdConfiguracionProximidadBeacon`; tiene FK a `BeaconAutorizado`. Incluye emisiones mínimas, ventanas en milisegundos, RSSI y vigencia UTC.
-
-- Las cantidades y ventanas deben ser mayores que cero.
-- RSSI es nulo o está entre -127 y 0.
-- El índice filtrado `IN_ConfiguracionProximidadBeacon_Abierta` permite una sola configuración abierta por beacon.
+La configuración de beacons y proximidad es transversal y se administra en el esquema `proximidad`.
 
 ## Planificación y menú
 
@@ -60,9 +47,12 @@ Versiona los parámetros de detección de un beacon. Su clave es `IdConfiguracio
 
 Agrupa días de servicio elegidos libremente para una sede y controla su estado. Su clave es `IdPlanificacion`, con identificador público único y FK a `organizacion.Sede`.
 
-- Estados: `BORRADOR`, `PUBLICADA_ABIERTA`, `PUBLICADA_CERRADA`, `CONSOLIDADA`.
+- Estados: `BORRADOR`, `PUBLICADA_ABIERTA`, `PUBLICADA_CERRADA`, `CONSOLIDADA`, `ELIMINADA`.
+- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`); una planificación eliminada queda inactiva.
 - `VersionRegistro` debe ser mayor que cero.
-- No contiene mes, año ni rango obligatorio: las fechas se definen mediante `Menu.FechaServicio`.
+- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`).
+- Conserva `Nombre`, `FechaInicio` y `FechaFin` como período explícito para identificarla y listarla; el fin no puede ser anterior al inicio.
+- Los días con servicio se definen mediante `Menu.FechaServicio`; no es obligatorio que todos los días del período tengan menú.
 
 ### `alimentacion.Menu`
 
@@ -79,6 +69,7 @@ Conserva componentes informativos ordenados de un menú. Su clave es `IdComponen
 
 - La combinación `IdMenu` + `Orden` es única.
 - El orden debe ser mayor que cero.
+- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`).
 
 ## Consolidación
 
@@ -140,7 +131,6 @@ Registra la validación temporal previa al consumo del QR. Su clave es el UUID `
 
 ```text
 Sede ──< VentanaRetiroServicio
-Sede ──< BeaconAutorizado ──< ConfiguracionProximidadBeacon
 Sede ──< Planificacion ──< Menu ──< ComponenteMenu
                               │
 Planificacion ── 0..1 ConsolidacionPlanificacion ──< CantidadConsolidadaMenu
@@ -162,8 +152,8 @@ Colaborador ──< ConsolidacionPlanificacion, Entrega, ValidacionEntrega
 
 ## Referencias
 
-- `db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql` a `012_crear_validacion_entrega.sql`.
-- `docs-proyecto/er-diagram-fisico-alimentacion-v1.md`.
-- `docs-proyecto/CONTRATO_STORES_BACKEND_ALIMENTACION.md`.
-- `docs-proyecto/ESTADO_OFICIAL_OBJETOS_DB.md`.
-
+- `db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql` a `013_crear_matriz_informativa_beacons.sql`.
+- `docs-proyecto/alimentacion/Stores Procedures/usp_ListarPlanificaciones.md`, contrato de lectura del listado maestro.
+- `docs-proyecto/alimentacion/Stores Procedures/usp_ObtenerResumenPlanificacion.md`, contrato del resumen de planificación.
+- `docs-proyecto/alimentacion/Stores Procedures/usp_ListarMenusPlanificacionPorTipoServicio.md`, contrato del calendario de menús por tipo de servicio.
+- `docs-proyecto/nucleo/TABLAS_NUCLEO.md`, para las tablas externas requeridas del núcleo común.

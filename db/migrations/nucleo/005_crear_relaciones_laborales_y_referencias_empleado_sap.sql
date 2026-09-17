@@ -1,7 +1,7 @@
 -- Migración: 005_crear_relaciones_laborales_y_referencias_empleado_sap
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.RelacionLaboral
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Conservar reingresos y planillas simultáneas como relaciones independientes.
 
 -- UP

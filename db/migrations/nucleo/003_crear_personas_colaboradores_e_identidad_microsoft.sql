@@ -1,7 +1,7 @@
 -- Migración: 003_crear_personas_colaboradores_e_identidad_microsoft
 -- Fecha: 2026-09-04T08:00:21-05:00
 -- Entidad(es) afectada(s): rrhh.Persona, rrhh.DocumentoPersona, rrhh.Colaborador, integracion.CuentaMicrosoftCorporativa
--- Referencia: er-diagram-v1 / STACK.md
+-- Referencia: docs-proyecto/nucleo/TABLAS_NUCLEO.md
 -- Motivo: Materializar la identidad civil, el registro laboral central y la referencia externa Microsoft sin modelar usuarios ni permisos.
 
 -- UP
