@@ -158,5 +158,7 @@ Colaborador ──< ConsolidacionPlanificacion, Entrega, ValidacionEntrega
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ListarPlanificaciones.md`, contrato de lectura del listado maestro.
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ObtenerResumenPlanificacion.md`, contrato del resumen de planificación.
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ListarMenusPlanificacionPorTipoServicio.md`, contrato del calendario de menús por tipo de servicio.
+- `docs-proyecto/alimentacion/Stores Procedures/016_listar_menus_configuracion_plantilla.md`, contrato del listado diario de menús y sus reservas para sistemas consumidores.
+- `docs-proyecto/alimentacion/Stores Procedures/017_listar_planificaciones_plantilla.md`, contrato del listado simple de planificaciones para sistemas consumidores.
 - `docs-proyecto/alimentacion/Stores Procedures/009_listar_tipos_servicio.md`, contrato del maestro de tipos de servicio para frontend.
 - `docs-proyecto/nucleo/TABLAS_NUCLEO.md`, para las tablas externas requeridas del núcleo común.
