@@ -1,3 +1,13 @@
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+allow_login_shell = true
+
+[sandbox_workspace_write]
+network_access = false
+
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 2
+
+[windows]
+sandbox = "unelevated"

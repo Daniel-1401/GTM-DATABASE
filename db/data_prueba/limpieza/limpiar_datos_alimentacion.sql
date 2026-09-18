@@ -17,7 +17,6 @@ IF OBJECT_ID(N'[alimentacion].[ValidacionEntrega]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[Reserva]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[CantidadConsolidadaMenu]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[ConsolidacionPlanificacion]', N'U') IS NULL
-   OR OBJECT_ID(N'[alimentacion].[ComponenteMenu]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[Menu]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[Planificacion]', N'U') IS NULL
    OR OBJECT_ID(N'[alimentacion].[ConfiguracionProximidadBeacon]', N'U') IS NULL
@@ -33,7 +32,6 @@ DELETE FROM [alimentacion].[CodigoQR];
 DELETE FROM [alimentacion].[Reserva];
 DELETE FROM [alimentacion].[CantidadConsolidadaMenu];
 DELETE FROM [alimentacion].[ConsolidacionPlanificacion];
-DELETE FROM [alimentacion].[ComponenteMenu];
 DELETE FROM [alimentacion].[Menu];
 DELETE FROM [alimentacion].[Planificacion];
 DELETE FROM [alimentacion].[ConfiguracionProximidadBeacon];
@@ -44,7 +42,6 @@ DBCC CHECKIDENT (N'[alimentacion].[Entrega]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[Reserva]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[CantidadConsolidadaMenu]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[ConsolidacionPlanificacion]', RESEED, 0) WITH NO_INFOMSGS;
-DBCC CHECKIDENT (N'[alimentacion].[ComponenteMenu]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[Menu]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[Planificacion]', RESEED, 0) WITH NO_INFOMSGS;
 DBCC CHECKIDENT (N'[alimentacion].[ConfiguracionProximidadBeacon]', RESEED, 0) WITH NO_INFOMSGS;

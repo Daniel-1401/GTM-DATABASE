@@ -3,8 +3,8 @@
 ## Propósito
 
 Elimina lógicamente una planificación que se encuentre en `BORRADOR`. La
-operación conserva la cabecera, sus menús, componentes y cualquier relación histórica: cambia
-el estado a `ELIMINADA`, desactiva la planificación, sus menús y sus componentes, aumenta
+operación conserva la cabecera, sus menús y cualquier relación histórica: cambia
+el estado a `ELIMINADA`, desactiva la planificación y sus menús, aumenta
 la versión de los registros modificables y registra la fecha de modificación local.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/007_eliminar_planificacion.sql`.
@@ -24,7 +24,7 @@ cambios.
 | `INVALID_PLAN_STATE` | `La planificación no permite esta operación.` | La planificación no está en borrador. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
-La eliminación lógica, sus menús y componentes se actualizan atómicamente con
+La eliminación lógica y sus menús se actualizan atómicamente con
 `SET XACT_ABORT ON` y `TRY/CATCH`; todo error posterior al inicio revierte solo
 si `XACT_STATE() <> 0`.
 
@@ -48,7 +48,7 @@ EXEC [alimentacion].[usp_EliminarPlanificacion]
 
 - Solo una planificación con estado `BORRADOR` puede eliminarse.
 - La transición es terminal: `BORRADOR` → `ELIMINADA`.
-- La misma transacción desactiva los `Menu` y `ComponenteMenu` asociados; los menús también incrementan su versión y registran su fecha de modificación.
+- La misma transacción desactiva los `Menu` asociados; los menús también incrementan su versión y registran su fecha de modificación.
 - El procedimiento usa bloqueo de actualización para serializar eliminaciones concurrentes sobre la misma planificación.
 - Las planificaciones eliminadas quedan excluidas de los procedimientos de listado, resumen y consulta de menús activos.
 

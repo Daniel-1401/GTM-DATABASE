@@ -46,7 +46,6 @@ BEGIN TRY
     DROP TABLE IF EXISTS [alimentacion].[Reserva];
     DROP TABLE IF EXISTS [alimentacion].[CantidadConsolidadaMenu];
     DROP TABLE IF EXISTS [alimentacion].[ConsolidacionPlanificacion];
-    DROP TABLE IF EXISTS [alimentacion].[ComponenteMenu];
     DROP TABLE IF EXISTS [alimentacion].[Menu];
     DROP TABLE IF EXISTS [alimentacion].[Planificacion];
     DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
@@ -56,9 +55,7 @@ BEGIN TRY
     DROP TABLE IF EXISTS [proximidad].[MajorAreaBeacon];
     DROP TABLE IF EXISTS [proximidad].[MatrizInformativaBeacon];
 
-    DROP TYPE IF EXISTS [alimentacion].[TipoComponenteMenuLoteCreacion];
     DROP TYPE IF EXISTS [alimentacion].[TipoMenuPlanificacionLoteCreacion];
-    DROP TYPE IF EXISTS [alimentacion].[TipoComponenteMenuCreacion];
 
     -- La infraestructura de auditoría fue creada por la migración 016.
     DROP PROCEDURE IF EXISTS [auditoria].[usp_RegistrarErrorProcedimiento];

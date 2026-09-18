@@ -1,6 +1,6 @@
 -- Migración: 010_crear_planificaciones_menus_y_consolidacion
 -- Fecha: 2026-09-04T12:00:00-05:00
--- Entidad(es) afectada(s): alimentacion.Planificacion, alimentacion.Menu, alimentacion.ComponenteMenu, alimentacion.ConsolidacionPlanificacion, alimentacion.CantidadConsolidadaMenu
+-- Entidad(es) afectada(s): alimentacion.Planificacion, alimentacion.Menu, alimentacion.ConsolidacionPlanificacion, alimentacion.CantidadConsolidadaMenu
 -- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Persistir una planificación con días elegidos libremente (no necesariamente consecutivos ni del mismo mes), el menú informativo y la fotografía irreversible de cantidades consolidadas.
 
@@ -79,22 +79,6 @@ CREATE INDEX [IN_Menu_FechaServicioDisponible]
     ON [alimentacion].[Menu] ([FechaServicio], [TipoServicio], [EstaDisponible])
     INCLUDE ([IdPlanificacion], [Nombre], [VersionRegistro]);
 
-CREATE TABLE [alimentacion].[ComponenteMenu]
-(
-    [IdComponenteMenu] BIGINT IDENTITY(1,1) NOT NULL,
-    [IdMenu] BIGINT NOT NULL,
-    [IdColaboradorRegistro] BIGINT NOT NULL,
-    [Orden] SMALLINT NOT NULL,
-    [DescripcionComponente] NVARCHAR(300) NOT NULL,
-    [EstaActivo] BIT NOT NULL CONSTRAINT [VP_ComponenteMenu_EstaActivo] DEFAULT (1),
-    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_ComponenteMenu_FechaCreacion] DEFAULT (SYSDATETIME()),
-    CONSTRAINT [CP_ComponenteMenu] PRIMARY KEY CLUSTERED ([IdComponenteMenu]),
-    CONSTRAINT [CU_ComponenteMenu_MenuOrden] UNIQUE ([IdMenu], [Orden]),
-    CONSTRAINT [CE_ComponenteMenu_Menu] FOREIGN KEY ([IdMenu]) REFERENCES [alimentacion].[Menu] ([IdMenu]),
-    CONSTRAINT [RV_ComponenteMenu_Orden] CHECK ([Orden] > 0),
-    CONSTRAINT [RV_ComponenteMenu_DescripcionNoVacia] CHECK (LEN(LTRIM(RTRIM([DescripcionComponente]))) > 0)
-);
-
 CREATE TABLE [alimentacion].[ConsolidacionPlanificacion]
 (
     [IdConsolidacionPlanificacion] BIGINT IDENTITY(1,1) NOT NULL,
@@ -136,7 +120,6 @@ GO
 /*
 DROP TABLE IF EXISTS [alimentacion].[CantidadConsolidadaMenu];
 DROP TABLE IF EXISTS [alimentacion].[ConsolidacionPlanificacion];
-DROP TABLE IF EXISTS [alimentacion].[ComponenteMenu];
 DROP TABLE IF EXISTS [alimentacion].[Menu];
 DROP TABLE IF EXISTS [alimentacion].[Planificacion];
 GO

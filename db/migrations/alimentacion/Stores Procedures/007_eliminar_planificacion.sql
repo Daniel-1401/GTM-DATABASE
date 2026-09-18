@@ -65,14 +65,6 @@ BEGIN
 
     SET @FechaEliminacion = SYSDATETIME();
 
-    UPDATE [Componente]
-    SET [EstaActivo] = 0
-    FROM [alimentacion].[ComponenteMenu] AS [Componente]
-    INNER JOIN [alimentacion].[Menu] AS [Menu]
-        ON [Menu].[IdMenu] = [Componente].[IdMenu]
-    WHERE [Menu].[IdPlanificacion] = @IdPlanificacionInterno
-      AND [Componente].[EstaActivo] = 1;
-
     UPDATE [alimentacion].[Menu]
     SET
         [EstaActivo] = 0,

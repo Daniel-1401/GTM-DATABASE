@@ -3,11 +3,9 @@
 ## Propósito
 
 Registra un menú —o un servicio sin atención— para una fecha y tipo de servicio
-de una planificación en `BORRADOR`. Inserta sus componentes opcionales dentro de
-la misma transacción.
+de una planificación en `BORRADOR`.
 
-Scripts fuente: `db/migrations/alimentacion/014_crear_tipo_tabla_componentes_menu.sql` y
-`db/migrations/alimentacion/Stores Procedures/005_crear_menu_planificacion.sql`.
+Script fuente: `db/migrations/alimentacion/Stores Procedures/005_crear_menu_planificacion.sql`.
 
 ## Contrato de salida
 
@@ -18,15 +16,14 @@ cambios.
 | Código | Mensaje seguro | Cuándo ocurre |
 |---|---|---|
 | `CREATED` | `null` | El menú fue creado. |
-| `VALIDATION_ERROR` | Mensaje de validación seguro | Datos requeridos, servicio o componentes inválidos. |
+| `VALIDATION_ERROR` | Mensaje de validación seguro | Datos requeridos o servicio inválido. |
 | `BUSINESS_RULE_VIOLATION` | Mensaje de regla de negocio seguro | Contenido incompatible o fecha fuera del período. |
 | `PLAN_NOT_FOUND` | `La planificación indicada no existe.` | No existe la planificación. |
 | `INVALID_PLAN_STATE` | `La planificación no permite crear menús.` | La planificación no está en borrador. |
 | `MENU_ALREADY_EXISTS` | Mensaje de conflicto seguro | Ya existe menú para la fecha y servicio. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
-La creación de menú y componentes es atómica con `SET XACT_ABORT ON` y
-`TRY/CATCH`; todo error después de iniciar la transacción hace rollback solo si
+La creación del menú es atómica con `SET XACT_ABORT ON` y `TRY/CATCH`; todo error después de iniciar la transacción hace rollback solo si
 `XACT_STATE() <> 0`. La existencia del colaborador no se valida aquí.
 
 ## Parámetros de entrada
@@ -34,17 +31,15 @@ La creación de menú y componentes es atómica con `SET XACT_ABORT ON` y
 | Parámetro | Tipo SQL | Obligatorio | Descripción |
 |---|---|---:|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | UUID público devuelto al crear la planificación. |
-| `@IdColaboradorRegistro` | `BIGINT` | Sí | Identificador que registra el menú y sus componentes. |
+| `@IdColaboradorRegistro` | `BIGINT` | Sí | Identificador que registra el menú. |
 | `@FechaServicio` | `DATE` | Sí | Debe estar dentro del período de la planificación. |
-| `@TipoServicio` | `NVARCHAR(20)` | Sí | `DESAYUNO`, `ALMUERZO` o `CENA`. |
+| `@TipoServicio` | `NVARCHAR(20)` | Sí | Código activo de `alimentacion.TipoServicio`. |
 | `@EstaDisponible` | `BIT` | Sí | `1` para menú disponible; `0` para servicio sin atención. |
 | `@Nombre` | `NVARCHAR(200)` | Condicional | Obligatorio si está disponible. |
 | `@Descripcion` | `NVARCHAR(1000)` | No | Descripción del menú disponible. |
 | `@ReferenciaImagen` | `NVARCHAR(500)` | No | Referencia opcional de imagen. |
-| `@Componentes` | `alimentacion.TipoComponenteMenuCreacion READONLY` | Sí | TVP con `Orden` y `DescripcionComponente`; puede enviarse vacío. |
 
-Si `EstaDisponible = 0`, nombre, descripción, imagen y componentes deben estar
-vacíos. La combinación planificación, fecha y servicio se puede crear una sola vez.
+Si `EstaDisponible = 0`, nombre, descripción e imagen deben estar vacíos. La combinación planificación, fecha y servicio se puede crear una sola vez.
 
 ## Salida
 

@@ -1,6 +1,5 @@
 -- Procedimiento: alimentacion.usp_CrearMenuPlanificacion
--- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql,
---             db/migrations/alimentacion/014_crear_tipo_tabla_componentes_menu.sql
+-- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
 -- Motivo: Crear un menú, o registrar un servicio sin atención, para una planificación en BORRADOR.
 -- Ejecutar después de la migración 010.
 
@@ -18,7 +17,6 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenuPlanificacion]
     @Nombre NVARCHAR(200) = NULL,
     @Descripcion NVARCHAR(1000) = NULL,
     @ReferenciaImagen NVARCHAR(500) = NULL,
-    @Componentes [alimentacion].[TipoComponenteMenuCreacion] READONLY,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
@@ -52,7 +50,14 @@ BEGIN
         SET @Mensaje = N'El colaborador que registra el menú es obligatorio.';
         RETURN;
     END;
-    IF @TipoServicio NOT IN (N'DESAYUNO', N'ALMUERZO', N'CENA')
+    IF @TipoServicio IS NULL
+       OR NOT EXISTS
+       (
+           SELECT 1
+           FROM [alimentacion].[TipoServicio] AS [TipoServicio]
+           WHERE [TipoServicio].[CodigoTipoServicio] = @TipoServicio
+             AND [TipoServicio].[EstaActivo] = 1
+       )
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El tipo de servicio no es válido.';
@@ -76,30 +81,6 @@ BEGIN
         SET @Mensaje = N'Un servicio sin atención no puede contener contenido.';
         RETURN;
     END;
-    IF EXISTS
-    (
-        SELECT 1 FROM @Componentes
-        WHERE [Orden] <= 0 OR NULLIF(LTRIM(RTRIM([DescripcionComponente])), N'') IS NULL
-    )
-    BEGIN
-        SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'Los componentes enviados no son válidos.';
-        RETURN;
-    END;
-
-    IF EXISTS (SELECT [Orden] FROM @Componentes GROUP BY [Orden] HAVING COUNT(*) > 1)
-    BEGIN
-        SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'Los componentes no pueden repetir el orden.';
-        RETURN;
-    END;
-    IF @EstaDisponible = 0 AND EXISTS (SELECT 1 FROM @Componentes)
-    BEGIN
-        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
-        SET @Mensaje = N'Un servicio sin atención no puede contener componentes.';
-        RETURN;
-    END;
-
     DECLARE @IdPlanificacionInterno BIGINT;
     DECLARE @FechaInicio DATE;
     DECLARE @FechaFin DATE;
@@ -164,10 +145,6 @@ BEGIN
 
     SET @IdMenuInterno = CONVERT(BIGINT, SCOPE_IDENTITY());
 
-    INSERT INTO [alimentacion].[ComponenteMenu] ([IdMenu], [IdColaboradorRegistro], [Orden], [DescripcionComponente])
-    SELECT @IdMenuInterno, @IdColaboradorRegistro, [Orden], LTRIM(RTRIM([DescripcionComponente]))
-    FROM @Componentes;
-
         COMMIT TRANSACTION;
 
         SET @Codigo = N'CREATED';
@@ -200,12 +177,8 @@ BEGIN
 END;
 GO
 
--- DECLARE @Componentes [alimentacion].[TipoComponenteMenuCreacion];
--- INSERT INTO @Componentes ([Orden], [DescripcionComponente])
--- VALUES (1, N'Pollo'), (2, N'Arroz');
---
 -- EXEC [alimentacion].[usp_CrearMenuPlanificacion]
 --     @IdPlanificacion = '00000000-0000-0000-0000-000000000000', @IdColaboradorRegistro = 1,
 --     @FechaServicio = '2026-09-01', @TipoServicio = N'ALMUERZO',
 --     @EstaDisponible = 1, @Nombre = N'Pollo al horno',
---     @Descripcion = N'Pollo con arroz y ensalada.', @Componentes = @Componentes;
+--     @Descripcion = N'Pollo con arroz y ensalada.';

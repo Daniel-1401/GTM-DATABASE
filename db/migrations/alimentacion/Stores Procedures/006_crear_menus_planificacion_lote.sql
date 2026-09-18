@@ -1,8 +1,8 @@
 -- Procedimiento: alimentacion.usp_CrearMenusPlanificacionLote
--- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql,
---             db/migrations/alimentacion/015_crear_tipos_tabla_lote_menus.sql
--- Motivo: Crear varios menús de una planificación BORRADOR, con sus componentes, de forma atómica.
--- Ejecutar después de las migraciones 010 y 015.
+-- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
+-- Motivo: Configurar un mismo menú para un rango de días de una planificación
+--         BORRADOR, sin modificar los días que ya poseen menú.
+-- Ejecutar después de la migración 017.
 
 SET ANSI_NULLS ON;
 GO
@@ -12,8 +12,13 @@ GO
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion UNIQUEIDENTIFIER,
     @IdColaboradorRegistro BIGINT,
-    @Menus [alimentacion].[TipoMenuPlanificacionLoteCreacion] READONLY,
-    @Componentes [alimentacion].[TipoComponenteMenuLoteCreacion] READONLY,
+    @FechaInicio DATE,
+    @FechaFin DATE,
+    @TipoServicio NVARCHAR(20),
+    @EstaDisponible BIT,
+    @Nombre NVARCHAR(200) = NULL,
+    @Descripcion NVARCHAR(1000) = NULL,
+    @ReferenciaImagen NVARCHAR(500) = NULL,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
@@ -24,17 +29,15 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
+    SET @TipoServicio = UPPER(NULLIF(LTRIM(RTRIM(@TipoServicio)), N''));
+    SET @Nombre = NULLIF(LTRIM(RTRIM(@Nombre)), N'');
+    SET @Descripcion = NULLIF(LTRIM(RTRIM(@Descripcion)), N'');
+    SET @ReferenciaImagen = NULLIF(LTRIM(RTRIM(@ReferenciaImagen)), N'');
+
     IF @IdPlanificacion IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El identificador de planificación es obligatorio.';
-        RETURN;
-    END;
-
-    IF NOT EXISTS (SELECT 1 FROM @Menus)
-    BEGIN
-        SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'Debe enviar al menos un menú.';
         RETURN;
     END;
     IF @IdColaboradorRegistro IS NULL
@@ -43,199 +46,150 @@ BEGIN
         SET @Mensaje = N'El colaborador que registra los menús es obligatorio.';
         RETURN;
     END;
-    IF EXISTS
-    (
-        SELECT 1
-        FROM @Menus
-        WHERE UPPER(LTRIM(RTRIM([TipoServicio]))) NOT IN (N'DESAYUNO', N'ALMUERZO', N'CENA')
-           OR ([EstaDisponible] = 1 AND NULLIF(LTRIM(RTRIM([Nombre])), N'') IS NULL)
-           OR ([EstaDisponible] = 0 AND
-               (NULLIF(LTRIM(RTRIM([Nombre])), N'') IS NOT NULL
-                OR NULLIF(LTRIM(RTRIM([Descripcion])), N'') IS NOT NULL
-                OR NULLIF(LTRIM(RTRIM([ReferenciaImagen])), N'') IS NOT NULL))
-    )
+    IF @FechaInicio IS NULL OR @FechaFin IS NULL OR @FechaFin < @FechaInicio
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'Uno o más menús contienen datos no válidos.';
+        SET @Mensaje = N'El rango de fechas no es válido.';
         RETURN;
     END;
-
-    IF EXISTS (SELECT [IdReferencia] FROM @Menus GROUP BY [IdReferencia] HAVING COUNT(*) > 1)
+    IF @TipoServicio IS NULL
+       OR NOT EXISTS
+       (
+           SELECT 1
+           FROM [alimentacion].[TipoServicio] AS [TipoServicio]
+           WHERE [TipoServicio].[CodigoTipoServicio] = @TipoServicio
+             AND [TipoServicio].[EstaActivo] = 1
+       )
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'No se permiten referencias temporales de menú repetidas.';
+        SET @Mensaje = N'El tipo de servicio no es válido.';
         RETURN;
     END;
-
-    IF EXISTS
-    (
-        SELECT [FechaServicio], UPPER(LTRIM(RTRIM([TipoServicio])))
-        FROM @Menus
-        GROUP BY [FechaServicio], UPPER(LTRIM(RTRIM([TipoServicio])))
-        HAVING COUNT(*) > 1
-    )
+    IF @EstaDisponible IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'No se permiten menús repetidos para la misma fecha y tipo de servicio.';
+        SET @Mensaje = N'Debe indicar si el servicio está disponible.';
         RETURN;
     END;
-
-    IF EXISTS
-    (
-        SELECT 1
-        FROM @Componentes AS [Componente]
-        LEFT JOIN @Menus AS [Menu]
-            ON [Menu].[IdReferencia] = [Componente].[IdReferenciaMenu]
-        WHERE [Menu].[IdReferencia] IS NULL
-           OR [Componente].[Orden] <= 0
-           OR NULLIF(LTRIM(RTRIM([Componente].[DescripcionComponente])), N'') IS NULL
-    )
+    IF @EstaDisponible = 1 AND @Nombre IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'Uno o más componentes no son válidos.';
+        SET @Mensaje = N'El nombre es obligatorio cuando el servicio está disponible.';
         RETURN;
     END;
-
-    IF EXISTS
-    (
-        SELECT [IdReferenciaMenu], [Orden]
-        FROM @Componentes
-        GROUP BY [IdReferenciaMenu], [Orden]
-        HAVING COUNT(*) > 1
-    )
-    BEGIN
-        SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'No se permiten órdenes de componente repetidos dentro del mismo menú.';
-        RETURN;
-    END;
-
-    IF EXISTS
-    (
-        SELECT 1
-        FROM @Componentes AS [Componente]
-        INNER JOIN @Menus AS [Menu]
-            ON [Menu].[IdReferencia] = [Componente].[IdReferenciaMenu]
-        WHERE [Menu].[EstaDisponible] = 0
-    )
+    IF @EstaDisponible = 0 AND (@Nombre IS NOT NULL OR @Descripcion IS NOT NULL OR @ReferenciaImagen IS NOT NULL)
     BEGIN
         SET @Codigo = N'BUSINESS_RULE_VIOLATION';
-        SET @Mensaje = N'Un servicio sin atención no puede contener componentes.';
+        SET @Mensaje = N'Un servicio sin atención no puede contener contenido.';
         RETURN;
     END;
 
     DECLARE @IdPlanificacionInterno BIGINT;
-    DECLARE @FechaInicio DATE;
-    DECLARE @FechaFin DATE;
+    DECLARE @FechaInicioPlanificacion DATE;
+    DECLARE @FechaFinPlanificacion DATE;
     DECLARE @EstadoPlanificacion NVARCHAR(25);
-    DECLARE @MenusInsertados TABLE
+    DECLARE @CantidadCreados INT;
+    DECLARE @CantidadOmitidos INT;
+    DECLARE @FechasSolicitadas TABLE ([FechaServicio] DATE NOT NULL PRIMARY KEY);
+    DECLARE @MenusCreados TABLE
     (
-        [IdReferencia] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
-        [IdMenu] BIGINT NOT NULL
+        [IdMenu] BIGINT NOT NULL PRIMARY KEY,
+        [FechaServicio] DATE NOT NULL UNIQUE
     );
 
     BEGIN TRY
         BEGIN TRANSACTION;
 
-    SELECT
-        @IdPlanificacionInterno = [IdPlanificacion],
-        @FechaInicio = [FechaInicio],
-        @FechaFin = [FechaFin],
-        @EstadoPlanificacion = [Estado]
-    FROM [alimentacion].[Planificacion] WITH (UPDLOCK, HOLDLOCK)
-    WHERE [IdentificadorPublico] = @IdPlanificacion;
+        SELECT
+            @IdPlanificacionInterno = [Planificacion].[IdPlanificacion],
+            @FechaInicioPlanificacion = [Planificacion].[FechaInicio],
+            @FechaFinPlanificacion = [Planificacion].[FechaFin],
+            @EstadoPlanificacion = [Planificacion].[Estado]
+        FROM [alimentacion].[Planificacion] AS [Planificacion] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion;
 
-    IF @IdPlanificacionInterno IS NULL
-    BEGIN
-        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        SET @Codigo = N'PLAN_NOT_FOUND';
-        SET @Mensaje = N'La planificación indicada no existe.';
-        RETURN;
-    END;
+        IF @IdPlanificacionInterno IS NULL
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+            SET @Codigo = N'PLAN_NOT_FOUND';
+            SET @Mensaje = N'La planificación indicada no existe.';
+            RETURN;
+        END;
+        IF @EstadoPlanificacion <> N'BORRADOR'
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+            SET @Codigo = N'INVALID_PLAN_STATE';
+            SET @Mensaje = N'La planificación no permite crear menús.';
+            RETURN;
+        END;
+        IF @FechaInicio < @FechaInicioPlanificacion OR @FechaFin > @FechaFinPlanificacion
+        BEGIN
+            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+            SET @Codigo = N'BUSINESS_RULE_VIOLATION';
+            SET @Mensaje = N'El rango de fechas no pertenece al período de la planificación.';
+            RETURN;
+        END;
 
-    IF @EstadoPlanificacion <> N'BORRADOR'
-    BEGIN
-        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        SET @Codigo = N'INVALID_PLAN_STATE';
-        SET @Mensaje = N'La planificación no permite crear menús.';
-        RETURN;
-    END;
+        ;WITH [Fechas] AS
+        (
+            SELECT @FechaInicio AS [FechaServicio]
+            UNION ALL
+            SELECT DATEADD(DAY, 1, [Fechas].[FechaServicio])
+            FROM [Fechas]
+            WHERE [Fechas].[FechaServicio] < @FechaFin
+        )
+        INSERT INTO @FechasSolicitadas ([FechaServicio])
+        SELECT [Fechas].[FechaServicio]
+        FROM [Fechas]
+        OPTION (MAXRECURSION 0);
 
-    IF EXISTS (SELECT 1 FROM @Menus WHERE [FechaServicio] NOT BETWEEN @FechaInicio AND @FechaFin)
-    BEGIN
-        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        SET @Codigo = N'BUSINESS_RULE_VIOLATION';
-        SET @Mensaje = N'La fecha de cada menú no pertenece al período de la planificación.';
-        RETURN;
-    END;
+        INSERT INTO [alimentacion].[Menu]
+        (
+            [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
+            [Nombre], [Descripcion], [ReferenciaImagen]
+        )
+        OUTPUT inserted.[IdMenu], inserted.[FechaServicio]
+            INTO @MenusCreados ([IdMenu], [FechaServicio])
+        SELECT
+            @IdPlanificacionInterno, @IdColaboradorRegistro, [Fecha].[FechaServicio], @TipoServicio,
+            @EstaDisponible, @Nombre, @Descripcion, @ReferenciaImagen
+        FROM @FechasSolicitadas AS [Fecha]
+        WHERE NOT EXISTS
+        (
+            SELECT 1
+            FROM [alimentacion].[Menu] AS [Menu] WITH (UPDLOCK, HOLDLOCK)
+            WHERE [Menu].[IdPlanificacion] = @IdPlanificacionInterno
+              AND [Menu].[FechaServicio] = [Fecha].[FechaServicio]
+              AND [Menu].[TipoServicio] = @TipoServicio
+        );
 
-    IF EXISTS
-    (
-        SELECT 1
-        FROM [alimentacion].[Menu] AS [Menu] WITH (UPDLOCK, HOLDLOCK)
-        INNER JOIN @Menus AS [Entrada]
-            ON [Entrada].[FechaServicio] = [Menu].[FechaServicio]
-           AND UPPER(LTRIM(RTRIM([Entrada].[TipoServicio]))) = [Menu].[TipoServicio]
-        WHERE [Menu].[IdPlanificacion] = @IdPlanificacionInterno
-    )
-    BEGIN
-        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-        SET @Codigo = N'MENU_ALREADY_EXISTS';
-        SET @Mensaje = N'El lote contiene un menú que ya existe en la planificación.';
-        RETURN;
-    END;
-
-    INSERT INTO [alimentacion].[Menu]
-    (
-        [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
-        [Nombre], [Descripcion], [ReferenciaImagen]
-    )
-    SELECT
-        @IdPlanificacionInterno, @IdColaboradorRegistro,
-        [Entrada].[FechaServicio],
-        UPPER(LTRIM(RTRIM([Entrada].[TipoServicio]))),
-        [Entrada].[EstaDisponible],
-        NULLIF(LTRIM(RTRIM([Entrada].[Nombre])), N''),
-        NULLIF(LTRIM(RTRIM([Entrada].[Descripcion])), N''),
-        NULLIF(LTRIM(RTRIM([Entrada].[ReferenciaImagen])), N'')
-    FROM @Menus AS [Entrada];
-
-    INSERT INTO @MenusInsertados ([IdReferencia], [IdMenu])
-    SELECT
-        [Entrada].[IdReferencia],
-        [Menu].[IdMenu]
-    FROM @Menus AS [Entrada]
-    INNER JOIN [alimentacion].[Menu] AS [Menu]
-        ON [Menu].[IdPlanificacion] = @IdPlanificacionInterno
-       AND [Menu].[FechaServicio] = [Entrada].[FechaServicio]
-       AND [Menu].[TipoServicio] = UPPER(LTRIM(RTRIM([Entrada].[TipoServicio])));
-
-    INSERT INTO [alimentacion].[ComponenteMenu] ([IdMenu], [IdColaboradorRegistro], [Orden], [DescripcionComponente])
-    SELECT
-        [Insertado].[IdMenu], @IdColaboradorRegistro,
-        [Componente].[Orden],
-        LTRIM(RTRIM([Componente].[DescripcionComponente]))
-    FROM @Componentes AS [Componente]
-    INNER JOIN @MenusInsertados AS [Insertado]
-        ON [Insertado].[IdReferencia] = [Componente].[IdReferenciaMenu];
+        SET @CantidadCreados = @@ROWCOUNT;
+        SET @CantidadOmitidos = (SELECT COUNT(*) FROM @FechasSolicitadas) - @CantidadCreados;
 
         COMMIT TRANSACTION;
 
         SET @Codigo = N'CREATED';
-        SET @Mensaje = NULL;
+        SET @Mensaje = CONCAT(
+            N'Se crearon ', @CantidadCreados, N' menú(s) y se omitieron ', @CantidadOmitidos,
+            N' fecha(s) que ya tenían un menú configurado.');
 
         SELECT
-        [Insertado].[IdReferencia] AS [IdReferenciaMenu],
-        [Menu].[IdentificadorPublico] AS [IdMenu],
-        [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
-        [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistro],
-        [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
-        [Menu].[VersionRegistro], [Menu].[FechaCreacion]
-    FROM @MenusInsertados AS [Insertado]
-    INNER JOIN [alimentacion].[Menu] AS [Menu]
-        ON [Menu].[IdMenu] = [Insertado].[IdMenu]
-    INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
-        ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
-        ORDER BY [Menu].[FechaServicio], [Menu].[TipoServicio];
+            [Fecha].[FechaServicio],
+            @TipoServicio AS [TipoServicio],
+            CONVERT(BIT, CASE WHEN [Creado].[IdMenu] IS NULL THEN 0 ELSE 1 END) AS [FueCreado],
+            CASE WHEN [Creado].[IdMenu] IS NULL THEN N'OMITIDO_EXISTENTE' ELSE N'CREADO' END AS [Resultado],
+            [Menu].[IdentificadorPublico] AS [IdMenu],
+            [Menu].[EstaDisponible],
+            [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
+            [Menu].[VersionRegistro], [Menu].[FechaCreacion]
+        FROM @FechasSolicitadas AS [Fecha]
+        INNER JOIN [alimentacion].[Menu] AS [Menu]
+            ON [Menu].[IdPlanificacion] = @IdPlanificacionInterno
+           AND [Menu].[FechaServicio] = [Fecha].[FechaServicio]
+           AND [Menu].[TipoServicio] = @TipoServicio
+        LEFT JOIN @MenusCreados AS [Creado]
+            ON [Creado].[IdMenu] = [Menu].[IdMenu]
+        ORDER BY [Fecha].[FechaServicio];
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;

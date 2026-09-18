@@ -1,8 +1,8 @@
 -- Procedimiento: alimentacion.usp_ListarMenusPlanificacionPorTipoServicio
 -- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
--- Motivo: Listar todos los días de una planificación para un tipo de servicio,
---         incluyendo los días que aún no tienen una fila de menú.
--- Ejecutar después de la migración 010.
+-- Motivo: Listar la matriz fecha por tipo de servicio de una planificación,
+--         incluyendo los días y servicios que aún no tienen una fila de menú.
+-- Ejecutar después de la migración 017.
 
 SET ANSI_NULLS ON;
 GO
@@ -32,7 +32,17 @@ BEGIN
     SET @TipoServicio = UPPER(NULLIF(LTRIM(RTRIM(@TipoServicio)), N''));
 
     IF @TipoServicio IS NULL
-       OR @TipoServicio NOT IN (N'DESAYUNO', N'ALMUERZO', N'CENA')
+       OR
+       (
+           @TipoServicio <> N'TODOS'
+           AND NOT EXISTS
+           (
+               SELECT 1
+               FROM [alimentacion].[TipoServicio] AS [TipoServicio]
+               WHERE [TipoServicio].[CodigoTipoServicio] = @TipoServicio
+                 AND [TipoServicio].[EstaActivo] = 1
+           )
+       )
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El tipo de servicio no es válido.';
@@ -66,10 +76,33 @@ BEGIN
             [FechasPeriodo].[FechaFin]
         FROM [FechasPeriodo]
         WHERE [FechasPeriodo].[FechaServicio] < [FechasPeriodo].[FechaFin]
+    ),
+    [ServiciosSolicitados] AS
+    (
+        SELECT
+            [TipoServicio].[CodigoTipoServicio],
+            [TipoServicio].[NombreTipoServicio],
+            [TipoServicio].[OrdenPresentacion]
+        FROM [alimentacion].[TipoServicio] AS [TipoServicio]
+        WHERE [TipoServicio].[EstaActivo] = 1
+          AND (@TipoServicio = N'TODOS' OR [TipoServicio].[CodigoTipoServicio] = @TipoServicio)
+    ),
+    [ReservasPorMenu] AS
+    (
+        SELECT
+            [Reserva].[IdPlanificacion],
+            [Reserva].[IdMenu],
+            COUNT_BIG(*) AS [CantidadReservasRegistradas]
+        FROM [alimentacion].[Reserva] AS [Reserva]
+        INNER JOIN [PeriodoPlanificacion] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+        GROUP BY [Reserva].[IdPlanificacion], [Reserva].[IdMenu]
     )
     SELECT
         [FechasPeriodo].[FechaServicio],
-        @TipoServicio AS [TipoServicio],
+        [ServiciosSolicitados].[CodigoTipoServicio] AS [TipoServicio],
+        [ServiciosSolicitados].[NombreTipoServicio],
+        [ServiciosSolicitados].[OrdenPresentacion],
         CONVERT(BIT, CASE WHEN [Menu].[IdMenu] IS NULL THEN 0 ELSE 1 END) AS [TieneMenu],
         [Menu].[IdentificadorPublico] AS [IdMenu],
         [Menu].[EstaDisponible],
@@ -80,13 +113,21 @@ BEGIN
         [Menu].[ReferenciaImagen],
         [Menu].[VersionRegistro],
         [Menu].[FechaCreacion],
-        [Menu].[FechaModificacion]
+        [Menu].[FechaModificacion],
+        ISNULL([ReservasPorMenu].[CantidadReservasRegistradas], 0) AS [CantidadReservasRegistradas]
     FROM [FechasPeriodo]
+    CROSS JOIN [ServiciosSolicitados]
     LEFT JOIN [alimentacion].[Menu] AS [Menu]
         ON [Menu].[IdPlanificacion] = [FechasPeriodo].[IdPlanificacion]
        AND [Menu].[FechaServicio] = [FechasPeriodo].[FechaServicio]
-       AND [Menu].[TipoServicio] = @TipoServicio
-    ORDER BY [FechasPeriodo].[FechaServicio]
+       AND [Menu].[TipoServicio] = [ServiciosSolicitados].[CodigoTipoServicio]
+    LEFT JOIN [ReservasPorMenu] AS [ReservasPorMenu]
+        ON [ReservasPorMenu].[IdPlanificacion] = [Menu].[IdPlanificacion]
+       AND [ReservasPorMenu].[IdMenu] = [Menu].[IdMenu]
+    ORDER BY
+        [FechasPeriodo].[FechaServicio],
+        [ServiciosSolicitados].[OrdenPresentacion],
+        [ServiciosSolicitados].[CodigoTipoServicio]
     OPTION (MAXRECURSION 0, RECOMPILE);
     END TRY
     BEGIN CATCH

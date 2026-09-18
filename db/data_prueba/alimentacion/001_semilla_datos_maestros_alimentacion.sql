@@ -3,7 +3,7 @@
 -- Alcance: configuración maestra del schema alimentacion.
 -- Incluye: VentanaRetiroServicio, MatrizInformativaBeacon, MajorAreaBeacon,
 --          BeaconAutorizado y ConfiguracionProximidadBeacon.
--- Excluye: Planificacion, Menu, ComponenteMenu, ConsolidacionPlanificacion,
+-- Excluye: Planificacion, Menu, ConsolidacionPlanificacion,
 --          CantidadConsolidadaMenu, Reserva, CodigoQR, Entrega y ValidacionEntrega.
 -- No ejecutar contra producción. Requiere las migraciones núcleo 001..008,
 -- Alimentación 009 y la sede sintética GTM-PRUEBA / LIM-PRU.

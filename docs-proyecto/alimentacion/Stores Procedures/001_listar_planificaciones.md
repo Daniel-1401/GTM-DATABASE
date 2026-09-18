@@ -4,7 +4,7 @@
 
 Procedimiento de solo lectura para el listado maestro paginado de planificaciones
 de Alimentación. Devuelve exclusivamente la cabecera de cada planificación; no
-incluye menús, componentes, reservas ni consolidaciones.
+incluye menús, reservas ni consolidaciones.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/001_listar_planificaciones.sql`.
 

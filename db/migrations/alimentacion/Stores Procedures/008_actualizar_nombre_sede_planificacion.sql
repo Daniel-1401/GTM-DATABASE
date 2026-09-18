@@ -89,18 +89,18 @@ BEGIN
             RETURN;
         END;
 
-        IF NOT EXISTS
-        (
-            SELECT 1
-            FROM [rrhh].[Colaborador]
-            WHERE [IdColaborador] = @IdColaboradorModificacion
-        )
-        BEGIN
-            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-            SET @Codigo = N'NOT_FOUND';
-            SET @Mensaje = N'El colaborador que realiza la modificación no existe.';
-            RETURN;
-        END;
+--         IF NOT EXISTS
+--         (
+--             SELECT 1
+--             FROM [rrhh].[Colaborador]
+--             WHERE [IdColaborador] = @IdColaboradorModificacion
+--         )
+--         BEGIN
+--             IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+--             SET @Codigo = N'NOT_FOUND';
+--             SET @Mensaje = N'El colaborador que realiza la modificación no existe.';
+--             RETURN;
+--         END;
 
         IF NOT EXISTS
         (
@@ -161,11 +161,12 @@ BEGIN
 END;
 GO
 
--- DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
--- EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
---     @IdPlanificacion = '00000000-0000-0000-0000-000000000000',
---     @IdSede = 1,
---     @Nombre = N'Menú septiembre 2026',
---     @IdColaboradorModificacion = 1,
---     @Codigo = @Codigo OUTPUT,
---     @Mensaje = @Mensaje OUTPUT;
+DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
+EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
+    @IdPlanificacion = '2D2F75E9-E2B2-F111-B1C0-0050568F0125',
+    @IdSede = 1,
+    @Nombre = N'Menú septiembre 2026',
+    @IdColaboradorModificacion = 3221,
+    @Codigo = @Codigo OUTPUT,
+    @Mensaje = @Mensaje OUTPUT;
+SELECT @Codigo, @Mensaje

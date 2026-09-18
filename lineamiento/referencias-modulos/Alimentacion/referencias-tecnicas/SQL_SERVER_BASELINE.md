@@ -87,7 +87,7 @@ El modelo deberá representar:
 - versión para control de concurrencia;
 - una combinación de fecha, sede y tipo de servicio;
 - menú o marca explícita de día sin servicio;
-- nombre, descripción, componentes informativos e imagen opcional;
+- nombre, descripción e imagen opcional;
 - copia de contenido sin compartir identidad transaccional; y
 - instante y actor de publicación, cierre, reapertura y consolidación.
 

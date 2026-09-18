@@ -6,7 +6,7 @@ Schema propio: `alimentacion`
 
 ## Alcance y fuente de verdad
 
-Este documento describe las 12 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `016` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
+Este documento describe las 10 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `017` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
 
 No se definen aquí tablas de inventario, compras, recetas, costos, cupos, usuarios, roles ni permisos. Esta documentación no acredita que el DDL haya sido aplicado en una instancia.
 
@@ -23,18 +23,26 @@ Alimentación reutiliza, sin duplicarlos, los siguientes datos del núcleo:
 
 | Grupo | Tablas |
 |---|---|
-| Configuración operativa | `VentanaRetiroServicio` |
-| Planificación y menú | `Planificacion`, `Menu`, `ComponenteMenu` |
+| Configuración operativa | `TipoServicio`, `VentanaRetiroServicio` |
+| Planificación y menú | `Planificacion`, `Menu` |
 | Consolidación | `ConsolidacionPlanificacion`, `CantidadConsolidadaMenu` |
 | Reserva, QR y entrega | `Reserva`, `CodigoQR`, `Entrega`, `ValidacionEntrega` |
 
 ## Configuración operativa
 
+### `alimentacion.TipoServicio`
+
+Maestro de los tipos de servicio que pueden utilizar los menús y las ventanas de retiro. Su clave es `IdTipoServicio`; `CodigoTipoServicio` es único y se referencia desde las tablas operativas.
+
+- Valores iniciales: `DESAYUNO`, `ALMUERZO` y `CENA`.
+- `NombreTipoServicio` y `OrdenPresentacion` permiten que el frontend los muestre sin codificar valores.
+- Solo los tipos con `EstaActivo = 1` se exponen para crear menús y en `usp_ListarTiposServicio`.
+
 ### `alimentacion.VentanaRetiroServicio`
 
 Configura una ventana de retiro por sede y servicio. Su clave es `IdVentanaRetiroServicio`; tiene FK a `organizacion.Sede`. Registra tipo de servicio, horas de inicio/fin y vigencia.
 
-- Servicios permitidos: `DESAYUNO`, `ALMUERZO`, `CENA`.
+- El tipo de servicio debe existir en `alimentacion.TipoServicio`.
 - Las horas de inicio y fin deben ser distintas.
 - El fin de vigencia debe ser posterior al inicio.
 - El índice filtrado `IN_VentanaRetiroServicio_Abierta` permite una sola ventana abierta por sede y servicio.
@@ -60,17 +68,9 @@ Agrupa días de servicio elegidos libremente para una sede y controla su estado.
 Define un menú —o la indisponibilidad— para una planificación, fecha y tipo de servicio. Su clave es `IdMenu`; tiene FK a `Planificacion` e identificador público único.
 
 - La combinación `IdPlanificacion`, `FechaServicio`, `TipoServicio` es única.
-- Servicios permitidos: `DESAYUNO`, `ALMUERZO`, `CENA`.
+- El tipo de servicio debe existir en `alimentacion.TipoServicio`.
 - Si está disponible, exige nombre; si no lo está, no puede conservar nombre, descripción ni imagen.
 - `VersionRegistro` debe ser mayor que cero.
-
-### `alimentacion.ComponenteMenu`
-
-Conserva componentes informativos ordenados de un menú. Su clave es `IdComponenteMenu` y tiene FK a `Menu`.
-
-- La combinación `IdMenu` + `Orden` es única.
-- El orden debe ser mayor que cero.
-- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`).
 
 ## Consolidación
 
@@ -131,8 +131,9 @@ Registra la validación temporal previa al consumo del QR. Su clave es el UUID `
 ## Relaciones principales
 
 ```text
+TipoServicio ──< VentanaRetiroServicio, Menu, Reserva, Entrega
 Sede ──< VentanaRetiroServicio
-Sede ──< Planificacion ──< Menu ──< ComponenteMenu
+Sede ──< Planificacion ──< Menu
                               │
 Planificacion ── 0..1 ConsolidacionPlanificacion ──< CantidadConsolidadaMenu
                               │
@@ -153,8 +154,9 @@ Colaborador ──< ConsolidacionPlanificacion, Entrega, ValidacionEntrega
 
 ## Referencias
 
-- `db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql` a `013_crear_matriz_informativa_beacons.sql`.
+- `db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql` a `017_crear_maestro_tipos_servicio.sql`.
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ListarPlanificaciones.md`, contrato de lectura del listado maestro.
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ObtenerResumenPlanificacion.md`, contrato del resumen de planificación.
 - `docs-proyecto/alimentacion/Stores Procedures/usp_ListarMenusPlanificacionPorTipoServicio.md`, contrato del calendario de menús por tipo de servicio.
+- `docs-proyecto/alimentacion/Stores Procedures/009_listar_tipos_servicio.md`, contrato del maestro de tipos de servicio para frontend.
 - `docs-proyecto/nucleo/TABLAS_NUCLEO.md`, para las tablas externas requeridas del núcleo común.

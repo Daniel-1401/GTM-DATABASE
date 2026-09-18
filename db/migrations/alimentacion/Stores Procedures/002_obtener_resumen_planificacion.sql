@@ -1,7 +1,7 @@
 -- Procedimiento: alimentacion.usp_ObtenerResumenPlanificacion
 -- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
--- Motivo: Obtener la cabecera y el conteo global de menús de una planificación.
--- Ejecutar después de la migración 010.
+-- Motivo: Obtener la cabecera y los conteos de menús y reservas de una planificación.
+-- Ejecutar después de la migración 017.
 
 SET ANSI_NULLS ON;
 GO
@@ -28,6 +28,46 @@ BEGIN
     END;
 
     BEGIN TRY
+    ;WITH [PlanificacionObjetivo] AS
+    (
+        SELECT
+            [Planificacion].[IdPlanificacion],
+            [Planificacion].[IdentificadorPublico],
+            [Planificacion].[Nombre],
+            [Planificacion].[IdSede],
+            [Planificacion].[FechaInicio],
+            [Planificacion].[FechaFin],
+            [Planificacion].[Estado],
+            [Planificacion].[IdColaboradorModificacion],
+            [Planificacion].[VersionRegistro],
+            [Planificacion].[FechaCreacion],
+            [Planificacion].[FechaModificacion]
+        FROM [alimentacion].[Planificacion] AS [Planificacion]
+        WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion
+          AND [Planificacion].[Estado] <> N'ELIMINADA'
+    ),
+    [MenusPorPlanificacion] AS
+    (
+        SELECT
+            [Menu].[IdPlanificacion],
+            COUNT_BIG(*) AS [CantidadMenusRegistrados],
+            SUM(CASE WHEN [Menu].[EstaDisponible] = 1 THEN CONVERT(BIGINT, 1) ELSE CONVERT(BIGINT, 0) END) AS [CantidadMenusConfigurados],
+            SUM(CASE WHEN [Menu].[EstaDisponible] = 0 THEN CONVERT(BIGINT, 1) ELSE CONVERT(BIGINT, 0) END) AS [CantidadServiciosSinAtencion]
+        FROM [alimentacion].[Menu] AS [Menu]
+        INNER JOIN [PlanificacionObjetivo] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
+        GROUP BY [Menu].[IdPlanificacion]
+    ),
+    [ReservasPorPlanificacion] AS
+    (
+        SELECT
+            [Reserva].[IdPlanificacion],
+            COUNT_BIG(*) AS [CantidadReservasRegistradas]
+        FROM [alimentacion].[Reserva] AS [Reserva]
+        INNER JOIN [PlanificacionObjetivo] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+        GROUP BY [Reserva].[IdPlanificacion]
+    )
     SELECT
         [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
         [Planificacion].[Nombre],
@@ -40,31 +80,69 @@ BEGIN
         [Planificacion].[Estado],
         [Planificacion].[IdColaboradorModificacion],
         [Planificacion].[VersionRegistro],
-        COUNT([Menu].[IdMenu]) AS [CantidadMenusRegistrados],
-        SUM(CASE WHEN [Menu].[EstaDisponible] = 1 THEN 1 ELSE 0 END) AS [CantidadMenusCreados],
-        SUM(CASE WHEN [Menu].[EstaDisponible] = 0 THEN 1 ELSE 0 END) AS [CantidadServiciosSinAtencion],
+        ISNULL([MenusPorPlanificacion].[CantidadMenusRegistrados], 0) AS [CantidadMenusRegistrados],
+        ISNULL([MenusPorPlanificacion].[CantidadMenusConfigurados], 0) AS [CantidadMenusCreados],
+        ISNULL([MenusPorPlanificacion].[CantidadServiciosSinAtencion], 0) AS [CantidadServiciosSinAtencion],
         [Planificacion].[FechaCreacion],
-        [Planificacion].[FechaModificacion]
-    FROM [alimentacion].[Planificacion] AS [Planificacion]
+        [Planificacion].[FechaModificacion],
+        ISNULL([ReservasPorPlanificacion].[CantidadReservasRegistradas], 0) AS [CantidadReservasRegistradas]
+    FROM [PlanificacionObjetivo] AS [Planificacion]
     INNER JOIN [organizacion].[Sede] AS [Sede]
         ON [Sede].[IdSede] = [Planificacion].[IdSede]
-    LEFT JOIN [alimentacion].[Menu] AS [Menu]
-        ON [Menu].[IdPlanificacion] = [Planificacion].[IdPlanificacion]
-    WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion
-      AND [Planificacion].[Estado] <> N'ELIMINADA'
-    GROUP BY
-        [Planificacion].[IdentificadorPublico],
-        [Planificacion].[Nombre],
-        [Sede].[IdSede],
-        [Sede].[CodigoSede],
-        [Sede].[NombreSede],
-        [Planificacion].[FechaInicio],
-        [Planificacion].[FechaFin],
-        [Planificacion].[Estado],
-        [Planificacion].[IdColaboradorModificacion],
-        [Planificacion].[VersionRegistro],
-        [Planificacion].[FechaCreacion],
-        [Planificacion].[FechaModificacion];
+    LEFT JOIN [MenusPorPlanificacion] AS [MenusPorPlanificacion]
+        ON [MenusPorPlanificacion].[IdPlanificacion] = [Planificacion].[IdPlanificacion]
+    LEFT JOIN [ReservasPorPlanificacion] AS [ReservasPorPlanificacion]
+        ON [ReservasPorPlanificacion].[IdPlanificacion] = [Planificacion].[IdPlanificacion];
+
+    ;WITH [PlanificacionObjetivo] AS
+    (
+        SELECT [Planificacion].[IdPlanificacion]
+        FROM [alimentacion].[Planificacion] AS [Planificacion]
+        WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion
+          AND [Planificacion].[Estado] <> N'ELIMINADA'
+    ),
+    [MenusPorTipoServicio] AS
+    (
+        SELECT
+            [Menu].[IdPlanificacion],
+            [Menu].[TipoServicio],
+            COUNT_BIG(*) AS [CantidadMenusRegistrados],
+            SUM(CASE WHEN [Menu].[EstaDisponible] = 1 THEN CONVERT(BIGINT, 1) ELSE CONVERT(BIGINT, 0) END) AS [CantidadMenusConfigurados],
+            SUM(CASE WHEN [Menu].[EstaDisponible] = 0 THEN CONVERT(BIGINT, 1) ELSE CONVERT(BIGINT, 0) END) AS [CantidadServiciosSinAtencion]
+        FROM [alimentacion].[Menu] AS [Menu]
+        INNER JOIN [PlanificacionObjetivo] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Menu].[IdPlanificacion]
+        GROUP BY [Menu].[IdPlanificacion], [Menu].[TipoServicio]
+    ),
+    [ReservasPorTipoServicio] AS
+    (
+        SELECT
+            [Reserva].[IdPlanificacion],
+            [Reserva].[TipoServicio],
+            COUNT_BIG(*) AS [CantidadReservasRegistradas]
+        FROM [alimentacion].[Reserva] AS [Reserva]
+        INNER JOIN [PlanificacionObjetivo] AS [Planificacion]
+            ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+        GROUP BY [Reserva].[IdPlanificacion], [Reserva].[TipoServicio]
+    )
+    SELECT
+        [TipoServicio].[CodigoTipoServicio] AS [TipoServicio],
+        [TipoServicio].[NombreTipoServicio] AS [NombreTipoServicio],
+        [TipoServicio].[OrdenPresentacion],
+        ISNULL([MenusPorTipoServicio].[CantidadMenusRegistrados], 0) AS [CantidadMenusRegistrados],
+        ISNULL([MenusPorTipoServicio].[CantidadMenusConfigurados], 0) AS [CantidadMenusConfigurados],
+        ISNULL([MenusPorTipoServicio].[CantidadServiciosSinAtencion], 0) AS [CantidadServiciosSinAtencion],
+        ISNULL([ReservasPorTipoServicio].[CantidadReservasRegistradas], 0) AS [CantidadReservasRegistradas]
+    FROM [PlanificacionObjetivo] AS [Planificacion]
+    INNER JOIN [alimentacion].[TipoServicio] AS [TipoServicio]
+        ON [TipoServicio].[EstaActivo] = 1
+    LEFT JOIN [MenusPorTipoServicio] AS [MenusPorTipoServicio]
+        ON [MenusPorTipoServicio].[IdPlanificacion] = [Planificacion].[IdPlanificacion]
+       AND [MenusPorTipoServicio].[TipoServicio] = [TipoServicio].[CodigoTipoServicio]
+    LEFT JOIN [ReservasPorTipoServicio] AS [ReservasPorTipoServicio]
+        ON [ReservasPorTipoServicio].[IdPlanificacion] = [Planificacion].[IdPlanificacion]
+       AND [ReservasPorTipoServicio].[TipoServicio] = [TipoServicio].[CodigoTipoServicio]
+    ORDER BY [TipoServicio].[OrdenPresentacion], [TipoServicio].[CodigoTipoServicio];
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
