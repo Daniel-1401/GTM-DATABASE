@@ -1,12 +1,12 @@
 # Tablas del módulo Alimentación GTM
 
-Fecha de actualización: 2026-09-08  
+Fecha de actualización: 2026-09-21
 Motor objetivo: Microsoft SQL Server 2017  
 Schema propio: `alimentacion`
 
 ## Alcance y fuente de verdad
 
-Este documento describe las 10 tablas oficiales del módulo Alimentación. La fuente de verdad son las migraciones `009` a `017` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
+Este documento describe las 10 tablas del esquema `alimentacion` y las tres tablas transversales de proximidad creadas por la migración `009`. La fuente de verdad son las migraciones `009` a `017` en `db/migrations/alimentacion/`; ante cualquier diferencia, prevalecen esas migraciones.
 
 No se definen aquí tablas de inventario, compras, recetas, costos, cupos, usuarios, roles ni permisos. Esta documentación no acredita que el DDL haya sido aplicado en una instancia.
 
@@ -24,6 +24,7 @@ Alimentación reutiliza, sin duplicarlos, los siguientes datos del núcleo:
 | Grupo | Tablas |
 |---|---|
 | Configuración operativa | `TipoServicio`, `VentanaRetiroServicio` |
+| Proximidad | `proximidad.MajorAreaBeacon`, `proximidad.ConfiguracionBeacon`, `proximidad.BeaconAutorizado` |
 | Planificación y menú | `Planificacion`, `Menu` |
 | Consolidación | `ConsolidacionPlanificacion`, `CantidadConsolidadaMenu` |
 | Reserva, QR y entrega | `Reserva`, `CodigoQR`, `Entrega`, `ValidacionEntrega` |
@@ -49,6 +50,51 @@ Configura una ventana de retiro por sede y servicio. Su clave es `IdVentanaRetir
 
 La configuración de beacons y proximidad es transversal y se administra en el esquema `proximidad`.
 
+### `proximidad.MajorAreaBeacon`
+
+Define el área física asociada a una combinación de sede y `major`. Su clave es
+`IdMajorAreaBeacon`; la combinación `IdSede` y `NumeroMajor` es única.
+
+- Conserva el código, nombre, ubicación de referencia y observación del área.
+- Un beacon autorizado debe referenciar obligatoriamente un área major de la
+  misma sede y major.
+- La tabla no representa un beacon físico: un área major puede tener varios
+  beacons, diferenciados por `minor`.
+
+### `proximidad.ConfiguracionBeacon`
+
+Define una política reutilizable de proximidad para una sede. Su clave es
+`IdConfiguracionProximidadBeacon`; `CodigoVersion` es único dentro de la sede y
+se expone al backend como `configurationVersion`.
+
+- La política contiene `CantidadMinimaEmisiones`,
+  `VentanaConfirmacionMilisegundos`, `IntervaloEvaluacionMilisegundos`,
+  `TiempoSalidaRangoMilisegundos` y `UmbralRssi`.
+- La política tiene vigencia mediante `FechaInicioVigencia` y
+  `FechaFinVigencia`; el fin, si existe, debe ser posterior al inicio.
+- Para cambiar parámetros se registra una nueva configuración con otro
+  `CodigoVersion` y se reasignan los beacons; la configuración publicada no se
+  modifica en sitio.
+- Una misma configuración puede asignarse a varios beacons de la misma sede,
+  evitando duplicar sus parámetros.
+- `IdConfiguracionProximidadBeacon` identifica internamente la política aplicada
+  y puede exponerse como referencia de configuración si un consumidor lo requiere.
+
+### `proximidad.BeaconAutorizado`
+
+Registra un beacon habilitado para una sede. Su identidad técnica es la terna
+`IdentificadorUuid`, `NumeroMajor` y `NumeroMinor`, que es única.
+
+- Cada beacon referencia obligatoriamente una `ConfiguracionBeacon` de su misma
+  sede mediante la FK compuesta por configuración y sede.
+- La regla impide asignar a un beacon la política de otra sede.
+- `ReferenciaBeacon` es la referencia funcional que el backend expone como
+  `beaconRef`; debe contener texto no vacío.
+- `DireccionMac` permite registrar la MAC del dispositivo en formato canónico
+  `AA:BB:CC:DD:EE:FF`. Es opcional y no sustituye la identidad BLE formada por
+  UUID, major y minor.
+- `EstaActivo` determina si el beacon puede ser expuesto para operación móvil.
+
 ## Planificación y menú
 
 ### `alimentacion.Planificacion`
@@ -67,6 +113,7 @@ Agrupa días de servicio elegidos libremente para una sede y controla su estado.
 
 Define un menú —o la indisponibilidad— para una planificación, fecha y tipo de servicio. Su clave es `IdMenu`; tiene FK a `Planificacion` e identificador público único.
 
+- `MenuId` es una referencia obligatoria a un menú gestionado en otra base de datos. No tiene FK local y debe ser provista por `usp_CrearMenuPlanificacion` y `usp_CrearMenusPlanificacionLote`.
 - La combinación `IdPlanificacion`, `FechaServicio`, `TipoServicio` es única.
 - El tipo de servicio debe existir en `alimentacion.TipoServicio`.
 - Si está disponible, exige nombre; si no lo está, no puede conservar nombre, descripción ni imagen.
@@ -133,6 +180,8 @@ Registra la validación temporal previa al consumo del QR. Su clave es el UUID `
 ```text
 TipoServicio ──< VentanaRetiroServicio, Menu, Reserva, Entrega
 Sede ──< VentanaRetiroServicio
+Sede ──< MajorAreaBeacon ──< BeaconAutorizado >── ConfiguracionBeacon
+Sede ──< ConfiguracionBeacon
 Sede ──< Planificacion ──< Menu
                               │
 Planificacion ── 0..1 ConsolidacionPlanificacion ──< CantidadConsolidadaMenu

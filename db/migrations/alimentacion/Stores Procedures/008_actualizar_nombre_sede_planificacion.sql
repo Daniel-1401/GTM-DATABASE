@@ -161,12 +161,12 @@ BEGIN
 END;
 GO
 
-DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
-EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
-    @IdPlanificacion = '2D2F75E9-E2B2-F111-B1C0-0050568F0125',
-    @IdSede = 1,
-    @Nombre = N'Menú septiembre 2026',
-    @IdColaboradorModificacion = 3221,
-    @Codigo = @Codigo OUTPUT,
-    @Mensaje = @Mensaje OUTPUT;
-SELECT @Codigo, @Mensaje
+-- DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
+-- EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
+--     @IdPlanificacion = '2D2F75E9-E2B2-F111-B1C0-0050568F0125',
+--     @IdSede = 1,
+--     @Nombre = N'Menú septiembre 2026',
+--     @IdColaboradorModificacion = 3221,
+--     @Codigo = @Codigo OUTPUT,
+--     @Mensaje = @Mensaje OUTPUT;
+-- SELECT @Codigo, @Mensaje

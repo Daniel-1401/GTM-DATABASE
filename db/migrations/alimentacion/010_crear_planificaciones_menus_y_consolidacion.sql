@@ -46,6 +46,7 @@ INCLUDE ([Nombre], [VersionRegistro], [FechaModificacion]);
 CREATE TABLE [alimentacion].[Menu]
 (
     [IdMenu] BIGINT IDENTITY(1,1) NOT NULL,
+    [MenuId] BIGINT NOT NULL,
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Menu_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
     [IdPlanificacion] BIGINT NOT NULL,
     [IdColaboradorRegistro] BIGINT NOT NULL,

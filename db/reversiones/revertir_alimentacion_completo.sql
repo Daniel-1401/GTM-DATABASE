@@ -26,7 +26,26 @@ IF SCHEMA_ID(N'alimentacion') IS NULL
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    -- Los procedimientos deben eliminarse antes de sus tipos tabla y del schema.
+    -- Los procedimientos deben eliminarse antes de sus tablas, tipos tabla y schemas.
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarProductosPedidosPorNombre];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_MarcarReservasNoRecogidas];
+    DROP PROCEDURE IF EXISTS [proximidad].[usp_ObtenerConfiguracionBeaconsSede];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_RevocarCodigoQRReservaPropia];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_EmitirCodigoQRReservaPropia];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarHistorialReservasPropias];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ObtenerResumenServicioHoyColaborador];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CancelarReservaPropia];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CrearReservaPropia];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarCalendarioReservableColaborador];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarPlanificacionesPlantilla];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarMenusConfiguracionPlantilla];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ActualizarMenuPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ReabrirPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ConsolidarPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_CerrarPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_PublicarPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_EliminarMenuPlanificacion];
+    DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarTiposServicio];
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_ActualizarNombreSedePlanificacion];
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_EliminarPlanificacion];
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_CrearMenusPlanificacionLote];
@@ -35,9 +54,10 @@ BEGIN TRY
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarMenusPlanificacionPorTipoServicio];
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_ObtenerResumenPlanificacion];
     DROP PROCEDURE IF EXISTS [alimentacion].[usp_ListarPlanificaciones];
+    DROP PROCEDURE IF EXISTS [auditoria].[usp_RegistrarErrorProcedimiento];
 
     -- Las vistas se eliminan antes que las tablas que consultan.
-    DROP VIEW IF EXISTS [proximidad].[VistaMatrizInformativaBeacon];
+    DROP VIEW IF EXISTS [proximidad].[VistaMajorAreaBeacon];
 
     -- Orden inverso de las dependencias de claves foráneas.
     DROP TABLE IF EXISTS [alimentacion].[ValidacionEntrega];
@@ -49,16 +69,15 @@ BEGIN TRY
     DROP TABLE IF EXISTS [alimentacion].[Menu];
     DROP TABLE IF EXISTS [alimentacion].[Planificacion];
     DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
+    DROP TABLE IF EXISTS [alimentacion].[TipoServicio];
 
-    DROP TABLE IF EXISTS [proximidad].[ConfiguracionBeacon];
     DROP TABLE IF EXISTS [proximidad].[BeaconAutorizado];
+    DROP TABLE IF EXISTS [proximidad].[ConfiguracionBeacon];
     DROP TABLE IF EXISTS [proximidad].[MajorAreaBeacon];
-    DROP TABLE IF EXISTS [proximidad].[MatrizInformativaBeacon];
 
     DROP TYPE IF EXISTS [alimentacion].[TipoMenuPlanificacionLoteCreacion];
 
     -- La infraestructura de auditoría fue creada por la migración 016.
-    DROP PROCEDURE IF EXISTS [auditoria].[usp_RegistrarErrorProcedimiento];
     DROP TABLE IF EXISTS [auditoria].[ErrorProcedimiento];
 
     -- Solo se eliminan schemas que queden vacíos; objetos ajenos los preservan.

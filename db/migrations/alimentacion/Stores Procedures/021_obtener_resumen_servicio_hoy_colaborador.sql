@@ -1,0 +1,135 @@
+-- Procedimiento: alimentacion.usp_ObtenerResumenServicioHoyColaborador
+-- Referencias: migraciones nucleo 003/004 y alimentacion 010/011.
+-- Motivo: entregar el resumen de la reserva propia del colaborador para la
+-- pantalla inicial movil, siempre con una fila determinista.
+
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
+
+CREATE OR ALTER PROCEDURE [alimentacion].[usp_ObtenerResumenServicioHoyColaborador]
+    @IdColaborador BIGINT,
+    @Codigo NVARCHAR(50) OUTPUT,
+    @Mensaje NVARCHAR(500) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    SET @Codigo = N'OK';
+    SET @Mensaje = NULL;
+
+    IF @IdColaborador IS NULL
+    BEGIN
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'El colaborador es obligatorio.';
+        RETURN;
+    END;
+
+    select @IdColaborador = IdColaborador
+    from [rrhh].[Colaborador]
+    where UsuarioId = @IdColaborador;
+
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM [rrhh].[Colaborador] AS [Colaborador]
+        WHERE [Colaborador].[IdColaborador] = @IdColaborador
+    )
+    BEGIN
+        SET @Codigo = N'NOT_FOUND';
+        SET @Mensaje = N'El colaborador indicado no existe.';
+        RETURN;
+    END;
+
+    BEGIN TRY
+        -- No existe una conversion SQL aprobada de la zona IANA America/Lima;
+        -- SYSDATETIME() es la convencion vigente del repositorio.
+        DECLARE @FechaOficial DATE = CONVERT(DATE, SYSDATETIME());
+
+        ;WITH [ReservaHoy] AS
+        (
+            SELECT
+                [Reserva].[IdReserva] AS [IdReservaInterno],
+                [Reserva].[IdentificadorPublico] AS [IdReserva],
+                [Reserva].[IdPlanificacion] AS [IdPlanificacionInterno],
+                [Reserva].[IdMenu] AS [IdMenuInterno],
+                [Reserva].[IdSede] AS [IdSedeInterno],
+                [Reserva].[FechaServicio],
+                [Reserva].[TipoServicio],
+                [Reserva].[Estado] AS [EstadoReserva],
+                [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
+                [Planificacion].[Estado] AS [EstadoPlanificacion],
+                [Menu].[IdentificadorPublico] AS [IdMenu],
+                [Menu].[EstaDisponible],
+                [Menu].[Nombre] AS [NombreMenu],
+                [Menu].[Descripcion] AS [DescripcionMenu],
+                [Menu].[ReferenciaImagen],
+                [Sede].[IdentificadorPublico] AS [IdSedePublico],
+                [Sede].[NombreSede]
+            FROM [alimentacion].[Reserva] AS [Reserva]
+            LEFT JOIN [alimentacion].[Planificacion] AS [Planificacion]
+                ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+            LEFT JOIN [alimentacion].[Menu] AS [Menu]
+                ON [Menu].[IdMenu] = [Reserva].[IdMenu]
+               AND [Menu].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+               AND [Menu].[FechaServicio] = [Reserva].[FechaServicio]
+               AND [Menu].[TipoServicio] = [Reserva].[TipoServicio]
+            LEFT JOIN [organizacion].[Sede] AS [Sede]
+                ON [Sede].[IdSede] = [Reserva].[IdSede]
+            WHERE [Reserva].[IdColaborador] = @IdColaborador
+              AND [Reserva].[FechaServicio] = @FechaOficial
+              AND [Reserva].[Estado] = N'RESERVADA'
+        )
+        SELECT
+            @FechaOficial AS [FechaOficial],
+            [ReservaHoy].[IdReserva],
+            [ReservaHoy].[IdPlanificacion],
+            [ReservaHoy].[IdMenu],
+            [ReservaHoy].[IdSedeInterno] AS [IdSede],
+            [ReservaHoy].[IdSedePublico],
+            [ReservaHoy].[NombreSede],
+            [ReservaHoy].[FechaServicio],
+            [ReservaHoy].[TipoServicio],
+            [ReservaHoy].[EstadoReserva],
+            [ReservaHoy].[EstadoPlanificacion],
+            [ReservaHoy].[EstaDisponible],
+            [ReservaHoy].[NombreMenu],
+            [ReservaHoy].[DescripcionMenu],
+            [ReservaHoy].[ReferenciaImagen],
+            CONVERT(BIT, CASE WHEN [ReservaHoy].[IdReservaInterno] IS NULL THEN 0 ELSE 1 END) AS [TieneReservaHoy],
+            CONVERT(BIT, CASE
+                WHEN [ReservaHoy].[IdReservaInterno] IS NOT NULL
+                 AND [ReservaHoy].[EstadoPlanificacion] = N'PUBLICADA_ABIERTA'
+                THEN 1 ELSE 0 END) AS [PuedeCancelar],
+            CONVERT(BIT, CASE
+                WHEN [ReservaHoy].[IdReservaInterno] IS NOT NULL
+                 AND [ReservaHoy].[EstadoPlanificacion] = N'CONSOLIDADA'
+                THEN 1 ELSE 0 END) AS [PuedeGenerarQR],
+            CONVERT(BIT, CASE
+                WHEN [ReservaHoy].[IdReservaInterno] IS NOT NULL
+                 AND [ReservaHoy].[EstadoPlanificacion] = N'CONSOLIDADA'
+                THEN 1 ELSE 0 END) AS [PuedeRecoger]
+        FROM (VALUES (1)) AS [FilaUnica] ([Valor])
+        LEFT JOIN [ReservaHoy]
+            ON 1 = 1
+        ORDER BY [ReservaHoy].[IdReservaInterno];
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+        DECLARE @NumeroErrorCapturado INT = ERROR_NUMBER();
+        DECLARE @EstadoErrorCapturado INT = ERROR_STATE();
+        DECLARE @LineaErrorCapturado INT = ERROR_LINE();
+        DECLARE @DetalleErrorCapturado NVARCHAR(2048) = ERROR_MESSAGE();
+        EXEC [auditoria].[usp_RegistrarErrorProcedimiento]
+            @NombreProcedimiento = N'alimentacion.usp_ObtenerResumenServicioHoyColaborador',
+            @NumeroError = @NumeroErrorCapturado,
+            @EstadoError = @EstadoErrorCapturado,
+            @LineaError = @LineaErrorCapturado,
+            @DetalleInterno = @DetalleErrorCapturado;
+        SET @Codigo = N'INTERNAL_ERROR';
+        SET @Mensaje = N'No fue posible completar la operacion.';
+    END CATCH;
+END;
+GO

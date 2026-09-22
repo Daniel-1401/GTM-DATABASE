@@ -1,8 +1,8 @@
 -- Datos de prueba: 001_semilla_datos_maestros_alimentacion
 -- Motor objetivo: Microsoft SQL Server 2017
 -- Alcance: configuración maestra del schema alimentacion.
--- Incluye: VentanaRetiroServicio, MatrizInformativaBeacon, MajorAreaBeacon,
---          BeaconAutorizado y ConfiguracionProximidadBeacon.
+-- Incluye: VentanaRetiroServicio, MajorAreaBeacon, ConfiguracionBeacon reutilizable
+--          y BeaconAutorizado.
 -- Excluye: Planificacion, Menu, ConsolidacionPlanificacion,
 --          CantidadConsolidadaMenu, Reserva, CodigoQR, Entrega y ValidacionEntrega.
 -- No ejecutar contra producción. Requiere las migraciones núcleo 001..008,
@@ -14,7 +14,6 @@ SET NOCOUNT ON;
 IF OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[BeaconAutorizado]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[ConfiguracionBeacon]', N'U') IS NULL
-   OR OBJECT_ID(N'[proximidad].[MatrizInformativaBeacon]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[MajorAreaBeacon]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Empresa]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Sede]', N'U') IS NULL
@@ -81,56 +80,60 @@ IF NOT EXISTS
         (@IdSedePrueba, N'CENA', '18:00', '20:00', '2026-09-01');
 
 DECLARE @UUID_BEACON_PRUEBAS UNIQUEIDENTIFIER = 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0';
-IF EXISTS
-(
-    SELECT 1
-    FROM [proximidad].[MatrizInformativaBeacon]
-    WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS
-      AND [IdEmpresa] <> @IdEmpresaPrueba
-)
-    THROW 51013, N'El UUID de prueba ya pertenece a otra empresa.', 1;
-
--- El UUID de prueba pertenece a Golden Palace (empresa 03).
-IF NOT EXISTS
-(
-    SELECT 1
-    FROM [proximidad].[MatrizInformativaBeacon]
-    WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS
-)
-    INSERT INTO [proximidad].[MatrizInformativaBeacon]
-        ([IdEmpresa], [IdentificadorUuid])
-    VALUES
-        (@IdEmpresaPrueba, @UUID_BEACON_PRUEBAS);
-
-DECLARE @IdMatrizInformativaBeacon BIGINT =
-(
-    SELECT [IdMatrizInformativaBeacon]
-    FROM [proximidad].[MatrizInformativaBeacon]
-    WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS
-);
-
+DECLARE @NumeroMajorBeaconPrueba INT = 1;
 IF EXISTS
 (
     SELECT 1
     FROM [proximidad].[MajorAreaBeacon]
-    WHERE [IdMatrizInformativaBeacon] = @IdMatrizInformativaBeacon
-      AND [NumeroMajor] = 100
+    WHERE [IdSede] = @IdSedePrueba
+      AND [NumeroMajor] = @NumeroMajorBeaconPrueba
       AND [CodigoAreaFisica] <> N'COMEDOR'
 )
-    THROW 51014, N'El Major 100 del UUID de prueba ya está asociado a otra área física.', 1;
+    THROW 51014, N'El major de prueba ya está asociado a otra área física.', 1;
 
--- El Major 100 del UUID de prueba corresponde al área física COMEDOR.
+-- El major de prueba corresponde al área física COMEDOR de la sede.
 IF NOT EXISTS
 (
     SELECT 1
     FROM [proximidad].[MajorAreaBeacon]
-    WHERE [IdMatrizInformativaBeacon] = @IdMatrizInformativaBeacon
-      AND [NumeroMajor] = 100
+    WHERE [IdSede] = @IdSedePrueba
+      AND [NumeroMajor] = @NumeroMajorBeaconPrueba
 )
     INSERT INTO [proximidad].[MajorAreaBeacon]
-        ([IdMatrizInformativaBeacon], [CodigoAreaFisica], [NombreAreaFisica], [NumeroMajor], [UbicacionReferencia])
+        ([IdSede], [CodigoAreaFisica], [NombreAreaFisica], [NumeroMajor], [UbicacionReferencia])
     VALUES
-        (@IdMatrizInformativaBeacon, N'COMEDOR', N'Comedor', 100, N'Comedor de la sede Golden Palace');
+        (@IdSedePrueba, N'COMEDOR', N'Comedor', @NumeroMajorBeaconPrueba, N'Comedor de la sede Golden Palace');
+
+DECLARE @IdMajorAreaBeaconPrueba BIGINT =
+(
+    SELECT [IdMajorAreaBeacon]
+    FROM [proximidad].[MajorAreaBeacon]
+    WHERE [IdSede] = @IdSedePrueba
+      AND [NumeroMajor] = @NumeroMajorBeaconPrueba
+);
+
+-- Política maestra vigente reutilizable para los beacons sintéticos de la sede.
+DECLARE @CodigoVersionConfiguracionPrueba NVARCHAR(100) = N'BEACON-PRUEBA-V1';
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [proximidad].[ConfiguracionBeacon]
+    WHERE [IdSede] = @IdSedePrueba
+      AND [CodigoVersion] = @CodigoVersionConfiguracionPrueba
+)
+    INSERT INTO [proximidad].[ConfiguracionBeacon]
+        ([IdSede], [CodigoVersion], [CantidadMinimaEmisiones], [VentanaConfirmacionMilisegundos],
+         [IntervaloEvaluacionMilisegundos], [TiempoSalidaRangoMilisegundos], [UmbralRssi], [FechaInicioVigencia])
+    VALUES
+        (@IdSedePrueba, @CodigoVersionConfiguracionPrueba, 3, 4000, 250, 2000, -70, '2026-09-21T00:00:00.000');
+
+DECLARE @IdConfiguracionProximidadBeaconPrueba BIGINT =
+(
+    SELECT [IdConfiguracionProximidadBeacon]
+    FROM [proximidad].[ConfiguracionBeacon]
+    WHERE [IdSede] = @IdSedePrueba
+      AND [CodigoVersion] = @CodigoVersionConfiguracionPrueba
+);
 
 -- Beacon sintético autorizado para la sede de prueba.
 IF NOT EXISTS
@@ -138,36 +141,13 @@ IF NOT EXISTS
     SELECT 1
     FROM [proximidad].[BeaconAutorizado]
     WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS
-      AND [NumeroMajor] = 100
+      AND [NumeroMajor] = @NumeroMajorBeaconPrueba
       AND [NumeroMinor] = 1
 )
     INSERT INTO [proximidad].[BeaconAutorizado]
-        ([IdSede], [IdentificadorUuid], [NumeroMajor], [NumeroMinor], [EstaActivo])
+        ([IdSede], [IdMajorAreaBeacon], [IdConfiguracionProximidadBeacon], [ReferenciaBeacon], [DireccionMac], [IdentificadorUuid], [NumeroMajor], [NumeroMinor], [EstaActivo])
     VALUES
-        (@IdSedePrueba, @UUID_BEACON_PRUEBAS, 100, 1, 1);
-
-DECLARE @IdBeaconPrueba BIGINT =
-(
-    SELECT [IdBeaconAutorizado]
-    FROM [proximidad].[BeaconAutorizado]
-    WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS
-      AND [NumeroMajor] = 100
-      AND [NumeroMinor] = 1
-);
-
--- Configuración maestra vigente de proximidad para el beacon sintético.
-IF NOT EXISTS
-(
-    SELECT 1
-    FROM [proximidad].[ConfiguracionBeacon]
-    WHERE [IdBeaconAutorizado] = @IdBeaconPrueba
-AND [FechaInicioVigencia] = '2024-01-01T00:00:00.000'
-)
-    INSERT INTO [proximidad].[ConfiguracionBeacon]
-        ([IdBeaconAutorizado], [CantidadMinimaEmisiones], [VentanaConfirmacionMilisegundos],
-[TiempoSalidaRangoMilisegundos], [UmbralRssi], [FechaInicioVigencia])
-    VALUES
-        (@IdBeaconPrueba, 3, 5000, 10000, -75, '2024-01-01T00:00:00.000');
+        (@IdSedePrueba, @IdMajorAreaBeaconPrueba, @IdConfiguracionProximidadBeaconPrueba, N'room-test-01', 'F8:9B:EB:B0:C8:71', @UUID_BEACON_PRUEBAS, @NumeroMajorBeaconPrueba, 1, 1);
 
 COMMIT TRANSACTION;
 GO

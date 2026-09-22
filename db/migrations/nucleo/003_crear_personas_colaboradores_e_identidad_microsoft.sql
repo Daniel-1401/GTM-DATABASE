@@ -27,6 +27,7 @@ CREATE TABLE [rrhh].[Colaborador]
     [IdColaborador] BIGINT IDENTITY(1,1) NOT NULL,
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Colaborador_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
     [IdPersona] BIGINT NOT NULL,
+    [UsuarioId] BIGINT NULL,
     [CodigoSAP] NVARCHAR(30) NOT NULL,
 [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_Colaborador_FechaCreacion] DEFAULT (SYSDATETIME()),
 [FechaModificacion] DATETIME2(3) NULL,

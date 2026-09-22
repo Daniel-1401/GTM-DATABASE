@@ -12,6 +12,7 @@ GO
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion UNIQUEIDENTIFIER,
     @IdColaboradorRegistro BIGINT,
+    @MenuId BIGINT,
     @FechaInicio DATE,
     @FechaFin DATE,
     @TipoServicio NVARCHAR(20),
@@ -44,6 +45,12 @@ BEGIN
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador que registra los menús es obligatorio.';
+        RETURN;
+    END;
+    IF @MenuId IS NULL
+    BEGIN
+        SET @Codigo = N'VALIDATION_ERROR';
+        SET @Mensaje = N'La referencia externa del menú es obligatoria.';
         RETURN;
     END;
     IF @FechaInicio IS NULL OR @FechaFin IS NULL OR @FechaFin < @FechaInicio
@@ -145,13 +152,13 @@ BEGIN
 
         INSERT INTO [alimentacion].[Menu]
         (
-            [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
+            [MenuId], [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
             [Nombre], [Descripcion], [ReferenciaImagen]
         )
         OUTPUT inserted.[IdMenu], inserted.[FechaServicio]
             INTO @MenusCreados ([IdMenu], [FechaServicio])
         SELECT
-            @IdPlanificacionInterno, @IdColaboradorRegistro, [Fecha].[FechaServicio], @TipoServicio,
+            @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistro, [Fecha].[FechaServicio], @TipoServicio,
             @EstaDisponible, @Nombre, @Descripcion, @ReferenciaImagen
         FROM @FechasSolicitadas AS [Fecha]
         WHERE NOT EXISTS
