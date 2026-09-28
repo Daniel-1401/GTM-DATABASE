@@ -99,13 +99,12 @@ Registra un beacon habilitado para una sede. Su identidad técnica es la terna
 
 ### `alimentacion.Planificacion`
 
-Agrupa días de servicio elegidos libremente para una sede y controla su estado. Su clave es `IdPlanificacion`, con identificador público único y FK a `organizacion.Sede`.
+Agrupa días de servicio elegidos libremente para una sede y controla su estado. Su clave es `IdPlanificacion`, con identificador público único. `IdSede` conserva el identificador interno de la sede en `PERSONAL_MANAGEMENTE_UNIDAD_ORGANIZATIVA`; no tiene FK local porque la sede reside en otra base de datos.
 
 - Estados: `BORRADOR`, `PUBLICADA_ABIERTA`, `PUBLICADA_CERRADA`, `CONSOLIDADA`, `ELIMINADA`.
-- `IdColaboradorModificacion` registra el último colaborador que modificó la planificación y referencia a `rrhh.Colaborador`.
-- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`); una planificación eliminada queda inactiva.
+- `IdColaboradorRegistroCorporativo` e `IdColaboradorModificacionCorporativo` conservan los UUID de CO del registrador y del último modificador, respectivamente. No tienen FK local porque el colaborador reside en otra instancia.
+- Conserva la vigencia lógica (`EstaActivo`); una planificación eliminada queda inactiva.
 - `VersionRegistro` debe ser mayor que cero.
-- Conserva el colaborador registrador (`IdColaboradorRegistro`) y la vigencia lógica (`EstaActivo`).
 - Conserva `Nombre`, `FechaInicio` y `FechaFin` como período explícito para identificarla y listarla; el fin no puede ser anterior al inicio.
 - Los días con servicio se definen mediante `Menu.FechaServicio`; no es obligatorio que todos los días del período tengan menú.
 
@@ -114,6 +113,7 @@ Agrupa días de servicio elegidos libremente para una sede y controla su estado.
 Define un menú —o la indisponibilidad— para una planificación, fecha y tipo de servicio. Su clave es `IdMenu`; tiene FK a `Planificacion` e identificador público único.
 
 - `MenuId` es una referencia obligatoria a un menú gestionado en otra base de datos. No tiene FK local y debe ser provista por `usp_CrearMenuPlanificacion` y `usp_CrearMenusPlanificacionLote`.
+- `IdColaboradorRegistroCorporativo` conserva el UUID de CO de quien registra el menú, sin FK local.
 - La combinación `IdPlanificacion`, `FechaServicio`, `TipoServicio` es única.
 - El tipo de servicio debe existir en `alimentacion.TipoServicio`.
 - Si está disponible, exige nombre; si no lo está, no puede conservar nombre, descripción ni imagen.
@@ -123,7 +123,7 @@ Define un menú —o la indisponibilidad— para una planificación, fecha y tip
 
 ### `alimentacion.ConsolidacionPlanificacion`
 
-Registra el hecho irreversible de consolidar una planificación. Su clave es `IdConsolidacionPlanificacion`; tiene FKs a `Planificacion` y `rrhh.Colaborador`.
+Registra el hecho irreversible de consolidar una planificación. Su clave es `IdConsolidacionPlanificacion`; tiene FK a `Planificacion` y conserva en `IdActorColaboradorCorporativo` el UUID de CO del actor, sin FK local.
 
 - Existe como máximo una consolidación por planificación.
 - `IdCorrelacion` es único.
@@ -191,7 +191,7 @@ Colaborador ──< Reserva >── Menu
                     ├──< CodigoQR ── 0..1 Entrega
                     └──< ValidacionEntrega
 
-Colaborador ──< ConsolidacionPlanificacion, Entrega, ValidacionEntrega
+Colaborador ──< Entrega, ValidacionEntrega
 ```
 
 ## Límites conocidos

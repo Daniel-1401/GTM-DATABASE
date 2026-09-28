@@ -5,8 +5,8 @@
 --          y BeaconAutorizado.
 -- Excluye: Planificacion, Menu, ConsolidacionPlanificacion,
 --          CantidadConsolidadaMenu, Reserva, CodigoQR, Entrega y ValidacionEntrega.
--- No ejecutar contra producción. Requiere las migraciones núcleo 001..008,
--- Alimentación 009 y la sede sintética GTM-PRUEBA / LIM-PRU.
+-- No ejecutar contra producción. Requiere los scripts de una instancia hija
+-- del núcleo, Alimentación 009 y la sede sintética Golden Palace.
 
 SET XACT_ABORT ON;
 SET NOCOUNT ON;
@@ -15,23 +15,14 @@ IF OBJECT_ID(N'[alimentacion].[VentanaRetiroServicio]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[BeaconAutorizado]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[ConfiguracionBeacon]', N'U') IS NULL
    OR OBJECT_ID(N'[proximidad].[MajorAreaBeacon]', N'U') IS NULL
-   OR OBJECT_ID(N'[organizacion].[Empresa]', N'U') IS NULL
    OR OBJECT_ID(N'[organizacion].[Sede]', N'U') IS NULL
-    THROW 51010, N'Faltan tablas requeridas. Aplique primero las migraciones núcleo 001..008 y Alimentación 009.', 1;
-
-DECLARE @IdEmpresaPrueba INT =
-(
-    SELECT [IdEmpresa]
-    FROM [organizacion].[Empresa]
-    WHERE [CodigoEmpresa] = N'03'
-);
+    THROW 51010, N'Faltan tablas requeridas. Aplique primero los scripts de empresa y Alimentación 009.', 1;
 
 DECLARE @IdSedePrueba INT =
 (
     SELECT [s].[IdSede]
     FROM [organizacion].[Sede] AS [s]
-    WHERE [s].[IdEmpresa] = @IdEmpresaPrueba
-      AND [s].[CodigoSede] = N'01'
+    WHERE [s].[CodigoSede] = N'01'
 );
 
 IF @IdSedePrueba IS NULL
@@ -64,7 +55,7 @@ IF NOT EXISTS
     INSERT INTO [alimentacion].[VentanaRetiroServicio]
         ([IdSede], [TipoServicio], [HoraInicio], [HoraFin], [FechaInicioVigencia])
     VALUES
-        (@IdSedePrueba, N'ALMUERZO', '12:00', '14:00', '2026-09-01');
+        (@IdSedePrueba, N'ALMUERZO', '12:00', '15:00', '2026-09-01');
 
 IF NOT EXISTS
 (
@@ -135,6 +126,28 @@ DECLARE @IdConfiguracionProximidadBeaconPrueba BIGINT =
       AND [CodigoVersion] = @CodigoVersionConfiguracionPrueba
 );
 
+DECLARE @CodigoVersionConfiguracionPruebaDos NVARCHAR(100) = N'BEACON-PRUEBA-V2';
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [proximidad].[ConfiguracionBeacon]
+    WHERE [IdSede] = @IdSedePrueba
+      AND [CodigoVersion] = @CodigoVersionConfiguracionPruebaDos
+)
+    INSERT INTO [proximidad].[ConfiguracionBeacon]
+        ([IdSede], [CodigoVersion], [CantidadMinimaEmisiones], [VentanaConfirmacionMilisegundos],
+         [IntervaloEvaluacionMilisegundos], [TiempoSalidaRangoMilisegundos], [UmbralRssi], [FechaInicioVigencia])
+    VALUES
+        (@IdSedePrueba, @CodigoVersionConfiguracionPruebaDos, 3, 3500, 250, 4500, -60, '2026-09-21T00:00:00.000');
+
+DECLARE @IdConfiguracionProximidadBeaconPruebaDos BIGINT =
+(
+    SELECT [IdConfiguracionProximidadBeacon]
+    FROM [proximidad].[ConfiguracionBeacon]
+    WHERE [IdSede] = @IdSedePrueba
+      AND [CodigoVersion] = @CodigoVersionConfiguracionPruebaDos
+);
+
 -- Beacon sintético autorizado para la sede de prueba.
 IF NOT EXISTS
 (
@@ -148,6 +161,20 @@ IF NOT EXISTS
         ([IdSede], [IdMajorAreaBeacon], [IdConfiguracionProximidadBeacon], [ReferenciaBeacon], [DireccionMac], [IdentificadorUuid], [NumeroMajor], [NumeroMinor], [EstaActivo])
     VALUES
         (@IdSedePrueba, @IdMajorAreaBeaconPrueba, @IdConfiguracionProximidadBeaconPrueba, N'room-test-01', 'F8:9B:EB:B0:C8:71', @UUID_BEACON_PRUEBAS, @NumeroMajorBeaconPrueba, 1, 1);
+
+DECLARE @UUID_BEACON_PRUEBAS_DOS UNIQUEIDENTIFIER = '380C50C7-9EE2-419E-8869-A51D3FF53A13';
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [proximidad].[BeaconAutorizado]
+    WHERE [IdentificadorUuid] = @UUID_BEACON_PRUEBAS_DOS
+      AND [NumeroMajor] = @NumeroMajorBeaconPrueba
+      AND [NumeroMinor] = 2
+)
+    INSERT INTO [proximidad].[BeaconAutorizado]
+        ([IdSede], [IdMajorAreaBeacon], [IdConfiguracionProximidadBeacon], [ReferenciaBeacon], [DireccionMac], [IdentificadorUuid], [NumeroMajor], [NumeroMinor], [EstaActivo])
+    VALUES
+        (@IdSedePrueba, @IdMajorAreaBeaconPrueba, @IdConfiguracionProximidadBeaconPruebaDos, N'room-test-02', 'D0:E5:23:FD:38:30', @UUID_BEACON_PRUEBAS_DOS, @NumeroMajorBeaconPrueba, 2, 1);
 
 COMMIT TRANSACTION;
 GO
