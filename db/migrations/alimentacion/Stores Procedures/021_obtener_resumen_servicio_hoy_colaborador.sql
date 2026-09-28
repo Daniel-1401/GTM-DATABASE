@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ObtenerResumenServicioHoyColaborador]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
@@ -20,26 +20,10 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL
+    IF @IdColaboradorCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador es obligatorio.';
-        RETURN;
-    END;
-
-    select @IdColaborador = IdColaborador
-    from [rrhh].[Colaborador]
-    where UsuarioId = @IdColaborador;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
         RETURN;
     END;
 
@@ -66,7 +50,7 @@ BEGIN
                 [Menu].[Nombre] AS [NombreMenu],
                 [Menu].[Descripcion] AS [DescripcionMenu],
                 [Menu].[ReferenciaImagen],
-                [Sede].[IdentificadorPublico] AS [IdSedePublico],
+                [Sede].[IdSedePublico] AS [IdSedePublico],
                 [Sede].[NombreSede]
             FROM [alimentacion].[Reserva] AS [Reserva]
             LEFT JOIN [alimentacion].[Planificacion] AS [Planificacion]
@@ -76,9 +60,9 @@ BEGIN
                AND [Menu].[IdPlanificacion] = [Reserva].[IdPlanificacion]
                AND [Menu].[FechaServicio] = [Reserva].[FechaServicio]
                AND [Menu].[TipoServicio] = [Reserva].[TipoServicio]
-            LEFT JOIN [organizacion].[Sede] AS [Sede]
+            LEFT JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
                 ON [Sede].[IdSede] = [Reserva].[IdSede]
-            WHERE [Reserva].[IdColaborador] = @IdColaborador
+            WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
               AND [Reserva].[FechaServicio] = @FechaOficial
               AND [Reserva].[Estado] = N'RESERVADA'
         )

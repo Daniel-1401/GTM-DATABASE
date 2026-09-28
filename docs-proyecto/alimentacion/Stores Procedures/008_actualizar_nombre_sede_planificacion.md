@@ -7,6 +7,17 @@ Los espacios externos del nombre se eliminan antes de persistirlo.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/008_actualizar_nombre_sede_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdSede INT,
+@Nombre NVARCHAR(200),
+@IdColaboradorModificacionCorporativo UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y
@@ -19,8 +30,7 @@ La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y
 | `PLAN_NOT_FOUND` | `La planificación indicada no existe.` | No existe la planificación. |
 | `STATE_CONFLICT` | `La planificación ya fue eliminada.` | La planificación fue eliminada. |
 | `INVALID_PLAN_STATE` | `La planificación no permite esta operación.` | La planificación no está en borrador. |
-| `NOT_FOUND` | `La sede indicada no existe o está inactiva.` | No existe la sede o no está activa. |
-| `NOT_FOUND` | `El colaborador que realiza la modificación no existe.` | No existe el colaborador modificador. |
+| `NOT_FOUND` | `La sede indicada no existe o está inactiva.` | No existe la sede o no está activa en la UO. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
 ## Ejecución
@@ -31,7 +41,7 @@ EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
     @IdPlanificacion = @IdPlanificacion,
     @IdSede = @IdSede,
     @Nombre = @Nombre,
-    @IdColaboradorModificacion = @IdColaboradorModificacion,
+    @IdColaboradorModificacionCorporativo = @IdColaboradorModificacionCorporativo,
     @Codigo = @Codigo OUTPUT,
     @Mensaje = @Mensaje OUTPUT;
 ```
@@ -41,19 +51,19 @@ EXEC [alimentacion].[usp_ActualizarNombreSedePlanificacion]
 | Parámetro | Tipo SQL | Obligatorio | Descripción |
 |---|---|---:|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | UUID público de la planificación. |
-| `@IdSede` | `INT` | Sí | Sede existente y activa que se asignará. |
+| `@IdSede` | `INT` | Sí | Sede existente y activa de la UO. |
 | `@Nombre` | `NVARCHAR(200)` | Sí | Nombre funcional; se eliminan espacios externos. |
-| `@IdColaboradorModificacion` | `BIGINT` | Sí | Colaborador que realiza la modificación. |
+| `@IdColaboradorModificacionCorporativo` | `UNIQUEIDENTIFIER` | Sí | UUID corporativo de quien realiza la modificación. |
 
 ## Reglas de negocio
 
 - Solo una planificación con estado `BORRADOR` puede editarse.
-- La sede destino debe existir y estar activa.
-- El colaborador que realiza la modificación debe existir.
+- La sede destino debe existir y estar activa en `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`.
+- El backend proporciona el UUID corporativo autorizado del actor.
 - La actualización incrementa `VersionRegistro` y registra `FechaModificacion`.
 - El procedimiento bloquea la planificación durante la operación para serializar cambios concurrentes.
 
 ## Salida
 
 Devuelve una fila con `IdPlanificacion`, `IdSede`, `Nombre`,
-`IdColaboradorModificacion`, `Estado`, `VersionRegistro` y `FechaModificacion`.
+`IdColaboradorModificacionCorporativo`, `Estado`, `VersionRegistro` y `FechaModificacion`.

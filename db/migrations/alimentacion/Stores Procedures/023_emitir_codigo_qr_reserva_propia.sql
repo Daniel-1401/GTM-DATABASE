@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_EmitirCodigoQRReservaPropia]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdReserva UNIQUEIDENTIFIER,
     @HashCodigo VARBINARY(64),
     @IdCorrelacion UNIQUEIDENTIFIER,
@@ -22,28 +22,12 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL OR @IdColaborador <= 0 OR @IdReserva IS NULL OR @HashCodigo IS NULL
+    IF @IdColaboradorCorporativo IS NULL OR @IdReserva IS NULL OR @HashCodigo IS NULL
        OR DATALENGTH(@HashCodigo) = 0 OR DATALENGTH(@HashCodigo) > 64
        OR @IdCorrelacion IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'Los datos de emision son obligatorios y validos.';
-        RETURN;
-    END;
-
-    select @IdColaborador = IdColaborador
-    from [rrhh].[Colaborador]
-    where UsuarioId = @IdColaborador;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
         RETURN;
     END;
 
@@ -70,7 +54,7 @@ BEGIN
     DECLARE @IdSede INT;
     DECLARE @FechaServicio DATE;
     DECLARE @TipoServicio NVARCHAR(20);
-    DECLARE @IdColaboradorReserva BIGINT;
+    DECLARE @IdColaboradorReservaCorporativo UNIQUEIDENTIFIER;
     DECLARE @EstadoReserva NVARCHAR(20);
     DECLARE @EstadoPlanificacion NVARCHAR(25);
     DECLARE @HoraInicio TIME(0);
@@ -103,7 +87,7 @@ BEGIN
             @IdSede = [Reserva].[IdSede],
             @FechaServicio = [Reserva].[FechaServicio],
             @TipoServicio = [Reserva].[TipoServicio],
-            @IdColaboradorReserva = [Reserva].[IdColaborador],
+            @IdColaboradorReservaCorporativo = [Reserva].[IdColaboradorCorporativo],
             @EstadoReserva = [Reserva].[Estado]
         FROM [alimentacion].[Reserva] AS [Reserva] WITH (UPDLOCK, HOLDLOCK)
         WHERE [Reserva].[IdentificadorPublico] = @IdReserva;
@@ -116,7 +100,7 @@ BEGIN
             RETURN;
         END;
 
-        IF @IdColaboradorReserva <> @IdColaborador
+        IF @IdColaboradorReservaCorporativo <> @IdColaboradorCorporativo
         BEGIN
             IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
             SET @Codigo = N'NOT_OWNER';

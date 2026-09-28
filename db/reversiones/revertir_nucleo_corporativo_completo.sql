@@ -30,6 +30,7 @@ IF SCHEMA_ID(N'catalogo') IS NULL
    OR OBJECT_ID(N'[rrhh].[Persona]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[DocumentoPersona]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[Colaborador]', N'U') IS NULL
+   OR OBJECT_ID(N'[rrhh].[vw_ColaboradorConsulta]', N'V') IS NULL
    OR OBJECT_ID(N'[integracion].[PersonalSAPStaging]', N'U') IS NULL
    OR TYPE_ID(N'[integracion].[TVP_RecepcionPersonalSAP]') IS NULL
    OR OBJECT_ID(N'[integracion].[usp_RegistrarPersonalSAPStaging]', N'P') IS NULL
@@ -42,6 +43,7 @@ BEGIN TRY
 
     DROP PROCEDURE [integracion].[usp_RegistrarPersonalSAPStaging];
     DROP PROCEDURE [auditoria].[usp_RegistrarErrorProcedimiento];
+    DROP VIEW [rrhh].[vw_ColaboradorConsulta];
     DROP TYPE [integracion].[TVP_RecepcionPersonalSAP];
     DROP TABLE [integracion].[PersonalSAPStaging];
     DROP TABLE [auditoria].[ErrorProcedimiento];

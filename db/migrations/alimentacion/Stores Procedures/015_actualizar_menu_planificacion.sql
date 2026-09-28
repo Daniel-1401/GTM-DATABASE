@@ -168,7 +168,7 @@ BEGIN
             [Menu].[IdentificadorPublico] AS [IdMenu],
             [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
             [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo],
-            [Menu].[IdColaboradorRegistro], [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
+            [Menu].[IdColaboradorRegistroCorporativo], [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
             [Menu].[VersionRegistro], [Menu].[FechaCreacion], [Menu].[FechaModificacion]
         FROM [alimentacion].[Menu] AS [Menu]
         INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]

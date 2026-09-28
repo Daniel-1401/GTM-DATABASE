@@ -8,6 +8,20 @@ incluye menús, reservas ni consolidaciones.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/001_listar_planificaciones.sql`.
 
+## Firma
+
+```sql
+@IdSede INT = NULL,
+@Estado NVARCHAR(25) = NULL,
+@FechaDesde DATE = NULL,
+@FechaHasta DATE = NULL,
+@TerminoBusqueda NVARCHAR(200) = NULL,
+@NumeroPagina INT = 1,
+@TamanoPagina INT = 20,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -62,7 +76,9 @@ intersecta el intervalo solicitado `[FechaDesde, FechaHasta]`.
 
 ## Recordsets de salida
 
-Incluye `IdColaboradorModificacion` (`BIGINT` o `null`): colaborador de la última modificación.
+Incluye `IdColaboradorRegistroCorporativo` e
+`IdColaboradorModificacionCorporativo` (`UUID` o `null`): referencias a CO de
+quien creó y de quien modificó por última vez la planificación.
 
 Devuelve **un único recordset**. Las filas se ordenan por `FechaInicio DESC`,
 `FechaFin DESC`, `Nombre ASC` e identificador interno descendente.
@@ -71,9 +87,9 @@ Devuelve **un único recordset**. Las filas se ordenan por `FechaInicio DESC`,
 |---|---|---|
 | `IdPlanificacion` | UUID | Identificador público de la planificación. |
 | `Nombre` | string | Nombre funcional de la planificación. |
-| `IdSede` | integer | Identificador interno de la sede. |
-| `CodigoSede` | string | Código de sede para el listado. |
-| `NombreSede` | string | Nombre legible de la sede. |
+| `IdSede` | integer | Identificador interno de la sede de la UO. |
+| `CodigoSede` | string | Código de la sede obtenido de `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`. |
+| `NombreSede` | string | Nombre de la sede obtenido de `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`. |
 | `FechaInicio` | date | Primer día del período, sin conversión horaria. |
 | `FechaFin` | date | Último día del período, sin conversión horaria. |
 | `CantidadDias` | integer | Días calendario inclusivos del período. |
@@ -85,11 +101,8 @@ Devuelve **un único recordset**. Las filas se ordenan por `FechaInicio DESC`,
 
 Si no hay filas, el recordset está vacío y no contiene `TotalRegistros`.
 
-## Manejo de errores
+## Reglas de lectura
 
-| Error SQL | Condición |
-|---:|---|
-| `50001` | `NumeroPagina < 1` |
-| `50002` | `TamanoPagina` fuera de `1..100` |
-| `50003` | Estado fuera del catálogo permitido |
-| `50004` | `FechaDesde > FechaHasta` |
+Las validaciones de página, tamaño, estado y período se comunican al backend
+únicamente mediante `INVALID_FILTER`; los números internos de SQL Server no
+forman parte del contrato API.

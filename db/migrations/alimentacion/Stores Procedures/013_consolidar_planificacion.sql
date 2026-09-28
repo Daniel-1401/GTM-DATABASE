@@ -10,7 +10,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ConsolidarPlanificacion]
     @IdPlanificacion UNIQUEIDENTIFIER,
-    @IdActorColaborador BIGINT,
+    @IdActorColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdCorrelacion UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
@@ -22,7 +22,7 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdPlanificacion IS NULL OR @IdActorColaborador IS NULL OR @IdCorrelacion IS NULL
+    IF @IdPlanificacion IS NULL OR @IdActorColaboradorCorporativo IS NULL OR @IdCorrelacion IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'La planificación, el actor y la correlación son obligatorios.';
@@ -81,28 +81,15 @@ BEGIN
             RETURN;
         END;
 
-        IF NOT EXISTS
-        (
-            SELECT 1
-            FROM [rrhh].[Colaborador] AS [Colaborador]
-            WHERE [Colaborador].[IdColaborador] = @IdActorColaborador
-        )
-        BEGIN
-            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-            SET @Codigo = N'NOT_FOUND';
-            SET @Mensaje = N'El colaborador que consolida no existe.';
-            RETURN;
-        END;
-
         SET @FechaConsolidacion = SYSDATETIME();
 
         INSERT INTO [alimentacion].[ConsolidacionPlanificacion]
         (
-            [IdPlanificacion], [IdActorColaborador], [EstadoAnterior], [VersionPlanificacion],
+            [IdPlanificacion], [IdActorColaboradorCorporativo], [EstadoAnterior], [VersionPlanificacion],
             [FechaConsolidacion], [IdCorrelacion]
         )
         SELECT
-            @IdPlanificacionInterno, @IdActorColaborador, N'PUBLICADA_CERRADA',
+            @IdPlanificacionInterno, @IdActorColaboradorCorporativo, N'PUBLICADA_CERRADA',
             [Planificacion].[VersionRegistro], @FechaConsolidacion, @IdCorrelacion
         FROM [alimentacion].[Planificacion] AS [Planificacion]
         WHERE [Planificacion].[IdPlanificacion] = @IdPlanificacionInterno;
@@ -130,7 +117,7 @@ BEGIN
         UPDATE [alimentacion].[Planificacion]
         SET
             [Estado] = N'CONSOLIDADA',
-            [IdColaboradorModificacion] = @IdActorColaborador,
+            [IdColaboradorModificacionCorporativo] = @IdActorColaboradorCorporativo,
             [VersionRegistro] = [VersionRegistro] + 1,
             [FechaModificacion] = @FechaConsolidacion
         WHERE [IdPlanificacion] = @IdPlanificacionInterno;
@@ -142,7 +129,7 @@ BEGIN
         SELECT
             [Consolidacion].[IdConsolidacionPlanificacion],
             [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
-            [Consolidacion].[IdActorColaborador],
+            [Consolidacion].[IdActorColaboradorCorporativo],
             [Consolidacion].[EstadoAnterior],
             [Consolidacion].[VersionPlanificacion],
             [Consolidacion].[FechaConsolidacion],

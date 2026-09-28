@@ -71,14 +71,14 @@ BEGIN
         DATEDIFF(DAY, [Planificacion].[FechaInicio], [Planificacion].[FechaFin]) + 1 AS [CantidadDias],
         [Planificacion].[Estado],
         [Planificacion].[EstaActivo],
-        [Planificacion].[IdColaboradorRegistro],
-        [Planificacion].[IdColaboradorModificacion],
+        [Planificacion].[IdColaboradorRegistroCorporativo],
+        [Planificacion].[IdColaboradorModificacionCorporativo],
         [Planificacion].[VersionRegistro],
         [Planificacion].[FechaCreacion],
         [Planificacion].[FechaModificacion],
         COUNT_BIG(*) OVER () AS [TotalRegistros]
     FROM [alimentacion].[Planificacion] AS [Planificacion]
-    INNER JOIN [organizacion].[Sede] AS [Sede]
+    INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
         ON [Sede].[IdSede] = [Planificacion].[IdSede]
     WHERE (@IdSede IS NULL OR [Planificacion].[IdSede] = @IdSede)
       AND [Planificacion].[EstaActivo] = 1

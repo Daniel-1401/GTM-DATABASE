@@ -12,12 +12,15 @@ No se definen aquí tablas de inventario, compras, recetas, costos, cupos, usuar
 
 ## Dependencias del núcleo
 
-Alimentación reutiliza, sin duplicarlos, los siguientes datos del núcleo:
+Alimentación reutiliza, sin duplicarlos, los siguientes datos externos. La
+topología y las fuentes canónicas del ambiente de desarrollo están documentadas
+en [STACK.md](../STACK.md#topología-de-desarrollo-vigente).
 
-| Tabla del núcleo | Uso |
+| Fuente canónica | Uso |
 |---|---|
-| `organizacion.Sede` | Sede de ventanas, beacons, planificación, reservas, validaciones y entregas. |
-| `rrhh.Colaborador` | Colaborador que reserva, actor de consolidación y operador de entrega. |
+| `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede` | Sede de ventanas, beacons, planificación, reservas, validaciones y entregas. En desarrollo se consulta desde la instancia GI. |
+| `PERSONALMANEGEMENTCORP` | Colaborador corporativo identificado por UUID para reservas y actores. No existe FK local en GTM. |
+| `USERMANAGEMENTCORP` | Usuario, identidad y autorización resueltos por backend; no se duplican en GTM. |
 
 ## Vista general
 

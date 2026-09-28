@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearReservaPropia]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdMenu UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
@@ -20,15 +20,16 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL OR @IdMenu IS NULL
+    IF @IdColaboradorCorporativo IS NULL OR @IdMenu IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'El colaborador y el menu son obligatorios.';
+        SET @Mensaje = N'La identidad corporativa del colaborador y el menu son obligatorios.';
         RETURN;
     END;
 
     DECLARE @IdMenuInterno BIGINT;
     DECLARE @IdPlanificacionInterno BIGINT;
+    DECLARE @IdPlanificacionInicial BIGINT;
     DECLARE @IdSede INT;
     DECLARE @FechaServicio DATE;
     DECLARE @TipoServicio NVARCHAR(20);
@@ -46,22 +47,23 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        select @IdColaborador = IdColaborador
-        from [rrhh].[Colaborador]
-        where UsuarioId = @IdColaborador;
+        SELECT @IdPlanificacionInicial = [Menu].[IdPlanificacion]
+        FROM [alimentacion].[Menu] AS [Menu]
+        WHERE [Menu].[IdentificadorPublico] = @IdMenu;
 
-        IF NOT EXISTS
-        (
-            SELECT 1
-            FROM [rrhh].[Colaborador] AS [Colaborador] WITH (UPDLOCK, HOLDLOCK)
-            WHERE [Colaborador].[IdColaborador] = @IdColaborador
-        )
+        IF @IdPlanificacionInicial IS NULL
         BEGIN
             IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-            SET @Codigo = N'NOT_FOUND';
-            SET @Mensaje = N'El colaborador indicado no existe.';
+            SET @Codigo = N'MENU_NOT_FOUND';
+            SET @Mensaje = N'El menu indicado no existe.';
             RETURN;
         END;
+
+        SELECT
+            @IdSede = [Planificacion].[IdSede],
+            @EstadoPlanificacion = [Planificacion].[Estado]
+        FROM [alimentacion].[Planificacion] AS [Planificacion] WITH (UPDLOCK, HOLDLOCK)
+        WHERE [Planificacion].[IdPlanificacion] = @IdPlanificacionInicial;
 
         SELECT
             @IdMenuInterno = [Menu].[IdMenu],
@@ -71,7 +73,8 @@ BEGIN
             @EstaDisponible = [Menu].[EstaDisponible],
             @EstaActivoMenu = [Menu].[EstaActivo]
         FROM [alimentacion].[Menu] AS [Menu] WITH (UPDLOCK, HOLDLOCK)
-        WHERE [Menu].[IdentificadorPublico] = @IdMenu;
+        WHERE [Menu].[IdentificadorPublico] = @IdMenu
+          AND [Menu].[IdPlanificacion] = @IdPlanificacionInicial;
 
         IF @IdMenuInterno IS NULL
         BEGIN
@@ -88,12 +91,6 @@ BEGIN
             SET @Mensaje = N'El servicio no esta disponible para reserva.';
             RETURN;
         END;
-
-        SELECT
-            @IdSede = [Planificacion].[IdSede],
-            @EstadoPlanificacion = [Planificacion].[Estado]
-        FROM [alimentacion].[Planificacion] AS [Planificacion] WITH (UPDLOCK, HOLDLOCK)
-        WHERE [Planificacion].[IdPlanificacion] = @IdPlanificacionInterno;
 
         IF @EstadoPlanificacion = N'PUBLICADA_CERRADA'
         BEGIN
@@ -123,7 +120,7 @@ BEGIN
             @IdReservaInterno = [Reserva].[IdReserva],
             @IdMenuReservaActivaInterno = [Reserva].[IdMenu]
         FROM [alimentacion].[Reserva] AS [Reserva] WITH (UPDLOCK, HOLDLOCK, INDEX([IN_Reserva_ActivaColaboradorFecha]))
-        WHERE [Reserva].[IdColaborador] = @IdColaborador
+        WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
           AND [Reserva].[FechaServicio] = @FechaServicio
           AND [Reserva].[Estado] = N'RESERVADA';
 
@@ -162,7 +159,7 @@ BEGIN
 
         INSERT INTO [alimentacion].[Reserva]
         (
-            [IdColaborador],
+            [IdColaboradorCorporativo],
             [IdPlanificacion],
             [IdMenu],
             [IdSede],
@@ -172,7 +169,7 @@ BEGIN
         )
         VALUES
         (
-            @IdColaborador,
+            @IdColaboradorCorporativo,
             @IdPlanificacionInterno,
             @IdMenuInterno,
             @IdSede,
@@ -221,7 +218,7 @@ BEGIN
                 @IdReservaInterno = [Reserva].[IdReserva],
                 @IdMenuReservaActivaInterno = [Reserva].[IdMenu]
             FROM [alimentacion].[Reserva] AS [Reserva]
-            WHERE [Reserva].[IdColaborador] = @IdColaborador
+            WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
               AND [Reserva].[FechaServicio] = @FechaServicio
               AND [Reserva].[Estado] = N'RESERVADA';
 
@@ -272,6 +269,6 @@ GO
 
 -- DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 -- EXEC [alimentacion].[usp_CrearReservaPropia]
---     @IdColaborador = 1,
+--     @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000000',
 --     @IdMenu = '00000000-0000-0000-0000-000000000000',
 --     @Codigo = @Codigo OUTPUT, @Mensaje = @Mensaje OUTPUT;

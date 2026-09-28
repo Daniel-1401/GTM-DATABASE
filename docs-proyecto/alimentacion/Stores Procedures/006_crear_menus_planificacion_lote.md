@@ -8,6 +8,23 @@ se conservan sin cambios y se reportan como omitidas.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/006_crear_menus_planificacion_lote.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
+@MenuId BIGINT,
+@FechaInicio DATE,
+@FechaFin DATE,
+@TipoServicio NVARCHAR(20),
+@EstaDisponible BIT,
+@Nombre NVARCHAR(200) = NULL,
+@Descripcion NVARCHAR(1000) = NULL,
+@ReferenciaImagen NVARCHAR(500) = NULL,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -28,7 +45,7 @@ Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion = @IdPlanificacion,
-    @IdColaboradorRegistro = @IdColaboradorRegistro,
+    @IdColaboradorRegistroCorporativo = @IdColaboradorRegistroCorporativo,
     @MenuId = @MenuId,
     @FechaInicio = '2026-09-08',
     @FechaFin = '2026-09-13',
@@ -46,7 +63,7 @@ EXEC [alimentacion].[usp_CrearMenusPlanificacionLote]
 | Parámetro | Tipo SQL | Descripción |
 |---|---|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | UUID público de una planificación en `BORRADOR`. |
-| `@IdColaboradorRegistro` | `BIGINT` | Colaborador que registra los menús creados. |
+| `@IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` | UUID corporativo de quien registra los menús creados. |
 | `@MenuId` | `BIGINT` | Referencia externa que se persiste en `[alimentacion].[Menu].[MenuId]` para cada fecha creada. No se valida su existencia localmente porque pertenece a otra base de datos. |
 | `@FechaInicio`, `@FechaFin` | `DATE` | Rango inclusivo a configurar; debe pertenecer íntegramente al período de la planificación. |
 | `@TipoServicio` | `NVARCHAR(20)` | Código activo de `alimentacion.TipoServicio`; se normaliza a mayúsculas. |

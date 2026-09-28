@@ -32,7 +32,7 @@ BEGIN
 
     SELECT
         @EstaActivaSede = [Sede].[EstaActiva]
-    FROM [organizacion].[Sede] AS [Sede]
+    FROM [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
     WHERE [Sede].[IdSede] = @IdSede;
 
     IF @EstaActivaSede IS NULL

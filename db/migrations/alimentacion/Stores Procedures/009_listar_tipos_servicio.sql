@@ -1,7 +1,7 @@
 -- Procedimiento: alimentacion.usp_ListarTiposServicio
--- Referencia: db/migrations/alimentacion/017_crear_maestro_tipos_servicio.sql
+-- Referencia: db/migrations/alimentacion/009_crear_schema_y_configuracion_alimentacion.sql
 -- Motivo: Exponer al frontend los tipos de servicio vigentes para menú.
--- Ejecutar después de la migración 017.
+-- Ejecutar después de la migración 009.
 
 SET ANSI_NULLS ON;
 GO

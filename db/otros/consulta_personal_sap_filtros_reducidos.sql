@@ -17,7 +17,9 @@
 
     Filtros expuestos: mandante, colaborador, rango de movimientos, lista de
     medidas SAP e idioma. @Movimientos acepta valores MASSN separados por coma,
-    por ejemplo N'01,02,03'. @Idioma debe coincidir con los valores realmente
+    por ejemplo N'01,02,03'. El filtro no depende de STRING_SPLIT para mantener
+    compatibilidad con bases cuya version de compatibilidad sea anterior a 130.
+    @Idioma debe coincidir con los valores realmente
     cargados en SPRAS/SPRSL (por ejemplo, N'S' en SAP).
 
     PA0105 no se segmenta por USRTY porque esos subtipos no fueron entregados.
@@ -274,11 +276,10 @@ WHERE [Movimiento].[MANDT] = @Mandante
   AND
   (
       @Movimientos IS NULL
-      OR EXISTS
-      (
-          SELECT 1
-          FROM STRING_SPLIT(@Movimientos, N',') AS [FiltroMovimiento]
-          WHERE LTRIM(RTRIM([FiltroMovimiento].[value])) = [Movimiento].[MASSN]
-      )
+      OR CHARINDEX
+         (
+             N',' + [Movimiento].[MASSN] + N',',
+             N',' + REPLACE(@Movimientos, N' ', N'') + N','
+         ) > 0
   )
 ORDER BY [Movimiento].[PERNR], [Movimiento].[BEGDA], [Movimiento].[SEQNR];

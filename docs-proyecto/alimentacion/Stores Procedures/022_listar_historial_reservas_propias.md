@@ -15,7 +15,7 @@ procedure.
 
 ```sql
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarHistorialReservasPropias]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @NumeroPagina INT,
     @TamanoPagina INT,
     @Codigo NVARCHAR(50) OUTPUT,
@@ -28,7 +28,7 @@ Ejemplo de la primera pagina:
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 
 EXEC [alimentacion].[usp_ListarHistorialReservasPropias]
-    @IdColaborador = 123,
+    @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000001',
     @NumeroPagina = 1,
     @TamanoPagina = 20,
     @Codigo = @Codigo OUTPUT,
@@ -44,7 +44,7 @@ tamano permitido es de 1 a 100.
 
 | Parametro | Tipo | Entrada/salida | Descripcion |
 |---|---|---:|---|
-| `@IdColaborador` | `BIGINT` | Entrada | Identificador interno del colaborador resuelto por el backend. Debe existir en `rrhh.Colaborador`. |
+| `@IdColaboradorCorporativo` | `UNIQUEIDENTIFIER` | Entrada | UUID corporativo autenticado y autorizado por el backend. |
 | `@NumeroPagina` | `INT` | Entrada | Numero de pagina, mayor o igual a 1. |
 | `@TamanoPagina` | `INT` | Entrada | Cantidad solicitada por pagina, entre 1 y 100. |
 | `@Codigo` | `NVARCHAR(50)` | Salida | Codigo estandar del resultado. |
@@ -95,7 +95,6 @@ Reservas** desde la fecha actual en adelante.
 | `OK` | `NULL` | Si, incluso cuando no hay resultados. |
 | `VALIDATION_ERROR` | `El colaborador es obligatorio.` | No. |
 | `INVALID_FILTER` | `La pagina debe ser mayor o igual a 1 y el tamano debe estar entre 1 y 100.` | No. |
-| `NOT_FOUND` | `El colaborador indicado no existe.` | No. |
 | `INTERNAL_ERROR` | `No fue posible completar la operacion.` | No. |
 
 Los errores inesperados se registran mediante
@@ -106,6 +105,8 @@ exponen.
 
 El procedure solo lee las tablas funcionales y no abre transacciones. Mantiene
 `SET NOCOUNT ON`, `SET XACT_ABORT ON`, no usa SQL dinamico y aplica la
-paginacion despues del orden estable. `@IdColaborador` representa el
-identificador interno resuelto por el backend, no una identidad proporcionada
-directamente por el cliente.
+paginacion despues del orden estable. `@IdColaboradorCorporativo` representa
+el UUID corporativo que el backend entrega tras autenticar y autorizar al
+usuario. El procedure no consulta la base de datos CO ni `rrhh`; si el
+parámetro es nulo devuelve `VALIDATION_ERROR` con `El colaborador es
+obligatorio.`

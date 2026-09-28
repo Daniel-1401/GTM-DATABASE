@@ -8,6 +8,21 @@ se modifica.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/015_actualizar_menu_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdMenu UNIQUEIDENTIFIER,
+@FechaServicio DATE,
+@TipoServicio NVARCHAR(20),
+@EstaDisponible BIT,
+@Nombre NVARCHAR(200) = NULL,
+@Descripcion NVARCHAR(1000) = NULL,
+@ReferenciaImagen NVARCHAR(500) = NULL,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y
@@ -50,4 +65,4 @@ La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y
 ## Salida
 
 Devuelve una fila con los UUID públicos, contenido actualizado, vigencia,
-colaborador registrador, versión, fecha de creación y fecha de modificación.
+`Menu.IdColaboradorRegistroCorporativo`, versión, fecha de creación y fecha de modificación.

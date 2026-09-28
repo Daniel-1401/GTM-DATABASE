@@ -12,7 +12,7 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_ActualizarNombreSedePlanificacion]
     @IdPlanificacion UNIQUEIDENTIFIER,
     @IdSede INT,
     @Nombre NVARCHAR(200),
-    @IdColaboradorModificacion BIGINT,
+    @IdColaboradorModificacionCorporativo UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
@@ -31,7 +31,7 @@ BEGIN
         RETURN;
     END;
 
-    IF @IdSede IS NULL
+    IF @IdSede IS NULL OR @IdSede <= 0
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'La sede es obligatoria.';
@@ -45,7 +45,7 @@ BEGIN
         RETURN;
     END;
 
-    IF @IdColaboradorModificacion IS NULL
+    IF @IdColaboradorModificacionCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador que realiza la modificación es obligatorio.';
@@ -105,9 +105,9 @@ BEGIN
         IF NOT EXISTS
         (
             SELECT 1
-            FROM [organizacion].[Sede]
-            WHERE [IdSede] = @IdSede
-              AND [EstaActiva] = 1
+            FROM [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
+            WHERE [Sede].[IdSede] = @IdSede
+              AND [Sede].[EstaActiva] = 1
         )
         BEGIN
             IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
@@ -122,7 +122,7 @@ BEGIN
         SET
             [IdSede] = @IdSede,
             [Nombre] = @Nombre,
-            [IdColaboradorModificacion] = @IdColaboradorModificacion,
+            [IdColaboradorModificacionCorporativo] = @IdColaboradorModificacionCorporativo,
             [VersionRegistro] = [VersionRegistro] + 1,
             [FechaModificacion] = @FechaModificacion
         WHERE [IdPlanificacion] = @IdPlanificacionInterno;
@@ -136,7 +136,7 @@ BEGIN
             [IdentificadorPublico] AS [IdPlanificacion],
             [IdSede],
             [Nombre],
-            [IdColaboradorModificacion],
+            [IdColaboradorModificacionCorporativo],
             [Estado],
             [VersionRegistro],
             [FechaModificacion]
@@ -166,7 +166,7 @@ GO
 --     @IdPlanificacion = '2D2F75E9-E2B2-F111-B1C0-0050568F0125',
 --     @IdSede = 1,
 --     @Nombre = N'Menú septiembre 2026',
---     @IdColaboradorModificacion = 3221,
+--     @IdColaboradorModificacionCorporativo = '00000000-0000-0000-0000-000000000000',
 --     @Codigo = @Codigo OUTPUT,
 --     @Mensaje = @Mensaje OUTPUT;
 -- SELECT @Codigo, @Mensaje

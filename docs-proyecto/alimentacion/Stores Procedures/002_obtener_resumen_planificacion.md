@@ -8,6 +8,14 @@ tipo de servicio de menús y reservas para todo el período comprendido entre
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/002_obtener_resumen_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -15,8 +23,9 @@ Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
 
 | Código | Mensaje seguro | Cuándo ocurre |
 |---|---|---|
-| `OK` | `null` | Consulta ejecutada correctamente, incluso si no existe la planificación. |
+| `OK` | `null` | Consulta ejecutada correctamente. |
 | `VALIDATION_ERROR` | `El identificador de planificación es obligatorio.` | No se recibió identificador. |
+| `PLAN_NOT_FOUND` | `La planificacion indicada no existe.` | No existe una planificación activa con el identificador recibido. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
 Usa `SET XACT_ABORT ON` y `TRY/CATCH`; no abre una transacción de escritura.
@@ -39,19 +48,20 @@ EXEC [alimentacion].[usp_ObtenerResumenPlanificacion]
 
 ## Recordsets de salida
 
-Incluye `IdColaboradorModificacion` (`BIGINT` o `null`): colaborador de la última modificación.
+Incluye `IdColaboradorModificacionCorporativo` (`UUID` o `null`): referencia
+corporativa de quien realizó la última modificación.
 
-Devuelve dos recordsets cuando existe la planificación. Si no existe, ambos son
-vacíos. El primer recordset conserva las columnas existentes y agrega el total
-de reservas.
+Devuelve dos recordsets cuando existe la planificación. No devuelve recordsets
+en un error funcional. El primero conserva las columnas existentes y agrega el
+total de reservas.
 
 | Columna | Tipo SQL / lógico | Descripción |
 |---|---|---|
 | `IdPlanificacion` | `UNIQUEIDENTIFIER` / UUID | Identificador público de la planificación. |
 | `Nombre` | `NVARCHAR(200)` / string | Nombre de la planificación. |
-| `IdSede` | `INT` / integer | Identificador de la sede. |
-| `CodigoSede` | string | Código de la sede. |
-| `NombreSede` | string | Nombre de la sede. |
+| `IdSede` | `INT` / integer | Identificador de la sede de la UO. |
+| `CodigoSede` | string | Código de sede obtenido de `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`. |
+| `NombreSede` | string | Nombre de sede obtenido de `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`. |
 | `FechaInicio` | `DATE` / date | Inicio inclusivo del período. |
 | `FechaFin` | `DATE` / date | Fin inclusivo del período. |
 | `CantidadDias` | integer | Días calendario inclusivos del período. |
@@ -75,8 +85,7 @@ no existen menús ni reservas para ese tipo:
 | `CantidadServiciosSinAtencion` | integer | Registros con `EstaDisponible = 0`. |
 | `CantidadReservasRegistradas` | integer | Todas las filas de `Reserva` del servicio, sin excluir estados. |
 
-## Errores SQL
+## Reglas de lectura
 
-| Error SQL | Condición |
-|---:|---|
-| `50100` | `IdPlanificacion` es `NULL`. |
+La ausencia del identificador se comunica mediante `VALIDATION_ERROR`. Los
+números internos de SQL Server no forman parte del contrato API.

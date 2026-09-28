@@ -7,6 +7,22 @@ de una planificación en `BORRADOR`.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/005_crear_menu_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
+@MenuId BIGINT,
+@FechaServicio DATE,
+@TipoServicio NVARCHAR(20),
+@EstaDisponible BIT,
+@Nombre NVARCHAR(200) = NULL,
+@Descripcion NVARCHAR(1000) = NULL,
+@ReferenciaImagen NVARCHAR(500) = NULL,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -31,7 +47,7 @@ La creación del menú es atómica con `SET XACT_ABORT ON` y `TRY/CATCH`; todo e
 | Parámetro | Tipo SQL | Obligatorio | Descripción |
 |---|---|---:|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | UUID público devuelto al crear la planificación. |
-| `@IdColaboradorRegistro` | `BIGINT` | Sí | Identificador que registra el menú. |
+| `@IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` | Sí | UUID corporativo de quien registra el menú. |
 | `@MenuId` | `BIGINT` | Sí | Referencia externa que se persiste en `[alimentacion].[Menu].[MenuId]`. No se valida su existencia localmente porque pertenece a otra base de datos. |
 | `@FechaServicio` | `DATE` | Sí | Debe estar dentro del período de la planificación. |
 | `@TipoServicio` | `NVARCHAR(20)` | Sí | Código activo de `alimentacion.TipoServicio`. |
@@ -45,9 +61,9 @@ Si `EstaDisponible = 0`, nombre, descripción e imagen deben estar vacíos. La c
 ## Salida
 
 Devuelve una fila con el UUID público del menú, UUID de planificación, contenido,
-vigencia, colaborador registrador, versión y fecha de creación local.
+vigencia, UUID corporativo del registrador, versión y fecha de creación local.
 
-## Errores SQL
+## Reglas de salida
 
 Los códigos funcionales posibles son `VALIDATION_ERROR`,
 `BUSINESS_RULE_VIOLATION`, `PLAN_NOT_FOUND`, `INVALID_PLAN_STATE`,

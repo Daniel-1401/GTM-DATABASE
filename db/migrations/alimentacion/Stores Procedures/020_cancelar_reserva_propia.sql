@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CancelarReservaPropia]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdReserva UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
@@ -20,26 +20,10 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL OR @IdReserva IS NULL
+    IF @IdColaboradorCorporativo IS NULL OR @IdReserva IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'El colaborador y la reserva son obligatorios.';
-        RETURN;
-    END;
-
-    select @IdColaborador = IdColaborador
-    from [rrhh].[Colaborador]
-    where UsuarioId = @IdColaborador;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
+        SET @Mensaje = N'La identidad corporativa del colaborador y la reserva son obligatorios.';
         RETURN;
     END;
 
@@ -49,7 +33,7 @@ BEGIN
     DECLARE @IdPlanificacionInicial BIGINT;
     DECLARE @EstadoReserva NVARCHAR(20);
     DECLARE @EstadoPlanificacion NVARCHAR(25);
-    DECLARE @IdColaboradorReserva BIGINT;
+    DECLARE @IdColaboradorReservaCorporativo UNIQUEIDENTIFIER;
     DECLARE @FechaModificacion DATETIME2(3);
 
     SELECT
@@ -77,7 +61,7 @@ BEGIN
         SELECT
             @IdReservaInterno = [Reserva].[IdReserva],
             @IdPlanificacionInterno = [Reserva].[IdPlanificacion],
-            @IdColaboradorReserva = [Reserva].[IdColaborador],
+            @IdColaboradorReservaCorporativo = [Reserva].[IdColaboradorCorporativo],
             @EstadoReserva = [Reserva].[Estado]
         FROM [alimentacion].[Reserva] AS [Reserva] WITH (UPDLOCK, HOLDLOCK)
         WHERE [Reserva].[IdentificadorPublico] = @IdReserva;
@@ -90,7 +74,7 @@ BEGIN
             RETURN;
         END;
 
-        IF @IdColaboradorReserva <> @IdColaborador
+        IF @IdColaboradorReservaCorporativo <> @IdColaboradorCorporativo
         BEGIN
             IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
             SET @Codigo = N'NOT_OWNER';

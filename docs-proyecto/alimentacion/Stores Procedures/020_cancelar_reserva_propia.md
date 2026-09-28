@@ -11,7 +11,7 @@ cancelada.
 
 ```sql
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CancelarReservaPropia]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdReserva UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
@@ -25,7 +25,7 @@ Ejemplo:
 ```sql
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_CancelarReservaPropia]
-    @IdColaborador = 123,
+    @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000000',
     @IdReserva = '00000000-0000-0000-0000-000000000000',
     @Codigo = @Codigo OUTPUT,
     @Mensaje = @Mensaje OUTPUT;
@@ -34,8 +34,9 @@ SELECT @Codigo AS [Codigo], @Mensaje AS [Mensaje];
 
 ## Parámetros
 
-- `@IdColaborador`: identificador interno del colaborador autenticado por el
-  backend. Es obligatorio.
+- `@IdColaboradorCorporativo`: identidad corporativa UUID del colaborador,
+  resuelta por el backend autenticado. Es obligatoria y se usa para comprobar
+  propiedad.
 - `@IdReserva`: GUID público de la reserva. Es obligatorio.
 - `@Codigo` y `@Mensaje`: salidas del contrato estándar de procedures API.
 
@@ -64,7 +65,6 @@ Los errores funcionales no devuelven recordset.
 | `UPDATED` | `NULL` en `@Mensaje`; la reserva fue cancelada. |
 | `IDEMPOTENT_REPLAY` | `La reserva ya estaba cancelada.` |
 | `VALIDATION_ERROR` | `El colaborador y la reserva son obligatorios.` |
-| `NOT_FOUND` | `El colaborador indicado no existe.` |
 | `RESERVATION_NOT_FOUND` | `La reserva indicada no existe.` |
 | `NOT_OWNER` | `La reserva no pertenece al colaborador indicado.` |
 | `STATE_CONFLICT` | `La reserva se encuentra en un estado terminal y no puede cancelarse.` |
@@ -80,7 +80,7 @@ forma segura; si la lectura protegida observa que la reserva ya es
 ## Reglas de propiedad y estado
 
 La reserva se busca por su identificador público. Solo el colaborador cuyo
-`Reserva.IdColaborador` coincide con `@IdColaborador` puede cancelarla.
+`Reserva.IdColaboradorCorporativo` coincide con `@IdColaboradorCorporativo` puede cancelarla.
 
 Solo se cancela una reserva `RESERVADA` cuando la planificación asociada está
 exactamente en `PUBLICADA_ABIERTA`. La reserva `CANCELADA` es un historial y

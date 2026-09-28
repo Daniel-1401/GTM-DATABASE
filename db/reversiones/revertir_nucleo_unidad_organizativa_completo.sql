@@ -32,6 +32,10 @@ IF SCHEMA_ID(N'organizacion') IS NULL
    OR OBJECT_ID(N'[rrhh].[AsignacionOrganizacional]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[HorarioLaboral]', N'U') IS NULL
    OR OBJECT_ID(N'[rrhh].[VigenciaHorario]', N'U') IS NULL
+   OR OBJECT_ID(N'[organizacion].[vw_SedeConsulta]', N'V') IS NULL
+   OR OBJECT_ID(N'[organizacion].[vw_EstructuraOrganizacionalConsulta]', N'V') IS NULL
+   OR OBJECT_ID(N'[organizacion].[vw_JerarquiaCargoConsulta]', N'V') IS NULL
+   OR OBJECT_ID(N'[rrhh].[vw_ContextoOrganizacionalColaborador]', N'V') IS NULL
    OR OBJECT_ID(N'[seleccion].[Postulante]', N'U') IS NULL
    OR OBJECT_ID(N'[seleccion].[ArchivoPostulante]', N'U') IS NULL
    OR OBJECT_ID(N'[seleccion].[HistorialEstadoPostulante]', N'U') IS NULL
@@ -60,7 +64,18 @@ IF EXISTS
     FROM sys.objects AS [Objeto]
     WHERE [Objeto].[schema_id] IN (SCHEMA_ID(N'organizacion'), SCHEMA_ID(N'rrhh'), SCHEMA_ID(N'seleccion'))
       AND [Objeto].[is_ms_shipped] = 0
-      AND [Objeto].[type] NOT IN (N'U', N'C', N'D', N'F', N'PK', N'UQ')
+      AND NOT
+      (
+          [Objeto].[type] IN (N'U', N'C', N'D', N'F', N'PK', N'UQ')
+          OR ([Objeto].[type] = N'V'
+              AND
+              (
+                  ([Objeto].[schema_id] = SCHEMA_ID(N'organizacion')
+                   AND [Objeto].[name] IN (N'vw_SedeConsulta', N'vw_EstructuraOrganizacionalConsulta', N'vw_JerarquiaCargoConsulta'))
+                  OR ([Objeto].[schema_id] = SCHEMA_ID(N'rrhh')
+                      AND [Objeto].[name] = N'vw_ContextoOrganizacionalColaborador')
+              ))
+      )
 )
     THROW 51098, N'Reversión bloqueada: existen objetos ajenos a la huella UO.', 1;
 
@@ -77,6 +92,11 @@ IF EXISTS
 
 BEGIN TRY
     BEGIN TRANSACTION;
+
+    DROP VIEW [rrhh].[vw_ContextoOrganizacionalColaborador];
+    DROP VIEW [organizacion].[vw_JerarquiaCargoConsulta];
+    DROP VIEW [organizacion].[vw_EstructuraOrganizacionalConsulta];
+    DROP VIEW [organizacion].[vw_SedeConsulta];
 
     DROP TABLE [seleccion].[HistorialEstadoPostulante];
     DROP TABLE [seleccion].[ArchivoPostulante];

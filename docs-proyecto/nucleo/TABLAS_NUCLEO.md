@@ -11,8 +11,8 @@ proyectar varias empresas de esa UO. No hay claves foráneas entre bases.
 
 | Destino | Orden de instalación | Responsabilidad |
 |---|---|---|
-| CO | `corporativo/001` → `002` → `003` → `004` → `005` | Catálogos, UO, empresas, identidad corporativa, integración SAP y auditoría interna. |
-| Hija UO | `unidad_organizativa/001` → `002` → `003` → `004` | Proyección local, organización, relación laboral, asignación, horarios y selección. |
+| CO | `corporativo/001` → `002` → `003` → `004` → `005` → `006` | Catálogos, UO, empresas, identidad corporativa, integración SAP, auditoría interna y vista de consulta de colaboradores. |
+| Hija UO | `unidad_organizativa/001` → `002` → `003` → `004` → `005` | Proyección local, organización, relación laboral, asignación, horarios, selección y vistas de consulta. |
 
 Los GUID corporativos vinculan lógicamente las bases. El backend de integración
 valida y coordina esos vínculos; una hija no debe crear una segunda autoridad
@@ -28,6 +28,7 @@ para empresas, personas o colaboradores.
 | `rrhh` | `Persona` | Identidad civil con GUID corporativo. |
 | `rrhh` | `DocumentoPersona` | Documento histórico; identidad documental única y un principal abierto por persona. |
 | `rrhh` | `Colaborador` | Identidad laboral estable: máximo uno por persona y GUID corporativo único. |
+| `rrhh` | `vw_ColaboradorConsulta` | Proyección de lectura mínima: UUID corporativo y nombre del colaborador. No expone datos laborales, relación organizacional, documentos ni datos SAP. |
 | `integracion` | `PersonalSAPStaging` | Historial append-only de recepción SAP con Kafka, JSON original y 63 campos de origen. |
 | `integracion` | `TVP_RecepcionPersonalSAP` | Tipo tabular para lotes estructurados de uno o más eventos SAP. |
 | `integracion` | `usp_RegistrarPersonalSAPStaging` | Inserción idempotente de staging; no promueve al núcleo. |
@@ -56,9 +57,13 @@ backend únicamente el código y mensaje seguro `INTERNAL_ERROR`.
 | `organizacion` | `Sede`, `Area`, `Cargo` | Maestros locales, todos pertenecientes a una empresa proyectada. |
 | `organizacion` | `CargoSAP` | Código SAP y cargo GTM de la misma empresa. |
 | `organizacion` | `CargoJefatura` | Jerarquía de cargos de una misma empresa; un jefe abierto por subordinado. |
+| `organizacion` | `vw_SedeConsulta` | Sedes de la UO con la empresa propietaria, su UUID público, código, nombre y estados. |
+| `organizacion` | `vw_EstructuraOrganizacionalConsulta` | Catálogo normalizado de sedes, áreas, cargos y cargos SAP; evita productos cartesianos entre esos maestros. |
+| `organizacion` | `vw_JerarquiaCargoConsulta` | Relaciones de jefatura de cargos con empresa, códigos, nombres y periodo de vigencia. |
 | `rrhh` | `RelacionLaboral` | Vínculo colaborador corporativo–empresa local. Es único por colaborador y empresa y se reactiva al reingreso. |
 | `rrhh` | `AsignacionOrganizacional` | Contexto operativo: relación corporativa, empleador, empresa local, sede y área. |
 | `rrhh` | `HorarioLaboral`, `VigenciaHorario` | Horarios por empresa y, como máximo, una vigencia por relación y fecha. |
+| `rrhh` | `vw_ContextoOrganizacionalColaborador` | Contexto operativo por UUID corporativo: asignación, empresa, sede, área y, si la relación existe localmente, cargo y datos laborales. |
 | `seleccion` | `Postulante`, `ArchivoPostulante`, `HistorialEstadoPostulante` | Prefiltro local, adjuntos y estados informados; no son aún persona ni colaborador. |
 
 `AsignacionOrganizacional.IdEmpresaReferencia` tiene FK local directa hacia
@@ -71,6 +76,11 @@ relación procedente de otra hija. `IdRelacionLaboralCorporativa`,
 Una hija garantiza una sola asignación por relación corporativa. La garantía de
 que esa sea la única asignación activa entre todas las hijas corresponde a la
 operación backend coordinadora, pues no existe una restricción distribuida.
+
+Las vistas de la hija se limitan a la UO configurada y no exponen nombres,
+documentos ni usuarios corporativos. El horario vigente no se publica como
+vista, porque requiere una fecha de consulta; ese caso debe resolverse mediante
+un contrato con parámetro de fecha.
 
 ## Semilla, limpieza y reversión
 
@@ -118,10 +128,3 @@ consolidación.
 - No se conserva historial de reingresos ni de asignaciones organizacionales.
 - La coordinación global de asignaciones y la sincronización de
   `EmpresaReferencia` pertenecen al backend de integración.
-- `USERMANAGEMENTCORP`, autenticación y el módulo Alimentación no se modifican
-  en esta fase. **Bloqueo de despliegue:** las migraciones vigentes de
-  Alimentación aún referencian `rrhh.Colaborador`, tabla que no existe en la
-  nueva instancia hija UO. No son compatibles con este núcleo UO y no deben
-  desplegarse juntos hasta completar su migración coordinada. Esa migración de
-  Alimentación es la siguiente fase, después de aprobar el núcleo; no está
-  corregida ni incluida en esta entrega.

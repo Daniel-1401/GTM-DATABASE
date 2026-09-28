@@ -7,6 +7,18 @@ devuelto debe usarse al registrar sus menús.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/004_crear_planificacion_borrador.sql`.
 
+## Firma
+
+```sql
+@IdSede INT,
+@IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
+@Nombre NVARCHAR(200),
+@FechaInicio DATE,
+@FechaFin DATE,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -17,19 +29,20 @@ cambios.
 |---|---|---|
 | `CREATED` | `null` | La planificación fue creada. |
 | `VALIDATION_ERROR` | Mensaje de validación seguro | Falta un dato requerido o el período es inválido. |
-| `NOT_FOUND` | `La sede indicada no existe.` | No existe la sede recibida. |
+| `NOT_FOUND` | `La sede indicada no existe.` | No existe la sede recibida en la UO. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
 La inserción se ejecuta de forma atómica con `SET XACT_ABORT ON` y `TRY/CATCH`.
-Ante un error inesperado se revierte solo si `XACT_STATE() <> 0`. La existencia
-del colaborador no se valida en este procedimiento.
+Ante un error inesperado se revierte solo si `XACT_STATE() <> 0`. El backend
+proporciona la identidad corporativa autorizada y el procedure valida la sede
+contra `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`.
 
 ## Parámetros de entrada
 
 | Parámetro | Tipo SQL | Obligatorio | Descripción |
 |---|---|---:|---|
-| `@IdSede` | `INT` | Sí | Sede existente para la planificación. |
-| `@IdColaboradorRegistro` | `BIGINT` | Sí | Identificador del colaborador que registra la planificación. |
+| `@IdSede` | `INT` | Sí | Sede existente de la UO. |
+| `@IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` | Sí | UUID corporativo de quien registra la planificación. |
 | `@Nombre` | `NVARCHAR(200)` | Sí | Nombre funcional; se eliminan espacios externos. |
 | `@FechaInicio` | `DATE` | Sí | Inicio inclusivo del período. |
 | `@FechaFin` | `DATE` | Sí | Fin inclusivo; no puede ser anterior al inicio. |
@@ -37,12 +50,10 @@ del colaborador no se valida en este procedimiento.
 ## Salida
 
 Devuelve una fila con `IdPlanificacion` (UUID público), sede, nombre, período,
-estado `BORRADOR`, vigencia, colaborador registrador, versión y fecha de creación local.
+estado `BORRADOR`, vigencia, UUID corporativo del registrador, versión y fecha de creación local.
 
-## Errores SQL
+## Reglas de salida
 
-| Error SQL | Condición |
-|---:|---|
-| `VALIDATION_ERROR` | Sede, nombre, colaborador o fechas ausentes; o fecha final anterior a la inicial. |
-| `NOT_FOUND` | La sede indicada no existe. |
-| `INTERNAL_ERROR` | No fue posible completar la operación. |
+Los códigos funcionales y sus mensajes seguros están definidos en el contrato
+de salida. El backend debe usar `@Codigo` y `@Mensaje`; los detalles internos
+de SQL Server no se exponen.

@@ -2,7 +2,7 @@
 -- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
 -- Motivo: Listar la matriz fecha por tipo de servicio de una planificación,
 --         incluyendo los días y servicios que aún no tienen una fila de menú.
--- Ejecutar después de la migración 017.
+-- Ejecutar después de la migración 010.
 
 SET ANSI_NULLS ON;
 GO
@@ -50,6 +50,19 @@ BEGIN
     END;
 
     BEGIN TRY
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM [alimentacion].[Planificacion] AS [Planificacion]
+        WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion
+          AND [Planificacion].[Estado] <> N'ELIMINADA'
+    )
+    BEGIN
+        SET @Codigo = N'PLAN_NOT_FOUND';
+        SET @Mensaje = N'La planificacion indicada no existe.';
+        RETURN;
+    END;
+
     ;WITH [PeriodoPlanificacion] AS
     (
         SELECT
@@ -107,7 +120,7 @@ BEGIN
         [Menu].[IdentificadorPublico] AS [IdMenu],
         [Menu].[EstaDisponible],
         [Menu].[EstaActivo],
-        [Menu].[IdColaboradorRegistro],
+        [Menu].[IdColaboradorRegistroCorporativo],
         [Menu].[Nombre],
         [Menu].[Descripcion],
         [Menu].[ReferenciaImagen],

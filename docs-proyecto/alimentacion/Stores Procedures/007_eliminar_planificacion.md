@@ -9,6 +9,14 @@ la versión de los registros modificables y registra la fecha de modificación l
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/007_eliminar_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y
@@ -63,12 +71,8 @@ Devuelve un único recordset con una fila:
 | `VersionRegistro` | integer de 64 bits | Versión incrementada tras la eliminación lógica. |
 | `FechaModificacion` | timestamp local | Instante local en que se realizó la eliminación. |
 
-## Manejo de errores
+## Reglas de salida
 
-| Error SQL | Condición |
-|---:|---|
-| `VALIDATION_ERROR` | El identificador de planificación es obligatorio. |
-| `PLAN_NOT_FOUND` | La planificación indicada no existe. |
-| `STATE_CONFLICT` | La planificación ya fue eliminada. |
-| `INVALID_PLAN_STATE` | La planificación no permite esta operación. |
-| `INTERNAL_ERROR` | No fue posible completar la operación. |
+Los códigos funcionales y sus mensajes seguros están definidos en el contrato
+de salida. El backend debe usar `@Codigo` y `@Mensaje`; los detalles internos
+de SQL Server no se exponen.

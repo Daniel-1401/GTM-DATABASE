@@ -8,6 +8,16 @@ el estado de la planificación a `CONSOLIDADA` en una sola transacción.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/013_consolidar_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdActorColaboradorCorporativo UNIQUEIDENTIFIER,
+@IdCorrelacion UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y `@Mensaje NVARCHAR(500) OUTPUT`.
@@ -20,7 +30,6 @@ La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y `@Mensaje NVARCHAR(500) OUT
 | `PLAN_NOT_FOUND` | No existe la planificación. |
 | `STATE_CONFLICT` | La planificación fue eliminada. |
 | `INVALID_PLAN_STATE` | La planificación no está en `PUBLICADA_CERRADA`. |
-| `NOT_FOUND` | El actor de consolidación no existe. |
 | `INTERNAL_ERROR` | Ocurrió un error inesperado. |
 
 ## Ejecución
@@ -29,7 +38,7 @@ La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y `@Mensaje NVARCHAR(500) OUT
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_ConsolidarPlanificacion]
     @IdPlanificacion = @IdPlanificacion,
-    @IdActorColaborador = @IdColaborador,
+    @IdActorColaboradorCorporativo = @IdActorColaboradorCorporativo,
     @IdCorrelacion = @IdCorrelacion,
     @Codigo = @Codigo OUTPUT,
     @Mensaje = @Mensaje OUTPUT;
@@ -40,7 +49,7 @@ EXEC [alimentacion].[usp_ConsolidarPlanificacion]
 | Parámetro | Tipo SQL | Descripción |
 |---|---|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | UUID público de la planificación publicada y cerrada. |
-| `@IdActorColaborador` | `BIGINT` | Colaborador existente que realiza la consolidación. |
+| `@IdActorColaboradorCorporativo` | `UNIQUEIDENTIFIER` | UUID corporativo del actor autorizado, proporcionado por el backend. |
 | `@IdCorrelacion` | `UNIQUEIDENTIFIER` | Correlación única de la operación de consolidación. |
 
 ## Reglas y salida
@@ -49,4 +58,6 @@ EXEC [alimentacion].[usp_ConsolidarPlanificacion]
 - Registra una sola `ConsolidacionPlanificacion` por planificación y una fila de `CantidadConsolidadaMenu` por menú activo.
 - `CantidadReservas` cuenta exclusivamente reservas en estado `RESERVADA`; excluye las canceladas.
 - `IdCorrelacion` debe ser único, para impedir que una misma intención duplique una consolidación.
-- Devuelve dos recordsets: cabecera de consolidación y detalle consolidado por menú.
+- El backend entrega el UUID corporativo autorizado; el procedimiento solo exige que no sea nulo y no consulta CO ni `rrhh` local.
+- Inserta y devuelve `IdActorColaboradorCorporativo`; actualiza `Planificacion.IdColaboradorModificacionCorporativo` con el mismo UUID.
+- Devuelve dos recordsets: cabecera de consolidación (incluido `IdActorColaboradorCorporativo`) y detalle consolidado por menú.

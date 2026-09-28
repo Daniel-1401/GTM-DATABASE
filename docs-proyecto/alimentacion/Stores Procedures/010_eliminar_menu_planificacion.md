@@ -8,6 +8,15 @@ servicio quede libre y pueda configurarse nuevamente.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/010_eliminar_menu_planificacion.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@IdMenu UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 La firma termina con `@Codigo NVARCHAR(50) OUTPUT` y

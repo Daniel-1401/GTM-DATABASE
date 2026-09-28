@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarMisReservasPropias]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @NumeroPagina INT,
     @TamanoPagina INT,
     @Codigo NVARCHAR(50) OUTPUT,
@@ -21,7 +21,7 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL
+    IF @IdColaboradorCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador es obligatorio.';
@@ -38,22 +38,6 @@ BEGIN
         RETURN;
     END;
 
-    SELECT @IdColaborador = [Colaborador].[IdColaborador]
-    FROM [rrhh].[Colaborador] AS [Colaborador]
-    WHERE [Colaborador].[UsuarioId] = @IdColaborador;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
-        RETURN;
-    END;
-
     BEGIN TRY
         -- SYSDATETIME() es la convencion vigente del repositorio para la
         -- fecha oficial del servicio.
@@ -64,7 +48,7 @@ BEGIN
             [Menu].[IdentificadorPublico] AS [IdMenu],
             [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
             [Reserva].[IdSede] AS [IdSede],
-            [Sede].[IdentificadorPublico] AS [IdSedePublico],
+            [Sede].[IdSedePublico] AS [IdSedePublico],
             [Sede].[NombreSede],
             [Reserva].[FechaServicio],
             [Reserva].[TipoServicio],
@@ -89,9 +73,9 @@ BEGIN
         INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
             ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
            AND [Planificacion].[IdSede] = [Reserva].[IdSede]
-        INNER JOIN [organizacion].[Sede] AS [Sede]
+        INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
             ON [Sede].[IdSede] = [Reserva].[IdSede]
-        WHERE [Reserva].[IdColaborador] = @IdColaborador
+        WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
           AND [Reserva].[FechaServicio] >= @FechaOficial
           AND [Reserva].[Estado] = N'RESERVADA'
         ORDER BY

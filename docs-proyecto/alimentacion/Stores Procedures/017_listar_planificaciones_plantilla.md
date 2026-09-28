@@ -9,6 +9,15 @@ menús o reservas.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/017_listar_planificaciones_plantilla.sql`.
 
+## Firma
+
+```sql
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
+No recibe parámetros de entrada.
+
 ## Ejecución
 
 ```sql

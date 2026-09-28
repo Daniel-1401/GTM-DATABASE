@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarCalendarioReservableColaborador]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdSede INT,
     @Anio SMALLINT,
     @Mes TINYINT,
@@ -27,10 +27,10 @@ BEGIN
 
     SET @TipoServicio = UPPER(NULLIF(LTRIM(RTRIM(@TipoServicio)), N''));
 
-    IF @IdColaborador IS NULL
+    IF @IdColaboradorCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'El colaborador es obligatorio.';
+        SET @Mensaje = N'La identidad corporativa del colaborador es obligatoria.';
         RETURN;
     END;
 
@@ -83,26 +83,10 @@ BEGIN
         RETURN;
     END;
 
-    select @IdColaborador = IdColaborador
-    from [rrhh].[Colaborador]
-    where UsuarioId = @IdColaborador;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
-        RETURN;
-    END;
-
     DECLARE @NombreSede NVARCHAR(150);
     SELECT
         @NombreSede = [Sede].[NombreSede]
-    FROM [organizacion].[Sede] AS [Sede]
+    FROM [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
     WHERE [Sede].[IdSede] = @IdSede;
 
     IF @NombreSede IS NULL
@@ -175,9 +159,9 @@ BEGIN
             FROM [alimentacion].[Reserva] AS [Reserva]
             INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
                 ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
-            INNER JOIN [organizacion].[Sede] AS [Sede]
+            INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
                 ON [Sede].[IdSede] = [Reserva].[IdSede]
-            WHERE [Reserva].[IdColaborador] = @IdColaborador
+            WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
               AND [Reserva].[FechaServicio] >= @FechaInicioMes
               AND [Reserva].[FechaServicio] <= @FechaFinMes
               AND [Reserva].[Estado] = N'RESERVADA'

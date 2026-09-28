@@ -15,7 +15,7 @@ La autenticacion y autorizacion pertenecen al backend.
 
 ```sql
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ObtenerResumenServicioHoyColaborador]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 ```
@@ -26,7 +26,7 @@ Ejemplo:
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 
 EXEC [alimentacion].[usp_ObtenerResumenServicioHoyColaborador]
-    @IdColaborador = 1001,
+    @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000001',
     @Codigo = @Codigo OUTPUT,
     @Mensaje = @Mensaje OUTPUT;
 
@@ -37,7 +37,7 @@ SELECT @Codigo AS [Codigo], @Mensaje AS [Mensaje];
 
 | Parametro | Tipo | Entrada/salida | Descripcion |
 |---|---|---|---|
-| `@IdColaborador` | `BIGINT` | Entrada | Clave interna de `rrhh.Colaborador`, resuelta por el backend autenticado. |
+| `@IdColaboradorCorporativo` | `UNIQUEIDENTIFIER` | Entrada | UUID corporativo autenticado y autorizado por el backend. |
 | `@Codigo` | `NVARCHAR(50)` | Salida | Codigo estandar del resultado. |
 | `@Mensaje` | `NVARCHAR(500)` | Salida | Mensaje seguro; `NULL` cuando el resultado es `OK`. |
 
@@ -80,7 +80,6 @@ convencion fisica vigente del modulo.
 |---|---|---|
 | `OK` | `NULL` | Si, una fila. |
 | `VALIDATION_ERROR` | `El colaborador es obligatorio.` | No. |
-| `NOT_FOUND` | `El colaborador indicado no existe.` | No. |
 | `INTERNAL_ERROR` | `No fue posible completar la operacion.` | No. |
 
 Los errores inesperados se registran mediante
@@ -96,9 +95,7 @@ convertir esa zona IANA en esta instancia; por ello el resultado depende de
 que el reloj del servidor SQL mantenga la hora oficial del proyecto. La fecha
 no se recibe del cliente.
 
-La reserva se filtra por `IdColaborador`, `FechaServicio = FechaOficial` y
+La reserva se filtra por `IdColaboradorCorporativo`, `FechaServicio = FechaOficial` y
 `Estado = RESERVADA`. La unicidad filtrada existente garantiza como maximo una
-reserva activa por colaborador y fecha. Nunca se consultan ni exponen reservas
-de otros colaboradores. Cuando existe la reserva, sus relaciones determinan
+reserva activa por colaborador y fecha. El backend entrega el UUID corporativo autenticado y autorizado; el SP no consulta la base de datos CO ni `rrhh`. Nunca se consultan ni exponen reservas de otros colaboradores. Cuando existe la reserva, sus relaciones determinan
 el menu, la planificacion y la sede devueltos.
-

@@ -14,7 +14,7 @@ autenticacion y autorizacion corresponden al backend.
 
 ```sql
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarMisReservasPropias]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @NumeroPagina INT,
     @TamanoPagina INT,
     @Codigo NVARCHAR(50) OUTPUT,
@@ -27,7 +27,7 @@ La paginacion es 1-based y el tamano permitido es de 1 a 100.
 
 | Parametro | Tipo | Entrada/salida | Descripcion |
 |---|---|---:|---|
-| `@IdColaborador` | `BIGINT` | Entrada | Identidad autenticada, resuelta al colaborador por el backend. |
+| `@IdColaboradorCorporativo` | `UNIQUEIDENTIFIER` | Entrada | UUID corporativo del usuario autenticado, validado y suministrado por el backend. |
 | `@NumeroPagina` | `INT` | Entrada | Pagina solicitada, mayor o igual a 1. |
 | `@TamanoPagina` | `INT` | Entrada | Filas por pagina, entre 1 y 100. |
 | `@Codigo` | `NVARCHAR(50)` | Salida | Codigo estandar del resultado. |
@@ -52,7 +52,7 @@ ordena por `FechaServicio` ascendente e identificador publico ascendente.
 ## Reglas de lectura
 
 La fecha oficial se calcula una vez con `CONVERT(DATE, SYSDATETIME())`, segun
-la convencion vigente. Filtra exclusivamente por colaborador propio,
+la convencion vigente. Filtra por `IdColaboradorCorporativo`, validado por el backend,
 `FechaServicio >= FechaOficial` y `Estado = RESERVADA`. No muestra reservas de
 otros colaboradores ni reservas canceladas, entregadas o no recogidas.
 
@@ -63,7 +63,6 @@ otros colaboradores ni reservas canceladas, entregadas o no recogidas.
 | `OK` | `NULL` | Si, incluso vacio. |
 | `VALIDATION_ERROR` | `El colaborador es obligatorio.` | No. |
 | `INVALID_FILTER` | `La pagina debe ser mayor o igual a 1 y el tamano debe estar entre 1 y 100.` | No. |
-| `NOT_FOUND` | `El colaborador indicado no existe.` | No. |
 | `INTERNAL_ERROR` | `No fue posible completar la operacion.` | No. |
 
 Los errores inesperados se registran mediante

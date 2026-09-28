@@ -8,7 +8,21 @@ una planificación `CONSOLIDADA` ya terminó y no existe una fila en
 `alimentacion.Entrega`. No se invoca desde móvil ni se expone como operación de
 usuario.
 
-## Firma y ejemplo
+## Firma
+
+```sql
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
+## Parametros
+
+| Parametro | Tipo | Entrada | Descripcion |
+|---|---|---:|---|
+| `@Codigo` | `NVARCHAR(50)` | Salida | Codigo seguro del resultado. |
+| `@Mensaje` | `NVARCHAR(500)` | Salida | Mensaje seguro; es `NULL` en `OK` o `UPDATED`. |
+
+## Ejemplo
 
 ```sql
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
@@ -17,9 +31,6 @@ EXEC [alimentacion].[usp_MarcarReservasNoRecogidas]
     @Mensaje = @Mensaje OUTPUT;
 SELECT @Codigo AS [Codigo], @Mensaje AS [Mensaje];
 ```
-
-La firma termina obligatoriamente con `@Codigo NVARCHAR(50) OUTPUT` y
-`@Mensaje NVARCHAR(500) OUTPUT`.
 
 ## Tiempo oficial
 

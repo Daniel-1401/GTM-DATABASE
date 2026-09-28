@@ -16,7 +16,7 @@ horarios fijos.
 
 ```sql
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarCalendarioReservableColaborador]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @IdSede INT,
     @Anio SMALLINT,
     @Mes TINYINT,
@@ -33,7 +33,7 @@ DECLARE @Codigo NVARCHAR(50),
         @Mensaje NVARCHAR(500);
 
 EXEC [alimentacion].[usp_ListarCalendarioReservableColaborador]
-    @IdColaborador = 1001,
+    @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000000',
     @IdSede = 3,
     @Anio = 2026,
     @Mes = 9,
@@ -52,8 +52,8 @@ N'OK'`. En errores funcionales no se devuelve recordset.
 
 | Parametro | Tipo | Entrada/salida | Descripcion |
 |---|---|---|---|
-| `@IdColaborador` | `BIGINT` | Entrada | Colaborador que consulta su calendario. Debe existir en `rrhh.Colaborador`. |
-| `@IdSede` | `INT` | Entrada | Sede seleccionada. Debe existir en `organizacion.Sede`. Se usa la convencion existente del proyecto: `IdSede` es el identificador numerico de la sede. |
+| `@IdColaboradorCorporativo` | `UNIQUEIDENTIFIER` | Entrada | Identidad corporativa UUID del colaborador, resuelta por el backend; debe ser no nula. |
+| `@IdSede` | `INT` | Entrada | Sede seleccionada. Debe existir en `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`. Se usa la convencion existente del proyecto: `IdSede` es el identificador numerico de la sede. |
 | `@Anio` | `SMALLINT` | Entrada | Ano del calendario. Debe estar entre 1 y 9999 para `DATEFROMPARTS`. |
 | `@Mes` | `TINYINT` | Entrada | Mes del calendario, entre 1 y 12. |
 | `@Dia` | `TINYINT` | Entrada opcional | Dia especifico del mes a consultar. Si es `NULL`, se devuelve el mes completo; si tiene valor, debe existir en el mes y estar entre 1 y 31. |
@@ -70,7 +70,7 @@ ni persiste reglas de autorizacion que el modelo actual no materializa.
 | Codigo | Mensaje posible | Recordset |
 |---|---|---|
 | `OK` | `NULL` | Si. Devuelve el calendario completo. |
-| `VALIDATION_ERROR` | `El colaborador es obligatorio.` | No. |
+| `VALIDATION_ERROR` | `La identidad corporativa del colaborador es obligatoria.` | No. |
 | `VALIDATION_ERROR` | `La sede es obligatoria.` | No. |
 | `VALIDATION_ERROR` | `El año indicado no es válido para el calendario solicitado.` | No. |
 | `VALIDATION_ERROR` | `El mes indicado debe estar entre 1 y 12.` | No. |
@@ -78,7 +78,6 @@ ni persiste reglas de autorizacion que el modelo actual no materializa.
 | `VALIDATION_ERROR` | `El día indicado no existe en el mes solicitado.` | No. |
 | `VALIDATION_ERROR` | `El tipo de servicio es obligatorio.` | No. |
 | `VALIDATION_ERROR` | `El tipo de servicio indicado no existe o está inactivo.` | No. |
-| `NOT_FOUND` | `El colaborador indicado no existe.` | No. |
 | `NOT_FOUND` | `La sede indicada no existe.` | No. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | No. |
 
@@ -138,7 +137,7 @@ colaboradores.
 3. La busqueda del menu se limita a la sede, fecha y tipo de servicio
    solicitados. `EstaDisponible = 0` se conserva para distinguir un dia sin
    atencion de un dia no configurado.
-4. La reserva activa se busca por colaborador y fecha, sin filtrar por sede,
+4. La reserva activa se busca por `Reserva.IdColaboradorCorporativo` y fecha, sin filtrar por sede,
    usando exclusivamente `Reserva.Estado = N'RESERVADA'`. La unicidad filtrada
    existente en la base garantiza como maximo una fila activa por colaborador y
    fecha.

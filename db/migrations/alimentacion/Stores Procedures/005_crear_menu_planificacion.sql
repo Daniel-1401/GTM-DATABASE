@@ -10,7 +10,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenuPlanificacion]
     @IdPlanificacion UNIQUEIDENTIFIER,
-    @IdColaboradorRegistro BIGINT,
+    @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
     @MenuId BIGINT,
     @FechaServicio DATE,
     @TipoServicio NVARCHAR(20),
@@ -45,7 +45,7 @@ BEGIN
         SET @Mensaje = N'La fecha de servicio es obligatoria.';
         RETURN;
     END;
-    IF @IdColaboradorRegistro IS NULL
+    IF @IdColaboradorRegistroCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador que registra el menú es obligatorio.';
@@ -141,12 +141,12 @@ BEGIN
 
     INSERT INTO [alimentacion].[Menu]
     (
-        [MenuId], [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
+        [MenuId], [IdPlanificacion], [IdColaboradorRegistroCorporativo], [FechaServicio], [TipoServicio], [EstaDisponible],
         [Nombre], [Descripcion], [ReferenciaImagen]
     )
     VALUES
     (
-        @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistro, @FechaServicio, @TipoServicio, @EstaDisponible,
+        @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistroCorporativo, @FechaServicio, @TipoServicio, @EstaDisponible,
         @Nombre, @Descripcion, @ReferenciaImagen
     );
 
@@ -160,7 +160,7 @@ BEGIN
         SELECT
             [Menu].[IdentificadorPublico] AS [IdMenu],
             [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
-            [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistro],
+            [Menu].[FechaServicio], [Menu].[TipoServicio], [Menu].[EstaDisponible], [Menu].[EstaActivo], [Menu].[IdColaboradorRegistroCorporativo],
             [Menu].[Nombre], [Menu].[Descripcion], [Menu].[ReferenciaImagen],
             [Menu].[VersionRegistro], [Menu].[FechaCreacion]
         FROM [alimentacion].[Menu] AS [Menu]
@@ -185,8 +185,11 @@ END;
 GO
 
 -- EXEC [alimentacion].[usp_CrearMenuPlanificacion]
---     @IdPlanificacion = '00000000-0000-0000-0000-000000000000', @IdColaboradorRegistro = 1,
+--     @IdPlanificacion = '00000000-0000-0000-0000-000000000000',
+--     @IdColaboradorRegistroCorporativo = '00000000-0000-0000-0000-000000000000',
 --     @MenuId = 1,
---     @FechaServicio = '2026-09-01', @TipoServicio = N'ALMUERZO',
---     @EstaDisponible = 1, @Nombre = N'Pollo al horno',
+--     @FechaServicio = '2026-09-01',
+--     @TipoServicio = N'ALMUERZO',
+--     @EstaDisponible = 1,
+--     @Nombre = N'Pollo al horno',
 --     @Descripcion = N'Pollo con arroz y ensalada.';

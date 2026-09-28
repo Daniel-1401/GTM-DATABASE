@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_ListarHistorialReservasPropias]
-    @IdColaborador BIGINT,
+    @IdColaboradorCorporativo UNIQUEIDENTIFIER,
     @NumeroPagina INT,
     @TamanoPagina INT,
     @Codigo NVARCHAR(50) OUTPUT,
@@ -21,16 +21,12 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdColaborador IS NULL
+    IF @IdColaboradorCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador es obligatorio.';
         RETURN;
     END;
-
-    select @IdColaborador = IdColaborador
-    from [rrhh].[Colaborador]
-    where UsuarioId = @IdColaborador;
 
     IF @NumeroPagina IS NULL OR @TamanoPagina IS NULL
        OR @NumeroPagina < 1
@@ -39,18 +35,6 @@ BEGIN
     BEGIN
         SET @Codigo = N'INVALID_FILTER';
         SET @Mensaje = N'La pagina debe ser mayor o igual a 1 y el tamano debe estar entre 1 y 100.';
-        RETURN;
-    END;
-
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM [rrhh].[Colaborador] AS [Colaborador]
-        WHERE [Colaborador].[IdColaborador] = @IdColaborador
-    )
-    BEGIN
-        SET @Codigo = N'NOT_FOUND';
-        SET @Mensaje = N'El colaborador indicado no existe.';
         RETURN;
     END;
 
@@ -64,7 +48,7 @@ BEGIN
             [Menu].[IdentificadorPublico] AS [IdMenu],
             [Planificacion].[IdentificadorPublico] AS [IdPlanificacion],
             [Reserva].[IdSede] AS [IdSede],
-            [Sede].[IdentificadorPublico] AS [IdSedePublico],
+            [Sede].[IdSedePublico] AS [IdSedePublico],
             [Sede].[NombreSede],
             [Reserva].[FechaServicio],
             [Reserva].[TipoServicio],
@@ -92,11 +76,11 @@ BEGIN
         INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
             ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
            AND [Planificacion].[IdSede] = [Reserva].[IdSede]
-        INNER JOIN [organizacion].[Sede] AS [Sede]
+        INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
             ON [Sede].[IdSede] = [Reserva].[IdSede]
         LEFT JOIN [alimentacion].[Entrega] AS [Entrega]
             ON [Entrega].[IdReserva] = [Reserva].[IdReserva]
-        WHERE [Reserva].[IdColaborador] = @IdColaborador
+        WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
           AND [Reserva].[FechaServicio] < @FechaOficial
           AND [Reserva].[Estado] IN (N'ENTREGADA', N'NO_RECOGIDA', N'CANCELADA')
         ORDER BY

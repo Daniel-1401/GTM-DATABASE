@@ -10,7 +10,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_PublicarPlanificacion]
     @IdPlanificacion UNIQUEIDENTIFIER,
-    @IdColaboradorModificacion BIGINT,
+    @IdColaboradorModificacionCorporativo UNIQUEIDENTIFIER,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
@@ -21,10 +21,10 @@ BEGIN
     SET @Codigo = N'OK';
     SET @Mensaje = NULL;
 
-    IF @IdPlanificacion IS NULL OR @IdColaboradorModificacion IS NULL
+    IF @IdPlanificacion IS NULL OR @IdColaboradorModificacionCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
-        SET @Mensaje = N'La planificación y el colaborador que publica son obligatorios.';
+        SET @Mensaje = N'La planificación y el actor corporativo que publica son obligatorios.';
         RETURN;
     END;
 
@@ -68,19 +68,6 @@ BEGIN
         IF NOT EXISTS
         (
             SELECT 1
-            FROM [rrhh].[Colaborador] AS [Colaborador]
-            WHERE [Colaborador].[IdColaborador] = @IdColaboradorModificacion
-        )
-        BEGIN
-            IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
-            SET @Codigo = N'NOT_FOUND';
-            SET @Mensaje = N'El colaborador que publica no existe.';
-            RETURN;
-        END;
-
-        IF NOT EXISTS
-        (
-            SELECT 1
             FROM [alimentacion].[Menu] AS [Menu] WITH (UPDLOCK, HOLDLOCK)
             WHERE [Menu].[IdPlanificacion] = @IdPlanificacionInterno
               AND [Menu].[EstaActivo] = 1
@@ -97,7 +84,7 @@ BEGIN
         UPDATE [alimentacion].[Planificacion]
         SET
             [Estado] = N'PUBLICADA_ABIERTA',
-            [IdColaboradorModificacion] = @IdColaboradorModificacion,
+            [IdColaboradorModificacionCorporativo] = @IdColaboradorModificacionCorporativo,
             [VersionRegistro] = [VersionRegistro] + 1,
             [FechaModificacion] = @FechaModificacion
         WHERE [IdPlanificacion] = @IdPlanificacionInterno;
@@ -108,7 +95,7 @@ BEGIN
 
         SELECT
             [IdentificadorPublico] AS [IdPlanificacion],
-            [Estado], [IdColaboradorModificacion], [VersionRegistro], [FechaModificacion]
+            [Estado], [IdColaboradorModificacionCorporativo], [VersionRegistro], [FechaModificacion]
         FROM [alimentacion].[Planificacion]
         WHERE [IdPlanificacion] = @IdPlanificacionInterno;
     END TRY

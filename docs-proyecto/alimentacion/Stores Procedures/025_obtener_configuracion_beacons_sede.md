@@ -69,6 +69,7 @@ Una fila por beacon que referencia una configuración del primer recordset.
 ## Reglas relevantes
 
 - Es una lectura: no modifica estado ni inicia transacciones de negocio.
+- La existencia y el estado activo de la sede se consultan en `[PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede]`, la fuente GI de sedes.
 - No filtra beacons inactivos; devuelve `EstaActivoBeacon` para que el backend
   aplique el contrato de exposición correspondiente.
 - `ReferenciaBeacon` es el valor para `beaconRef`; no se genera JSON en SQL.

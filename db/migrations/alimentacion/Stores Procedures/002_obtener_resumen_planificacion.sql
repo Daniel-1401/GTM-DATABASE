@@ -1,7 +1,7 @@
 -- Procedimiento: alimentacion.usp_ObtenerResumenPlanificacion
 -- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
 -- Motivo: Obtener la cabecera y los conteos de menús y reservas de una planificación.
--- Ejecutar después de la migración 017.
+-- Ejecutar después de la migración 010.
 
 SET ANSI_NULLS ON;
 GO
@@ -28,6 +28,19 @@ BEGIN
     END;
 
     BEGIN TRY
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM [alimentacion].[Planificacion] AS [Planificacion]
+        WHERE [Planificacion].[IdentificadorPublico] = @IdPlanificacion
+          AND [Planificacion].[Estado] <> N'ELIMINADA'
+    )
+    BEGIN
+        SET @Codigo = N'PLAN_NOT_FOUND';
+        SET @Mensaje = N'La planificacion indicada no existe.';
+        RETURN;
+    END;
+
     ;WITH [PlanificacionObjetivo] AS
     (
         SELECT
@@ -38,7 +51,7 @@ BEGIN
             [Planificacion].[FechaInicio],
             [Planificacion].[FechaFin],
             [Planificacion].[Estado],
-            [Planificacion].[IdColaboradorModificacion],
+            [Planificacion].[IdColaboradorModificacionCorporativo],
             [Planificacion].[VersionRegistro],
             [Planificacion].[FechaCreacion],
             [Planificacion].[FechaModificacion]
@@ -78,7 +91,7 @@ BEGIN
         [Planificacion].[FechaFin],
         DATEDIFF(DAY, [Planificacion].[FechaInicio], [Planificacion].[FechaFin]) + 1 AS [CantidadDias],
         [Planificacion].[Estado],
-        [Planificacion].[IdColaboradorModificacion],
+        [Planificacion].[IdColaboradorModificacionCorporativo],
         [Planificacion].[VersionRegistro],
         ISNULL([MenusPorPlanificacion].[CantidadMenusRegistrados], 0) AS [CantidadMenusRegistrados],
         ISNULL([MenusPorPlanificacion].[CantidadMenusConfigurados], 0) AS [CantidadMenusCreados],
@@ -87,7 +100,7 @@ BEGIN
         [Planificacion].[FechaModificacion],
         ISNULL([ReservasPorPlanificacion].[CantidadReservasRegistradas], 0) AS [CantidadReservasRegistradas]
     FROM [PlanificacionObjetivo] AS [Planificacion]
-    INNER JOIN [organizacion].[Sede] AS [Sede]
+    INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
         ON [Sede].[IdSede] = [Planificacion].[IdSede]
     LEFT JOIN [MenusPorPlanificacion] AS [MenusPorPlanificacion]
         ON [MenusPorPlanificacion].[IdPlanificacion] = [Planificacion].[IdPlanificacion]

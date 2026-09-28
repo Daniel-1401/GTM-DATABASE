@@ -22,7 +22,7 @@ El único procedure API nuevo es
 `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso`. Recibe un `UsuarioAcceso`
 legacy ya obtenido por el backend, no recibe ni resuelve `tid`, `oid`, UPN ni
 tokens. Su contrato está en
-`docs-proyecto/alimentacion/Stores Procedures/umc_usp_ResolverContextoUsuarioNucleoPorAcceso.md`.
+`docs-proyecto/usermanagementcorp/Stores Procedures/001_resolver_contexto_usuario_nucleo_por_acceso.md`.
 
 La auditoría `auditoria.ErrorProcedimiento` y su logger interno se crean solo
 para contener errores inesperados de ese procedure nuevo. No instrumentan ni

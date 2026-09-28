@@ -10,7 +10,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearPlanificacionBorrador]
     @IdSede INT,
-    @IdColaboradorRegistro BIGINT,
+    @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
     @Nombre NVARCHAR(200),
     @FechaInicio DATE,
     @FechaFin DATE,
@@ -26,7 +26,7 @@ BEGIN
 
     SET @Nombre = NULLIF(LTRIM(RTRIM(@Nombre)), N'');
 
-    IF @IdSede IS NULL
+    IF @IdSede IS NULL OR @IdSede <= 0
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'La sede es obligatoria.';
@@ -40,7 +40,7 @@ BEGIN
         RETURN;
     END;
 
-    IF @IdColaboradorRegistro IS NULL
+    IF @IdColaboradorRegistroCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador que registra la planificación es obligatorio.';
@@ -61,19 +61,25 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS (SELECT 1 FROM [organizacion].[Sede] WHERE [IdSede] = @IdSede)
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
+        WHERE [Sede].[IdSede] = @IdSede
+    )
     BEGIN
         SET @Codigo = N'NOT_FOUND';
         SET @Mensaje = N'La sede indicada no existe.';
         RETURN;
     END;
+
     DECLARE @IdPlanificacionInterno BIGINT;
 
     BEGIN TRY
         BEGIN TRANSACTION;
 
-    INSERT INTO [alimentacion].[Planificacion] ([IdSede], [IdColaboradorRegistro], [Nombre], [FechaInicio], [FechaFin])
-    VALUES (@IdSede, @IdColaboradorRegistro, @Nombre, @FechaInicio, @FechaFin);
+    INSERT INTO [alimentacion].[Planificacion] ([IdSede], [IdColaboradorRegistroCorporativo], [Nombre], [FechaInicio], [FechaFin])
+    VALUES (@IdSede, @IdColaboradorRegistroCorporativo, @Nombre, @FechaInicio, @FechaFin);
 
     SET @IdPlanificacionInterno = CONVERT(BIGINT, SCOPE_IDENTITY());
 
@@ -84,7 +90,7 @@ BEGIN
 
         SELECT
             [IdentificadorPublico] AS [IdPlanificacion], [IdSede], [Nombre],
-            [FechaInicio], [FechaFin], [Estado], [EstaActivo], [IdColaboradorRegistro], [VersionRegistro], [FechaCreacion]
+            [FechaInicio], [FechaFin], [Estado], [EstaActivo], [IdColaboradorRegistroCorporativo], [VersionRegistro], [FechaCreacion]
         FROM [alimentacion].[Planificacion]
         WHERE [IdPlanificacion] = @IdPlanificacionInterno;
     END TRY
@@ -105,5 +111,8 @@ END;
 GO
 
 -- EXEC [alimentacion].[usp_CrearPlanificacionBorrador]
---     @IdSede = 1, @IdColaboradorRegistro = 1, @Nombre = N'Menú septiembre 2026',
---     @FechaInicio = '2026-09-01', @FechaFin = '2026-09-30';
+--     @IdSede = 1,
+--     @IdColaboradorRegistroCorporativo = '00000000-0000-0000-0000-000000000000',
+--     @Nombre = N'Menú septiembre 2026',
+--     @FechaInicio = '2026-09-01',
+--     @FechaFin = '2026-09-30';

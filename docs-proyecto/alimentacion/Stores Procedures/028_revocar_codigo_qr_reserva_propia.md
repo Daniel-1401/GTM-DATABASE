@@ -7,7 +7,7 @@ Revoca de forma atomica un codigo QR de una reserva propia. No elimina registros
 ## Firma
 
 ```sql
-@IdColaborador BIGINT,
+@IdColaboradorCorporativo UNIQUEIDENTIFIER,
 @IdCodigoQR UNIQUEIDENTIFIER,
 @Codigo NVARCHAR(50) OUTPUT,
 @Mensaje NVARCHAR(500) OUTPUT
@@ -17,7 +17,7 @@ Revoca de forma atomica un codigo QR de una reserva propia. No elimina registros
 
 | Parametro | Descripcion |
 |---|---|
-| `@IdColaborador` | Identidad del colaborador autenticado; debe ser propietario de la reserva asociada al QR. |
+| `@IdColaboradorCorporativo` | UUID corporativo de la identidad autenticada; debe ser propietario de la reserva asociada al QR y el backend lo valida. |
 | `@IdCodigoQR` | Identificador del QR a revocar, obtenido al emitirlo. |
 | `@Codigo` | Codigo de resultado de salida. |
 | `@Mensaje` | Mensaje seguro de salida. |
@@ -27,7 +27,7 @@ Ejemplo ilustrativo:
 ```sql
 DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_RevocarCodigoQRReservaPropia]
-    @IdColaborador = 1,
+    @IdColaboradorCorporativo = '00000000-0000-0000-0000-000000000010',
     @IdCodigoQR = '00000000-0000-0000-0000-000000000001',
     @Codigo = @Codigo OUTPUT,
     @Mensaje = @Mensaje OUTPUT;
@@ -44,7 +44,6 @@ En `UPDATED` o `IDEMPOTENT_REPLAY` devuelve una fila con `IdCodigoQR`, `IdReserv
 | `UPDATED` | `El codigo QR fue revocado correctamente.` |
 | `IDEMPOTENT_REPLAY` | `El codigo QR ya estaba revocado.` |
 | `VALIDATION_ERROR` | `El colaborador y el codigo QR son obligatorios.` |
-| `NOT_FOUND` | `El colaborador indicado no existe.` |
 | `QR_NOT_FOUND` | `El codigo QR indicado no existe.` |
 | `RESERVATION_NOT_FOUND` | `La reserva asociada al codigo QR no existe.` |
 | `NOT_OWNER` | `El codigo QR no pertenece al colaborador indicado.` |

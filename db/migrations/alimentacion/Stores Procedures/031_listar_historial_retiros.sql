@@ -28,6 +28,17 @@ BEGIN
     SET @Mensaje = NULL;
     SET @NombreColaborador = NULLIF(LTRIM(RTRIM(@NombreColaborador)), N'');
 
+    DECLARE @PatronNombreColaborador NVARCHAR(402);
+
+    IF @NombreColaborador IS NOT NULL
+    BEGIN
+        SET @PatronNombreColaborador = REPLACE(@NombreColaborador, N'\', N'\\');
+        SET @PatronNombreColaborador = REPLACE(@PatronNombreColaborador, N'%', N'\%');
+        SET @PatronNombreColaborador = REPLACE(@PatronNombreColaborador, N'_', N'\_');
+        SET @PatronNombreColaborador = REPLACE(@PatronNombreColaborador, N'[', N'\[');
+        SET @PatronNombreColaborador = N'%' + @PatronNombreColaborador + N'%';
+    END;
+
     IF @IdSede IS NOT NULL AND @IdSede <= 0
        OR @NumeroPagina < 1 OR @TamanoPagina NOT BETWEEN 1 AND 100
        OR (@Fecha IS NOT NULL AND (@FechaDesde IS NOT NULL OR @FechaHasta IS NOT NULL))
@@ -59,17 +70,12 @@ BEGIN
                 [Sede].[IdSede],
                 [Sede].[CodigoSede],
                 [Sede].[NombreSede],
-                LTRIM(RTRIM(CONCAT([Persona].[Nombres], N' ', [Persona].[ApellidoPaterno],
-                    CASE WHEN [Persona].[ApellidoMaterno] IS NULL THEN N'' ELSE N' ' + [Persona].[ApellidoMaterno] END))) AS [NombreColaborador],
-                [Colaborador].[CodigoSAP] AS [CodigoSAPColaborador],
+                [Reserva].[IdColaboradorCorporativo] AS [IdColaboradorCorporativo],
+                [Colaborador].[NombreCompleto] AS [NombreColaborador],
                 [Menu].[Nombre] AS [NombreMenu],
                 [Menu].[ReferenciaImagen] AS [ReferenciaImagenMenu]
             FROM [alimentacion].[Reserva] AS [Reserva]
-            INNER JOIN [rrhh].[Colaborador] AS [Colaborador]
-                ON [Colaborador].[IdColaborador] = [Reserva].[IdColaborador]
-            INNER JOIN [rrhh].[Persona] AS [Persona]
-                ON [Persona].[IdPersona] = [Colaborador].[IdPersona]
-            INNER JOIN [organizacion].[Sede] AS [Sede]
+            INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
                 ON [Sede].[IdSede] = [Reserva].[IdSede]
             INNER JOIN [alimentacion].[Menu] AS [Menu]
                 ON [Menu].[IdMenu] = [Reserva].[IdMenu]
@@ -78,21 +84,28 @@ BEGIN
                AND [Menu].[TipoServicio] = [Reserva].[TipoServicio]
             LEFT JOIN [alimentacion].[Entrega] AS [Entrega]
                 ON [Entrega].[IdReserva] = [Reserva].[IdReserva]
+            LEFT JOIN [GSBEDEV01\CO].[PERSONALMANEGEMENTCORP].[rrhh].[vw_ColaboradorConsulta] AS [Colaborador]
+                ON [Colaborador].[IdColaboradorCorporativo] = [Reserva].[IdColaboradorCorporativo]
             WHERE (@IdSede IS NULL OR [Reserva].[IdSede] = @IdSede)
               AND (@TipoServicio IS NULL OR [Reserva].[TipoServicio] = @TipoServicio)
               AND (@Fecha IS NULL OR [Reserva].[FechaServicio] = @Fecha)
               AND (@FechaDesde IS NULL OR [Reserva].[FechaServicio] >= @FechaDesde)
               AND (@FechaHasta IS NULL OR [Reserva].[FechaServicio] <= @FechaHasta)
-              AND (@NombreColaborador IS NULL OR CONCAT([Persona].[Nombres], N' ', [Persona].[ApellidoPaterno], N' ', ISNULL([Persona].[ApellidoMaterno], N'')) LIKE N'%' + @NombreColaborador + N'%')
+              AND
+              (
+                  @PatronNombreColaborador IS NULL
+                  OR [Colaborador].[NombreCompleto] COLLATE DATABASE_DEFAULT
+                      LIKE @PatronNombreColaborador ESCAPE N'\'
+              )
         )
         SELECT
             [IdReserva], [IdEntrega], [FechaServicio], [TipoServicio], [EstadoReserva], [EstadoRetiro],
             [FechaEntrega], [MecanismoLectura], [IdSede], [CodigoSede], [NombreSede],
-            [NombreColaborador], [CodigoSAPColaborador], [NombreMenu], [ReferenciaImagenMenu],
+            [IdColaboradorCorporativo], [NombreColaborador], [NombreMenu], [ReferenciaImagenMenu],
             COUNT_BIG(*) OVER () AS [TotalRegistros]
         FROM [Historial]
         WHERE @EstadoRetiro IS NULL OR [EstadoRetiro] = @EstadoRetiro
-        ORDER BY [FechaServicio] DESC, [FechaEntrega] DESC, [NombreColaborador] ASC, [IdReserva] DESC
+        ORDER BY [FechaServicio] DESC, [FechaEntrega] DESC, [IdReserva] DESC
         OFFSET CASE WHEN @Exportar = 1 THEN 0 ELSE (@NumeroPagina - 1) * @TamanoPagina END ROWS
         FETCH NEXT CASE WHEN @Exportar = 1 THEN 2147483647 ELSE @TamanoPagina END ROWS ONLY
         OPTION (RECOMPILE);

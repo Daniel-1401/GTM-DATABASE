@@ -10,14 +10,24 @@ No requiere un store adicional de disponibilidad.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/003_listar_menus_planificacion_por_tipo_servicio.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@TipoServicio NVARCHAR(20),
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Contrato de salida
 
 Firma adicional obligatoria: `@Codigo NVARCHAR(50) OUTPUT` y `@Mensaje NVARCHAR(500) OUTPUT`. Mantiene sin cambios el recordset existente.
 
 | Código | Mensaje seguro | Cuándo ocurre |
 |---|---|---|
-| `OK` | `null` | Consulta ejecutada correctamente, incluso si no existe la planificación. |
+| `OK` | `null` | Consulta ejecutada correctamente. |
 | `VALIDATION_ERROR` | Mensaje de validación seguro | Identificador ausente o tipo de servicio inválido. |
+| `PLAN_NOT_FOUND` | `La planificacion indicada no existe.` | No existe una planificación activa con el identificador recibido. |
 | `INTERNAL_ERROR` | `No fue posible completar la operación.` | Error inesperado. |
 
 ## Ejecución
@@ -43,8 +53,7 @@ EXEC [alimentacion].[usp_ListarMenusPlanificacionPorTipoServicio]
 Devuelve un único recordset ordenado por `FechaServicio` y orden de servicio.
 Para un tipo específico devuelve una fila por cada fecha del período. Con
 `TODOS` devuelve la matriz completa fecha × tipo de servicio activo, incluso
-cuando no existe un menú. Si la planificación no existe, devuelve un recordset
-vacío.
+cuando no existe un menú. No devuelve recordset ante un error funcional.
 
 | Columna | Tipo SQL / lógico | Descripción |
 |---|---|---|
@@ -53,6 +62,7 @@ vacío.
 | `TieneMenu` | `BIT` / boolean | `0` cuando no existe fila `Menu`; `1` cuando existe. |
 | `IdMenu` | `UNIQUEIDENTIFIER` / UUID o `null` | Identificador público del menú; `null` si no existe fila. |
 | `EstaDisponible` | `BIT` / boolean o `null` | `null` sin fila `Menu`; `0` sin atención; `1` con menú disponible. |
+| `IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` / UUID o `null` | Referencia corporativa de quien registró el menú. |
 | `Nombre`, `Descripcion`, `ReferenciaImagen` | string o `null` | Datos del menú. |
 | `VersionRegistro` | `BIGINT` o `null` | Versión del menú. |
 | `FechaCreacion`, `FechaModificacion` | `DATETIME2(3)` o `null` | Fechas de creación y modificación. |
@@ -66,9 +76,8 @@ vacío.
 | `1` | `0` | La fecha y tipo fueron registrados sin atención. |
 | `1` | `1` | Existe un menú disponible. |
 
-## Errores SQL
+## Reglas de lectura
 
-| Error SQL | Condición |
-|---:|---|
-| `50100` | `IdPlanificacion` es `NULL`. |
-| `50101` | `TipoServicio` es nulo, vacío, inactivo, inexistente o distinto de `TODOS`. |
+Un identificador de planificación ausente o un tipo de servicio inválido se
+comunican mediante `VALIDATION_ERROR`. Los números internos de SQL Server no
+forman parte del contrato API.

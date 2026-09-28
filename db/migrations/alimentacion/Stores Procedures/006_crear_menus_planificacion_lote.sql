@@ -2,7 +2,7 @@
 -- Referencia: db/migrations/alimentacion/010_crear_planificaciones_menus_y_consolidacion.sql
 -- Motivo: Configurar un mismo menú para un rango de días de una planificación
 --         BORRADOR, sin modificar los días que ya poseen menú.
--- Ejecutar después de la migración 017.
+-- Ejecutar después de la migración 010.
 
 SET ANSI_NULLS ON;
 GO
@@ -11,7 +11,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion UNIQUEIDENTIFIER,
-    @IdColaboradorRegistro BIGINT,
+    @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
     @MenuId BIGINT,
     @FechaInicio DATE,
     @FechaFin DATE,
@@ -41,7 +41,7 @@ BEGIN
         SET @Mensaje = N'El identificador de planificación es obligatorio.';
         RETURN;
     END;
-    IF @IdColaboradorRegistro IS NULL
+    IF @IdColaboradorRegistroCorporativo IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'El colaborador que registra los menús es obligatorio.';
@@ -152,13 +152,13 @@ BEGIN
 
         INSERT INTO [alimentacion].[Menu]
         (
-            [MenuId], [IdPlanificacion], [IdColaboradorRegistro], [FechaServicio], [TipoServicio], [EstaDisponible],
+            [MenuId], [IdPlanificacion], [IdColaboradorRegistroCorporativo], [FechaServicio], [TipoServicio], [EstaDisponible],
             [Nombre], [Descripcion], [ReferenciaImagen]
         )
         OUTPUT inserted.[IdMenu], inserted.[FechaServicio]
             INTO @MenusCreados ([IdMenu], [FechaServicio])
         SELECT
-            @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistro, [Fecha].[FechaServicio], @TipoServicio,
+            @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistroCorporativo, [Fecha].[FechaServicio], @TipoServicio,
             @EstaDisponible, @Nombre, @Descripcion, @ReferenciaImagen
         FROM @FechasSolicitadas AS [Fecha]
         WHERE NOT EXISTS

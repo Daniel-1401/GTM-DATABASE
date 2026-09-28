@@ -72,3 +72,25 @@ Los artefactos se preparan como scripts. Aplicar DDL/DML sobre una instancia
 real requiere autorización humana expresa y un contexto de base de datos
 acotado. Las verificaciones de aplicación desde cero se realizarán en una base
 desechable o entorno autorizado durante la etapa del DB Agent.
+
+### Topología de desarrollo vigente
+
+Esta topología describe exclusivamente el ambiente de desarrollo actual. No es
+una configuración de producción ni contiene credenciales, cadenas de conexión,
+puertos o secretos.
+
+| Instancia | Base de datos | Responsabilidad canónica |
+|---|---|---|
+| `GSBEDEV01\CO` | `PERSONALMANEGEMENTCORP` | Datos corporativos de persona y colaborador. |
+| `GSBEDEV01\CO` | `USERMANAGEMENTCORP` | Usuario, identidad y autorización de aplicación. |
+| `GSBEDEV01\GI` | `PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA` | Empresa de la UO, sede, relación laboral, cargo, jefatura y área. |
+| `GSBEDEV01\GI` | `GTM` | Estado propio de los módulos GTM, incluido Alimentación. |
+
+`GTM` consulta las sedes de su propia UO mediante
+`PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA.organizacion.Sede`; los permisos de
+lectura requeridos ya existen en este ambiente. Los datos de CO se resuelven
+desde backend o mediante un mecanismo de integración explícitamente aprobado.
+La excepción aprobada para el historial de retiros es el linked server de solo
+lectura `GSBEDEV01\CO`, limitado a
+`PERSONALMANEGEMENTCORP.rrhh.vw_ColaboradorConsulta` para filtrar por nombre;
+ningún store debe consultar tablas corporativas directamente.

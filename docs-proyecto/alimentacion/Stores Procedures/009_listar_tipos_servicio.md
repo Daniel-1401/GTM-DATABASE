@@ -6,6 +6,13 @@ Lista los tipos de servicio activos que el frontend puede ofrecer al registrar o
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/009_listar_tipos_servicio.sql`.
 
+## Firma
+
+```sql
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Ejecución
 
 ```sql

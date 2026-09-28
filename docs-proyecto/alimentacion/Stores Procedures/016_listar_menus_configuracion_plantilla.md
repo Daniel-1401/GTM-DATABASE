@@ -12,6 +12,14 @@ sin filtrar por estado.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/016_listar_menus_configuracion_plantilla.sql`.
 
+## Firma
+
+```sql
+@IdPlanificacion UNIQUEIDENTIFIER,
+@Codigo NVARCHAR(50) OUTPUT,
+@Mensaje NVARCHAR(500) OUTPUT
+```
+
 ## Ejecución
 
 ```sql
