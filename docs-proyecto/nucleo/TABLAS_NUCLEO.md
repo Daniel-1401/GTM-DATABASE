@@ -1,123 +1,127 @@
-# Tablas del núcleo GTM
+# Núcleo distribuido de GTM
 
-Fecha de actualización: 2026-09-09
+Fecha de actualización: 2026-09-24
 Motor objetivo: Microsoft SQL Server 2017
 
-## Alcance y fuente de verdad
+## Modelo y orden de instalación
 
-Este documento describe las 16 tablas vigentes del núcleo común de GTM. La fuente de verdad son las migraciones `001` a `008` en `db/migrations/nucleo/`; ante cualquier diferencia, prevalecen esas migraciones. No incluye tablas de Alimentación, Evaluaciones, Seguridad, Marcaciones, Notificaciones ni otros módulos.
+GTM usa el Modelo B: una instancia corporativa (CO) y una instancia hija por
+unidad organizativa (UO). Una hija representa una UO, no una empresa, y puede
+proyectar varias empresas de esa UO. No hay claves foráneas entre bases.
 
-Es documentación de modelo, no evidencia de que el DDL o la semilla de datos de prueba hayan sido ejecutados en una instancia.
-
-## Vista general
-
-| Schema | Tablas | Responsabilidad |
+| Destino | Orden de instalación | Responsabilidad |
 |---|---|---|
-| `catalogo` | `TipoDocumento`, `TipoJefatura` | Clasificaciones extensibles de identidad y jefatura. |
-| `rrhh` | `Persona`, `Colaborador`, `DocumentoPersona`, `RelacionLaboral`, `AsignacionOrganizacional`, `HorarioLaboral`, `VigenciaHorario`, `JefaturaRelacionLaboral` | Identidad, vida laboral, asignación, horarios y jerarquía. |
-| `organizacion` | `Empresa`, `Sede`, `Area`, `Cargo`, `CargoJefatura` | Maestros organizacionales y estructura de jefaturas entre cargos. |
-| `integracion` | `CuentaMicrosoftCorporativa` | Referencia de identidad corporativa de Microsoft/Entra. |
+| CO | `corporativo/001` → `002` → `003` → `004` → `005` | Catálogos, UO, empresas, identidad corporativa, integración SAP y auditoría interna. |
+| Hija UO | `unidad_organizativa/001` → `002` → `003` → `004` | Proyección local, organización, relación laboral, asignación, horarios y selección. |
 
-## Catálogos
+Los GUID corporativos vinculan lógicamente las bases. El backend de integración
+valida y coordina esos vínculos; una hija no debe crear una segunda autoridad
+para empresas, personas o colaboradores.
 
-### `catalogo.TipoDocumento`
+## CO corporativo
 
-Clasifica documentos asociados a una persona. Su clave es `IdTipoDocumento`; `CodigoTipoDocumento` es único. Conserva nombre, indicador de actividad y fecha técnica de creación.
+| Schema | Tabla u objeto | Propósito e integridad principal |
+|---|---|---|
+| `catalogo` | `TipoDocumento`, `EstadoCivil`, `Genero`, `Pais` | Catálogos con código único y estado activo. |
+| `organizacion` | `UnidadOrganizativa` | Maestro de UO con GUID corporativo y código único. |
+| `organizacion` | `Empresa` | Maestro de empresas; pertenece a una UO y expone GUID corporativo único. |
+| `rrhh` | `Persona` | Identidad civil con GUID corporativo. |
+| `rrhh` | `DocumentoPersona` | Documento histórico; identidad documental única y un principal abierto por persona. |
+| `rrhh` | `Colaborador` | Identidad laboral estable: máximo uno por persona y GUID corporativo único. |
+| `integracion` | `PersonalSAPStaging` | Historial append-only de recepción SAP con Kafka, JSON original y 63 campos de origen. |
+| `integracion` | `TVP_RecepcionPersonalSAP` | Tipo tabular para lotes estructurados de uno o más eventos SAP. |
+| `integracion` | `usp_RegistrarPersonalSAPStaging` | Inserción idempotente de staging; no promueve al núcleo. |
+| `auditoria` | `ErrorProcedimiento` | Bitácora interna de errores inesperados de procedures API de CO. |
+| `auditoria` | `usp_RegistrarErrorProcedimiento` | Registrador interno que no expone detalles SQL al consumidor API. |
 
-### `catalogo.TipoJefatura`
+`PersonalSAPStaging` impide duplicados tanto por `IdEventoOrigen` como por
+`KafkaTopic + KafkaPartition + KafkaOffset`. Sus 63 columnas son `NVARCHAR(MAX)`
+anulables: el contrato SAP v1 exige que cada propiedad esté presente con texto o
+`null`; SQL Server conserva el payload sin volver a interpretarlo.
 
-Clasifica la naturaleza de una jefatura. Su clave es `IdTipoJefatura`; `CodigoTipoJefatura` es único. Conserva nombre, indicador de actividad y fecha técnica de creación.
+El procedimiento recibe TVP, valida `sap.personal.actualizado` v1 de SAP y
+devuelve `CREATED` o `IDEMPOTENT_REPLAY` ante una repetición. El backend confirma
+offset Kafka solo después de que la ejecución haya confirmado en SQL Server.
 
-## Identidad e integración
+Ante un error inesperado, el procedure de recepción conserva el detalle técnico
+en `auditoria.ErrorProcedimiento` mediante el registrador interno y devuelve al
+backend únicamente el código y mensaje seguro `INTERNAL_ERROR`.
 
-### `rrhh.Persona`
+## Instancia hija de UO
 
-Representa la identidad civil. Su clave es `IdPersona` y registra nombres, apellidos, fecha de nacimiento y marcas técnicas. No contiene cargo, área, empresa, usuario ni permisos.
+| Schema | Tabla | Propósito e integridad principal |
+|---|---|---|
+| `organizacion` | `ConfiguracionUnidadOrganizativa` | Una sola fila (`Id... = 1`) que identifica la UO propietaria. |
+| `organizacion` | `EmpresaReferencia` | Proyección de una empresa CO; su UO debe coincidir con la configuración local. |
+| `organizacion` | `Sede`, `Area`, `Cargo` | Maestros locales, todos pertenecientes a una empresa proyectada. |
+| `organizacion` | `CargoSAP` | Código SAP y cargo GTM de la misma empresa. |
+| `organizacion` | `CargoJefatura` | Jerarquía de cargos de una misma empresa; un jefe abierto por subordinado. |
+| `rrhh` | `RelacionLaboral` | Vínculo colaborador corporativo–empresa local. Es único por colaborador y empresa y se reactiva al reingreso. |
+| `rrhh` | `AsignacionOrganizacional` | Contexto operativo: relación corporativa, empleador, empresa local, sede y área. |
+| `rrhh` | `HorarioLaboral`, `VigenciaHorario` | Horarios por empresa y, como máximo, una vigencia por relación y fecha. |
+| `seleccion` | `Postulante`, `ArchivoPostulante`, `HistorialEstadoPostulante` | Prefiltro local, adjuntos y estados informados; no son aún persona ni colaborador. |
 
-### `rrhh.Colaborador`
+`AsignacionOrganizacional.IdEmpresaReferencia` tiene FK local directa hacia
+`EmpresaReferencia`; sus FKs compuestas obligan a que sede y área sean de esa
+misma empresa. No tiene FK a `RelacionLaboral`, porque puede representar una
+relación procedente de otra hija. `IdRelacionLaboralCorporativa`,
+`IdColaboradorCorporativo`, `IdUnidadOrganizativaOrigenCorporativa` e
+`IdEmpresaEmpleadoraCorporativa` son vínculos lógicos distribuidos.
 
-Representa la identidad laboral estable de una persona. Su clave es `IdColaborador`; `IdPersona` es una FK única hacia `rrhh.Persona`, por lo que una persona puede originar como máximo un colaborador. `IdentificadorPublico` y `CodigoSAP` también son únicos.
+Una hija garantiza una sola asignación por relación corporativa. La garantía de
+que esa sea la única asignación activa entre todas las hijas corresponde a la
+operación backend coordinadora, pues no existe una restricción distribuida.
 
-### `rrhh.DocumentoPersona`
+## Semilla, limpieza y reversión
 
-Registra documentos de una persona. Tiene FKs hacia `rrhh.Persona` y `catalogo.TipoDocumento`, número de documento, país de emisión, condición de principal y vigencia. El índice filtrado `IN_DocumentoPersona_PrincipalAbierto` limita a un documento principal abierto por persona; no se define una clave natural de persona ni se obliga a tener un documento principal.
+`db/data_prueba/nucleo/001_semilla_datos_prueba_nucleo_corp.sql` se ejecuta en
+la instancia CORP. Usa GUID deterministas, es repetible y crea los catálogos
+corporativos, las UO `GI` y `NC`, y las empresas `Golden Palace` y `Newport
+Capital`.
 
-### `integracion.CuentaMicrosoftCorporativa`
+`db/data_prueba/nucleo/002_semilla_datos_prueba_nucleo_corp_personas_colaboradores.sql`
+carga las personas y sus documentos DNI desde `db/csv_data/colaborador.csv`,
+y crea el colaborador corporativo asociado. La semilla de la instancia UO GI se
+entregará en un archivo separado.
 
-Mantiene la referencia de una cuenta corporativa por colaborador. Tiene FK a `rrhh.Colaborador`, vigencia y al menos uno de Object ID, UPN o correo corporativo. El índice filtrado `IN_CuentaMicrosoftCorporativa_Abierta` permite como máximo una cuenta abierta por colaborador. No es una tabla de usuario y no almacena credenciales, sesiones, roles ni permisos.
+`db/data_prueba/nucleo/003_semilla_datos_prueba_nucleo_uo_gi_organizacion.sql`
+se ejecuta en `@GSBEDEV01/GI` y carga la configuración de la UO GI, la empresa
+referencia `GI`, sus áreas y la sede `01` Golden Palace. Requiere colocar los
+UUID corporativos en las variables del script.
 
-## Organización
+`db/data_prueba/nucleo/004_semilla_datos_prueba_nucleo_uo_gi_cargos.sql` carga
+los 101 cargos de Golden desde `db/csv_data/posiciones.csv`. Conserva
+`id_posicion_reporta` en la carga temporal y crea 100 relaciones directas en
+`CargoJefatura`, vigentes desde `2026-01-01`; la posición raíz no crea una
+relación de jefatura.
 
-### `organizacion.Empresa`
+`db/data_prueba/nucleo/005_semilla_datos_prueba_nucleo_uo_gi_cargos_sap.sql`
+carga los 309 códigos SAP de `db/csv_data/posicionesSAP.csv` y los relaciona
+con sus cargos GI mediante `IdCargo`, usando `IdEmpresaReferencia = 1`.
 
-Maestro de empresas de la corporación. `IdEmpresa` es la clave y `CodigoEmpresa` es único. Conserva razón social, nombre comercial, número de identificación tributaria, estado de actividad y marcas técnicas.
+`db/data_prueba/nucleo/006_semilla_datos_prueba_nucleo_uo_gi_relaciones_laborales.sql`
+carga las relaciones laborales desde `db/csv_data/colaborador.csv`, enlazando
+el documento y colaborador corporativo de la instancia CO con el cargo SAP
+local de Golden.
 
-### `organizacion.Sede`
+| Contexto | Limpieza de datos | Reversión completa |
+|---|---|---|
+| CO | `db/data_prueba/limpieza/limpiar_datos_nucleo_corporativo.sql` | `db/reversiones/revertir_nucleo_corporativo_completo.sql` |
+| UO | `db/data_prueba/limpieza/limpiar_datos_nucleo_unidad_organizativa.sql` | `db/reversiones/revertir_nucleo_unidad_organizativa_completo.sql` |
 
-Representa una sede de una empresa. Tiene FK a `organizacion.Empresa`; la combinación `IdEmpresa` + `CodigoSede` es única y `IdentificadorPublico` también es único. Registra nombre, dirección, estado y marcas técnicas.
+No se ejecutaron estos scripts contra una instancia real como parte de esta
+consolidación.
 
-### `organizacion.Area`
+## Alcance pendiente
 
-Maestro corporativo plano de áreas propias de GTM. `IdArea` es la clave y `CodigoArea` es único. Registra nombre, descripción, estado y marcas técnicas. No se modela jerarquía ni pertenencia de área a empresa.
-
-### `organizacion.Cargo`
-
-Maestro corporativo de cargos propios de GTM. `IdCargo` es la clave y `CodigoCargo` es único. Registra nombre, descripción, estado y marcas técnicas. Un cargo GTM no es sustituido por una posición o código SAP.
-
-### `organizacion.CargoJefatura`
-
-Representa la estructura formal entre un cargo subordinado y otro cargo que actúa como jefatura. Conserva tipo, prioridad positiva y vigencia. No existe un máximo funcional de jefaturas por cargo; el índice filtrado permite una sola relación abierta por cargo subordinado y valor de prioridad, e impide repetir simultáneamente la misma pareja de cargos. No permite que un cargo sea jefe de sí mismo.
-
-## Vida laboral, asignación y horario
-
-### `rrhh.RelacionLaboral`
-
-Conserva cada vínculo histórico entre un colaborador y una empresa. Tiene FKs a `rrhh.Colaborador` y `organizacion.Empresa`, fecha de inicio, fecha y motivo de fin. Un reingreso debe generar otra relación; el modelo permite relaciones simultáneas.
-
-### `rrhh.AsignacionOrganizacional`
-
-Historiza el contexto organizacional de una relación laboral. Tiene FKs a `rrhh.RelacionLaboral`, `organizacion.Sede`, `organizacion.Area` y `organizacion.Cargo`, además de `CodigoPosicionSAP` y fechas de vigencia. El código de posición SAP es obligatorio y no vacío; identifica una plaza SAP, no el cargo funcional compartido. El índice filtrado `IN_AsignacionOrganizacional_Abierta` permite una sola asignación abierta por relación laboral y `IN_AsignacionOrganizacional_PosicionSAPAbierta` impide que una misma posición SAP esté abierta en más de una asignación.
-
-### `rrhh.HorarioLaboral`
-
-Es el maestro local de horarios. `CodigoHorarioGTM` y `CodigoHorarioSAP` son únicos; registra tipo de turno, nombre, descripción, estado y marcas técnicas. El tipo de turno se restringe a `MANANA`, `TARDE`, `NOCHE` o `MADRUGADA`.
-
-### `rrhh.VigenciaHorario`
-
-Asigna un horario a una relación laboral en una fecha concreta. Tiene FKs a `rrhh.RelacionLaboral` y `rrhh.HorarioLaboral`. El índice único `IN_VigenciaHorario_RelacionFecha` permite un solo horario por relación y día; no representa ciclos ni intervalos.
-
-## Jerarquía
-
-La estructura organizacional oficial se registra en `organizacion.CargoJefatura`. La tabla `rrhh.JefaturaRelacionLaboral` queda disponible para excepciones o asignaciones explícitas entre personas y no reemplaza la jerarquía de cargos.
-
-### `rrhh.JefaturaRelacionLaboral`
-
-Relaciona una relación laboral subordinada con otra que actúa como jefatura. Tiene tres FKs: relación subordinada, relación de jefatura y tipo de jefatura. Conserva prioridad y vigencia; no permite que ambas relaciones sean la misma. La prioridad está limitada a `1` o `2`, y el índice filtrado `IN_JefaturaRelacionLaboral_PrioridadAbierta` permite una fila abierta por relación subordinada y prioridad.
-
-## Relaciones principales
-
-```text
-Persona ── 0..1 Colaborador ──< RelacionLaboral >── Empresa ──< Sede
-   │              │                    │
-   ├──< DocumentoPersona               ├──< AsignacionOrganizacional >── Área, Cargo, Sede
-   └── TipoDocumento                   ├──< VigenciaHorario >── HorarioLaboral
-                                      └──< JefaturaRelacionLaboral >── TipoJefatura
-
-Colaborador ──< CuentaMicrosoftCorporativa
-Cargo ──< CargoJefatura >── Cargo
-```
-
-Las vigencias de relación laboral, asignación y jefatura usan el intervalo semiabierto `[FechaInicio, FechaFin)`; `NULL` en la fecha final significa que la fila permanece abierta.
-
-## Límites conocidos
-
-- No se definen procedimientos almacenados, vistas, funciones, disparadores, roles ni permisos como parte del modelo oficial.
-- No se garantiza de forma declarativa la ausencia de solapamientos históricos cerrados ni la cobertura continua entre vigencias relacionadas.
-- No se valida que una sede asignada pertenezca a la empresa de la relación laboral.
-- No se impone una jefatura principal obligatoria ni el máximo histórico de dos jefaturas para cualquier fecha pasada.
-- No se impide declarativamente un ciclo indirecto de cargos como `A → B → C → A`; esa validación requiere una operación controlada en una fase posterior.
-
-## Referencias
-
-- `db/migrations/nucleo/001_crear_esquemas_nucleo.sql` a `008_crear_jefaturas_relaciones_laborales.sql`.
-- `docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md`, para las dependencias del módulo de Alimentación sobre el núcleo.
+- No existe aún promoción desde staging hacia maestros del núcleo.
+- No se conserva historial de reingresos ni de asignaciones organizacionales.
+- La coordinación global de asignaciones y la sincronización de
+  `EmpresaReferencia` pertenecen al backend de integración.
+- `USERMANAGEMENTCORP`, autenticación y el módulo Alimentación no se modifican
+  en esta fase. **Bloqueo de despliegue:** las migraciones vigentes de
+  Alimentación aún referencian `rrhh.Colaborador`, tabla que no existe en la
+  nueva instancia hija UO. No son compatibles con este núcleo UO y no deben
+  desplegarse juntos hasta completar su migración coordinada. Esa migración de
+  Alimentación es la siguiente fase, después de aprobar el núcleo; no está
+  corregida ni incluida en esta entrega.
