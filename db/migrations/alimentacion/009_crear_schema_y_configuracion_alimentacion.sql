@@ -1,6 +1,6 @@
 -- Migración: 009_crear_schema_y_configuracion_alimentacion
 -- Fecha: 2026-09-04T12:00:00-05:00
--- Entidad(es) afectada(s): alimentacion, alimentacion.VentanaRetiroServicio, proximidad, proximidad.MajorAreaBeacon, proximidad.ConfiguracionBeacon, proximidad.BeaconAutorizado
+-- Entidad(es) afectada(s): alimentacion, alimentacion.TipoServicio, alimentacion.VentanaRetiroServicio, proximidad, proximidad.MajorAreaBeacon, proximidad.ConfiguracionBeacon, proximidad.BeaconAutorizado
 -- Referencia: docs-proyecto/alimentacion/TABLAS_ALIMENTACION.md
 -- Motivo: Crear el límite lógico y la configuración operativa inicial de Alimentación sin duplicar sedes ni horarios del núcleo GTM. Las áreas major y las políticas de proximidad se definen por sede y pueden reutilizarse entre varios beacons.
 
@@ -13,6 +13,28 @@ IF SCHEMA_ID(N'alimentacion') IS NULL
 IF SCHEMA_ID(N'proximidad') IS NULL
     EXEC(N'CREATE SCHEMA [proximidad] AUTHORIZATION [dbo]');
 
+CREATE TABLE [alimentacion].[TipoServicio]
+(
+    [IdTipoServicio] SMALLINT IDENTITY(1,1) NOT NULL,
+    [CodigoTipoServicio] NVARCHAR(20) NOT NULL,
+    [NombreTipoServicio] NVARCHAR(100) NOT NULL,
+    [OrdenPresentacion] TINYINT NOT NULL,
+    [EstaActivo] BIT NOT NULL CONSTRAINT [VP_TipoServicio_EstaActivo] DEFAULT (1),
+    [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_TipoServicio_FechaCreacion] DEFAULT (SYSDATETIME()),
+    CONSTRAINT [CP_TipoServicio] PRIMARY KEY CLUSTERED ([IdTipoServicio]),
+    CONSTRAINT [CU_TipoServicio_Codigo] UNIQUE ([CodigoTipoServicio]),
+    CONSTRAINT [CU_TipoServicio_Orden] UNIQUE ([OrdenPresentacion]),
+    CONSTRAINT [RV_TipoServicio_CodigoNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoTipoServicio]))) > 0),
+    CONSTRAINT [RV_TipoServicio_NombreNoVacio] CHECK (LEN(LTRIM(RTRIM([NombreTipoServicio]))) > 0)
+);
+
+INSERT INTO [alimentacion].[TipoServicio]
+    ([CodigoTipoServicio], [NombreTipoServicio], [OrdenPresentacion])
+VALUES
+    (N'DESAYUNO', N'Desayuno', 1),
+    (N'ALMUERZO', N'Almuerzo', 2),
+    (N'CENA', N'Cena', 3);
+
 CREATE TABLE [alimentacion].[VentanaRetiroServicio]
 (
     [IdVentanaRetiroServicio] BIGINT IDENTITY(1,1) NOT NULL,
@@ -24,8 +46,7 @@ CREATE TABLE [alimentacion].[VentanaRetiroServicio]
     [FechaFinVigencia] DATE NULL,
     [FechaCreacion] DATETIME2(3) NOT NULL CONSTRAINT [VP_VentanaRetiroServicio_FechaCreacion] DEFAULT (SYSDATETIME()),
     CONSTRAINT [CP_VentanaRetiroServicio] PRIMARY KEY CLUSTERED ([IdVentanaRetiroServicio]),
-    CONSTRAINT [CE_VentanaRetiroServicio_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
-    CONSTRAINT [RV_VentanaRetiroServicio_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
+    CONSTRAINT [CE_VentanaRetiroServicio_TipoServicio] FOREIGN KEY ([TipoServicio]) REFERENCES [alimentacion].[TipoServicio] ([CodigoTipoServicio]),
     CONSTRAINT [RV_VentanaRetiroServicio_HorasDistintas] CHECK ([HoraInicio] <> [HoraFin]),
     CONSTRAINT [RV_VentanaRetiroServicio_Vigencia] CHECK ([FechaFinVigencia] IS NULL OR [FechaFinVigencia] > [FechaInicioVigencia])
 );
@@ -51,7 +72,6 @@ CREATE TABLE [proximidad].[MajorAreaBeacon]
     CONSTRAINT [CP_MajorAreaBeacon] PRIMARY KEY CLUSTERED ([IdMajorAreaBeacon]),
     CONSTRAINT [CU_MajorAreaBeacon_SedeMajor] UNIQUE ([IdSede], [NumeroMajor]),
     CONSTRAINT [CU_MajorAreaBeacon_IdSedeMajor] UNIQUE ([IdMajorAreaBeacon], [IdSede], [NumeroMajor]),
-    CONSTRAINT [CE_MajorAreaBeacon_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [RV_MajorAreaBeacon_Major] CHECK ([NumeroMajor] BETWEEN 0 AND 65535),
     CONSTRAINT [RV_MajorAreaBeacon_CodigoAreaNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoAreaFisica]))) > 0),
     CONSTRAINT [RV_MajorAreaBeacon_NombreAreaNoVacio] CHECK (LEN(LTRIM(RTRIM([NombreAreaFisica]))) > 0)
@@ -76,7 +96,6 @@ CREATE TABLE [proximidad].[ConfiguracionBeacon]
     CONSTRAINT [CP_ConfiguracionProximidadBeacon] PRIMARY KEY CLUSTERED ([IdConfiguracionProximidadBeacon]),
     CONSTRAINT [CU_ConfiguracionProximidadBeacon_SedeVersion] UNIQUE ([IdSede], [CodigoVersion]),
     CONSTRAINT [CU_ConfiguracionProximidadBeacon_IdSede] UNIQUE ([IdConfiguracionProximidadBeacon], [IdSede]),
-    CONSTRAINT [CE_ConfiguracionProximidadBeacon_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_CodigoVersionNoVacio] CHECK (LEN(LTRIM(RTRIM([CodigoVersion]))) > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Emisiones] CHECK ([CantidadMinimaEmisiones] > 0),
     CONSTRAINT [RV_ConfiguracionProximidadBeacon_Ventana] CHECK ([VentanaConfirmacionMilisegundos] > 0),
@@ -105,7 +124,6 @@ CREATE TABLE [proximidad].[BeaconAutorizado]
     [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_BeaconAutorizado] PRIMARY KEY CLUSTERED ([IdBeaconAutorizado]),
     CONSTRAINT [CU_BeaconAutorizado_Identificador] UNIQUE ([IdentificadorUuid], [NumeroMajor], [NumeroMinor]),
-    CONSTRAINT [CE_BeaconAutorizado_Sede] FOREIGN KEY ([IdSede]) REFERENCES [organizacion].[Sede] ([IdSede]),
     CONSTRAINT [CE_BeaconAutorizado_MajorAreaSede] FOREIGN KEY ([IdMajorAreaBeacon], [IdSede], [NumeroMajor]) REFERENCES [proximidad].[MajorAreaBeacon] ([IdMajorAreaBeacon], [IdSede], [NumeroMajor]),
     CONSTRAINT [CE_BeaconAutorizado_ConfiguracionSede] FOREIGN KEY ([IdConfiguracionProximidadBeacon], [IdSede]) REFERENCES [proximidad].[ConfiguracionBeacon] ([IdConfiguracionProximidadBeacon], [IdSede]),
     CONSTRAINT [RV_BeaconAutorizado_ReferenciaNoVacia] CHECK (LEN(LTRIM(RTRIM([ReferenciaBeacon]))) > 0),
@@ -136,6 +154,7 @@ DROP TABLE IF EXISTS [proximidad].[BeaconAutorizado];
 DROP TABLE IF EXISTS [proximidad].[ConfiguracionBeacon];
 DROP TABLE IF EXISTS [proximidad].[MajorAreaBeacon];
 DROP TABLE IF EXISTS [alimentacion].[VentanaRetiroServicio];
+DROP TABLE IF EXISTS [alimentacion].[TipoServicio];
 IF SCHEMA_ID(N'alimentacion') IS NOT NULL EXEC(N'DROP SCHEMA [alimentacion]');
 GO
 */

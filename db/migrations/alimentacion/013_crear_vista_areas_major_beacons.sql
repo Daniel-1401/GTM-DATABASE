@@ -9,8 +9,6 @@ AS
 SELECT
     [MajorArea].[IdMajorAreaBeacon],
     [MajorArea].[IdSede],
-    [Sede].[CodigoSede],
-    [Sede].[NombreSede],
     [Beacon].[IdentificadorUuid],
     [MajorArea].[NumeroMajor],
     [MajorArea].[CodigoAreaFisica],
@@ -23,8 +21,6 @@ SELECT
     [Beacon].[NumeroMinor],
     [Beacon].[EstaActivo] AS [EstaActivoBeacon]
 FROM [proximidad].[MajorAreaBeacon] AS [MajorArea]
-INNER JOIN [organizacion].[Sede] AS [Sede]
-    ON [Sede].[IdSede] = [MajorArea].[IdSede]
 LEFT JOIN [proximidad].[BeaconAutorizado] AS [Beacon]
     ON [Beacon].[IdMajorAreaBeacon] = [MajorArea].[IdMajorAreaBeacon];
 GO

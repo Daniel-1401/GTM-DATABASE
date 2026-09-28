@@ -64,7 +64,7 @@ CREATE TABLE [alimentacion].[Menu]
     CONSTRAINT [CU_Menu_IdPlanificacionFechaServicio] UNIQUE ([IdMenu], [IdPlanificacion], [FechaServicio], [TipoServicio]),
     CONSTRAINT [CU_Menu_IdPlanificacion] UNIQUE ([IdMenu], [IdPlanificacion]),
     CONSTRAINT [CE_Menu_Planificacion] FOREIGN KEY ([IdPlanificacion]) REFERENCES [alimentacion].[Planificacion] ([IdPlanificacion]),
-    CONSTRAINT [RV_Menu_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
+    CONSTRAINT [CE_Menu_TipoServicio] FOREIGN KEY ([TipoServicio]) REFERENCES [alimentacion].[TipoServicio] ([CodigoTipoServicio]),
     CONSTRAINT [RV_Menu_Contenido] CHECK
     (
         ([EstaDisponible] = 1 AND NULLIF(LTRIM(RTRIM([Nombre])), N'') IS NOT NULL)

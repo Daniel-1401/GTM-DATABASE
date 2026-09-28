@@ -12,7 +12,7 @@ CREATE TABLE [alimentacion].[Reserva]
 (
     [IdReserva] BIGINT IDENTITY(1,1) NOT NULL,
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Reserva_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
-    [IdColaborador] BIGINT NOT NULL,
+    [IdColaboradorCorporativo] UNIQUEIDENTIFIER NOT NULL,
     [IdPlanificacion] BIGINT NOT NULL,
     [IdMenu] BIGINT NOT NULL,
     [IdSede] INT NOT NULL,
@@ -23,24 +23,24 @@ CREATE TABLE [alimentacion].[Reserva]
     [FechaModificacion] DATETIME2(3) NULL,
     CONSTRAINT [CP_Reserva] PRIMARY KEY CLUSTERED ([IdReserva]),
     CONSTRAINT [CU_Reserva_IdentificadorPublico] UNIQUE ([IdentificadorPublico]),
+    CONSTRAINT [CU_Reserva_IdReservaSede] UNIQUE ([IdReserva], [IdSede]),
     CONSTRAINT [CU_Reserva_Contexto] UNIQUE ([IdReserva], [IdPlanificacion], [IdSede], [FechaServicio], [TipoServicio]),
-    CONSTRAINT [CE_Reserva_Colaborador] FOREIGN KEY ([IdColaborador]) REFERENCES [rrhh].[Colaborador] ([IdColaborador]),
     CONSTRAINT [CE_Reserva_PlanificacionSede] FOREIGN KEY ([IdPlanificacion], [IdSede]) REFERENCES [alimentacion].[Planificacion] ([IdPlanificacion], [IdSede]),
     CONSTRAINT [CE_Reserva_Menu] FOREIGN KEY ([IdMenu], [IdPlanificacion], [FechaServicio], [TipoServicio]) REFERENCES [alimentacion].[Menu] ([IdMenu], [IdPlanificacion], [FechaServicio], [TipoServicio]),
-    CONSTRAINT [RV_Reserva_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
+    CONSTRAINT [CE_Reserva_TipoServicio] FOREIGN KEY ([TipoServicio]) REFERENCES [alimentacion].[TipoServicio] ([CodigoTipoServicio]),
     CONSTRAINT [RV_Reserva_Estado] CHECK ([Estado] IN (N'RESERVADA', N'CANCELADA', N'ENTREGADA', N'NO_RECOGIDA'))
 );
 
 CREATE UNIQUE INDEX [IN_Reserva_ActivaColaboradorFecha]
-    ON [alimentacion].[Reserva] ([IdColaborador], [FechaServicio])
+    ON [alimentacion].[Reserva] ([IdColaboradorCorporativo], [FechaServicio])
     WHERE [Estado] = N'RESERVADA';
 
 CREATE INDEX [IN_Reserva_PlanificacionMenuEstado]
     ON [alimentacion].[Reserva] ([IdPlanificacion], [IdMenu], [Estado])
-    INCLUDE ([IdColaborador], [IdSede], [FechaServicio], [TipoServicio]);
+    INCLUDE ([IdColaboradorCorporativo], [IdSede], [FechaServicio], [TipoServicio]);
 
 CREATE INDEX [IN_Reserva_ColaboradorHistorial]
-    ON [alimentacion].[Reserva] ([IdColaborador], [FechaServicio], [Estado])
+    ON [alimentacion].[Reserva] ([IdColaboradorCorporativo], [FechaServicio], [Estado])
     INCLUDE ([IdSede], [TipoServicio], [IdMenu]);
 
 CREATE TABLE [alimentacion].[CodigoQR]
@@ -88,7 +88,7 @@ CREATE TABLE [alimentacion].[Entrega]
     [IdentificadorPublico] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [VP_Entrega_IdentificadorPublico] DEFAULT (NEWSEQUENTIALID()),
     [IdReserva] BIGINT NOT NULL,
     [IdCodigoQR] UNIQUEIDENTIFIER NOT NULL,
-    [IdOperadorColaborador] BIGINT NOT NULL,
+    [IdOperadorColaboradorCorporativo] UNIQUEIDENTIFIER NOT NULL,
     [IdPlanificacion] BIGINT NOT NULL,
     [IdSede] INT NOT NULL,
     [FechaServicio] DATE NOT NULL,
@@ -103,8 +103,7 @@ CREATE TABLE [alimentacion].[Entrega]
     CONSTRAINT [CU_Entrega_Correlacion] UNIQUE ([IdCorrelacion]),
     CONSTRAINT [CE_Entrega_ReservaContexto] FOREIGN KEY ([IdReserva], [IdPlanificacion], [IdSede], [FechaServicio], [TipoServicio]) REFERENCES [alimentacion].[Reserva] ([IdReserva], [IdPlanificacion], [IdSede], [FechaServicio], [TipoServicio]),
     CONSTRAINT [CE_Entrega_CodigoQRReserva] FOREIGN KEY ([IdCodigoQR], [IdReserva]) REFERENCES [alimentacion].[CodigoQR] ([IdCodigoQR], [IdReserva]),
-    CONSTRAINT [CE_Entrega_Operador] FOREIGN KEY ([IdOperadorColaborador]) REFERENCES [rrhh].[Colaborador] ([IdColaborador]),
-    CONSTRAINT [RV_Entrega_TipoServicio] CHECK ([TipoServicio] IN (N'DESAYUNO', N'ALMUERZO', N'CENA')),
+    CONSTRAINT [CE_Entrega_TipoServicio] FOREIGN KEY ([TipoServicio]) REFERENCES [alimentacion].[TipoServicio] ([CodigoTipoServicio]),
     CONSTRAINT [RV_Entrega_MecanismoLectura] CHECK ([MecanismoLectura] IN (N'CAMARA', N'LECTOR_HID'))
 );
 
@@ -113,7 +112,7 @@ CREATE INDEX [IN_Entrega_SedeFechaServicio]
     INCLUDE ([IdReserva], [FechaEntrega]);
 
 CREATE INDEX [IN_Entrega_OperadorFecha]
-    ON [alimentacion].[Entrega] ([IdOperadorColaborador], [FechaEntrega]);
+    ON [alimentacion].[Entrega] ([IdOperadorColaboradorCorporativo], [FechaEntrega]);
 
 COMMIT TRANSACTION;
 GO

@@ -16,12 +16,8 @@ SET XACT_ABORT ON;
 --
 -- IF DB_ID() <= 4 OR DB_NAME() IN (N'master', N'model', N'msdb', N'tempdb')
 --     THROW 51002, 'Reversión bloqueada: no se permite operar sobre una base de sistema.', 1;
---
 -- IF SCHEMA_ID(N'alimentacion') IS NULL
---     THROW 51003, 'Reversión bloqueada: no existe el schema esperado [alimentacion].', 1;
-
-IF SCHEMA_ID(N'alimentacion') IS NULL
-    THROW 51004, 'Reversión bloqueada: no existe el schema [alimentacion].', 1;
+--     THROW 51004, 'Reversión bloqueada: no existe el schema [alimentacion].', 1;
 
 BEGIN TRY
     BEGIN TRANSACTION;

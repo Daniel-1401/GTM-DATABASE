@@ -1,83 +1,87 @@
 # `alimentacion.usp_ValidarCodigoQRReserva`
 
-## Propósito
+## Proposito
 
-Valida, sin modificar estado, un QR opaco asociado a una reserva para retiro en
-una sede. Devuelve la información de presentación del colaborador y del menú
-solo si el QR, la reserva y la ventana de retiro son válidos según la hora
-oficial de SQL Server.
+Valida un QR opaco para el retiro presencial y crea una `ValidacionEntrega`
+temporal, o reutiliza la vigente para el mismo QR, operador y sede. No consume
+el QR ni registra una entrega.
 
 ## Firma
 
 ```sql
 @HashCodigoQR VARBINARY(64),
 @IdSede INT,
+@IdOperadorColaboradorCorporativo UNIQUEIDENTIFIER,
+@MetodoLectura NVARCHAR(20), -- CAMARA o LECTOR_HID
+@IdCorrelacion UNIQUEIDENTIFIER,
 @Codigo NVARCHAR(50) OUTPUT,
 @Mensaje NVARCHAR(500) OUTPUT
 ```
 
-El backend convierte el valor QR leído a su hash antes de invocar el procedure.
-SQL Server no recibe, persiste ni devuelve el QR en texto claro.
+El backend obtiene el UUID corporativo del operador y su sede autorizada desde
+la sesion. Calcula el hash del QR antes de invocar el procedure; SQL Server no
+recibe ni persiste el QR en claro.
 
-## Parámetros
+## Parametros
 
-| Parámetro | Descripción |
+| Parametro | Descripcion |
 |---|---|
-| `@HashCodigoQR` | Hash no vacío del QR leído; admite hasta 64 bytes. |
-| `@IdSede` | Identificador interno de la sede en la que se produjo la lectura. |
-| `@Codigo` | Código de resultado de salida. |
+| `@HashCodigoQR` | Hash no vacio del QR leido; admite hasta 64 bytes. |
+| `@IdSede` | Sede autorizada en la que se produjo la lectura. |
+| `@IdOperadorColaboradorCorporativo` | UUID corporativo del operador autenticado. |
+| `@MetodoLectura` | `CAMARA` o `LECTOR_HID`. |
+| `@IdCorrelacion` | Clave de idempotencia del intento de validacion. |
+| `@Codigo` | Codigo de resultado de salida. |
 | `@Mensaje` | Mensaje seguro de salida. |
 
-## Recordset de éxito
+## Recordset de exito
 
-Cuando `@Codigo = OK`, retorna exactamente una fila.
+En `CREATED` o `IDEMPOTENT_REPLAY` retorna exactamente una fila.
 
-| Columna | Tipo | Descripción |
+| Columna | Tipo | Descripcion |
 |---|---|---|
-| `NombreColaborador` | `NVARCHAR` | Nombres y apellidos del colaborador titular de la reserva. |
-| `CodigoSAPColaborador` | `NVARCHAR(30)` | Código SAP del colaborador. |
-| `CargoColaborador` | `NVARCHAR(150)` o `null` | Cargo de la relación laboral vigente en la sede de la reserva. |
-| `Avatar` | `NVARCHAR(500)` o `null` | Siempre `null`: el modelo actual no persiste un avatar de colaborador. |
-| `NombreMenu` | `NVARCHAR(200)` | Nombre del menú reservado. |
-| `TipoServicio` | `NVARCHAR(20)` | Tipo de servicio de la reserva. |
-| `ReferenciaImagenMenu` | `NVARCHAR(500)` o `null` | Referencia de imagen del menú. |
+| `ValidationId` | `UNIQUEIDENTIFIER` | Identificador que debe recibirse para confirmar la entrega. |
+| `IdReserva` | `UNIQUEIDENTIFIER` | Identificador publico de la reserva. |
+| `FechaVencimiento` | `DATETIME2(3)` | Fin de la validacion temporal segun la hora oficial. |
+| `NombreMenu` | `NVARCHAR(200)` o `null` | Nombre del menu reservado. |
+| `TipoServicio` | `NVARCHAR(20)` | Tipo de servicio reservado. |
+| `ReferenciaImagenMenu` | `NVARCHAR(500)` o `null` | Referencia de imagen del menu. |
 
-No se devuelve recordset para resultados funcionales distintos de `OK`.
+No se devuelve informacion personal del colaborador. Si se requiere para la
+pantalla operativa, el backend la obtiene de CO bajo su propia autorizacion.
 
-## Códigos y mensajes seguros
+## Codigos y mensajes seguros
 
-| Código | Mensaje |
+| Codigo | Mensaje |
 |---|---|
-| `OK` | `null` |
-| `VALIDATION_ERROR` | `El codigo QR y la sede son obligatorios y validos.` |
+| `CREATED` | `La validacion de entrega fue creada correctamente.` |
+| `IDEMPOTENT_REPLAY` | `Ya existe una validacion vigente para el retiro.` |
+| `VALIDATION_ERROR` | `Los datos de validacion son obligatorios y validos.` |
+| `IDEMPOTENCY_CONFLICT` | `La correlacion ya esta vinculada a otra validacion.` |
 | `QR_NOT_FOUND` | `El codigo QR indicado no existe.` |
 | `SITE_FORBIDDEN` | `El codigo QR no corresponde a la sede indicada.` |
 | `QR_REVOKED` | `El codigo QR fue revocado.` |
 | `QR_ALREADY_USED` | `El codigo QR ya fue utilizado.` |
 | `QR_EXPIRED` | `El codigo QR ya vencio.` |
-| `QR_INVALID` | `El codigo QR no es valido.` o `El codigo QR no es valido para el retiro actual.` |
-| `ALREADY_DELIVERED` | `La reserva ya fue entregada.` |
-| `STATE_CONFLICT` | `La reserva no puede retirarse desde su estado actual.` |
-| `PLAN_NOT_FOUND` | `La planificacion de la reserva no existe.` |
+| `STATE_CONFLICT` | `La reserva no puede validarse para entrega.` o `La validacion ya fue consumida.` |
+| `DELIVERY_VALIDATION_EXPIRED` | `La validacion de entrega ya vencio.` |
 | `CONFIGURATION_UNAVAILABLE` | `No existe una ventana de retiro valida para la reserva.` |
 | `INTERNAL_ERROR` | `No fue posible completar la operacion.` |
 
 ## Reglas relevantes
 
-- Es una lectura: no crea una entrega, no crea una validación temporal, no usa
-  el QR y no actualiza estados de QR o reserva.
-- El QR debe existir, estar `VIGENTE` y no haber superado `FechaVencimiento`
-  frente a `SYSDATETIME()`.
-- La reserva debe pertenecer a la sede indicada, estar `RESERVADA`, corresponder
-  a la fecha oficial y tener una planificación `CONSOLIDADA`.
-- Debe existir una `VentanaRetiroServicio` vigente para la sede, fecha y tipo de
-  servicio; la hora oficial debe estar dentro de ella. Las ventanas que cruzan
-  medianoche se consideran configuración no disponible, coherente con la
-  emisión de QR existente.
-- Para evitar duplicar cargos con relaciones laborales simultáneas, se expone el
-  cargo de la relación vigente en la sede de la reserva con inicio más reciente.
-- `Avatar` se devuelve como `NULL` tipado por decisión explícita: no
-  hay una fuente física de avatar autorizada en el modelo actual.
+- La validacion se crea dentro de una transaccion con bloqueos sobre
+  planificacion, reserva, QR y validacion, en ese orden.
+- Su vencimiento es el menor entre dos minutos desde la validacion y el
+  vencimiento del QR. El QR conserva su propia vigencia de hasta cinco minutos.
+- Un reescaneo con otra correlacion reutiliza la validacion vigente del mismo
+  QR, operador y sede. No crea otra fila ni elimina la existente.
+- Un reintento con la misma correlacion devuelve la misma validacion mientras
+  siga vigente y sin consumir. Una correlacion asociada a otro contexto retorna
+  `IDEMPOTENCY_CONFLICT`.
+- El QR debe estar `VIGENTE`; la reserva debe estar `RESERVADA`, corresponder a
+  la fecha oficial y tener una planificacion `CONSOLIDADA` dentro de una ventana
+  de retiro vigente.
 - Los errores inesperados se registran mediante
   `auditoria.usp_RegistrarErrorProcedimiento` y solo se devuelve
   `INTERNAL_ERROR`.

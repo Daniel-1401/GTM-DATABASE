@@ -41,7 +41,7 @@ Maestro de los tipos de servicio que pueden utilizar los menús y las ventanas d
 
 ### `alimentacion.VentanaRetiroServicio`
 
-Configura una ventana de retiro por sede y servicio. Su clave es `IdVentanaRetiroServicio`; tiene FK a `organizacion.Sede`. Registra tipo de servicio, horas de inicio/fin y vigencia.
+Configura una ventana de retiro por sede y servicio. Su clave es `IdVentanaRetiroServicio`; `IdSede` es una referencia externa a `PERSONAL_MANAGEMENTE_UNIDAD_ORGANIZATIVA`, sin FK local. Registra tipo de servicio, horas de inicio/fin y vigencia.
 
 - El tipo de servicio debe existir en `alimentacion.TipoServicio`.
 - Las horas de inicio y fin deben ser distintas.
@@ -56,6 +56,7 @@ Define el área física asociada a una combinación de sede y `major`. Su clave 
 `IdMajorAreaBeacon`; la combinación `IdSede` y `NumeroMajor` es única.
 
 - Conserva el código, nombre, ubicación de referencia y observación del área.
+- `IdSede` es una referencia externa a `PERSONAL_MANAGEMENTE_UNIDAD_ORGANIZATIVA`, sin FK local.
 - Un beacon autorizado debe referenciar obligatoriamente un área major de la
   misma sede y major.
 - La tabla no representa un beacon físico: un área major puede tener varios
@@ -70,6 +71,7 @@ se expone al backend como `configurationVersion`.
 - La política contiene `CantidadMinimaEmisiones`,
   `VentanaConfirmacionMilisegundos`, `IntervaloEvaluacionMilisegundos`,
   `TiempoSalidaRangoMilisegundos` y `UmbralRssi`.
+- `IdSede` es una referencia externa a `PERSONAL_MANAGEMENTE_UNIDAD_ORGANIZATIVA`, sin FK local.
 - La política tiene vigencia mediante `FechaInicioVigencia` y
   `FechaFinVigencia`; el fin, si existe, debe ser posterior al inicio.
 - Para cambiar parámetros se registra una nueva configuración con otro
@@ -85,6 +87,7 @@ se expone al backend como `configurationVersion`.
 Registra un beacon habilitado para una sede. Su identidad técnica es la terna
 `IdentificadorUuid`, `NumeroMajor` y `NumeroMinor`, que es única.
 
+- `IdSede` es una referencia externa a `PERSONAL_MANAGEMENTE_UNIDAD_ORGANIZATIVA`, sin FK local.
 - Cada beacon referencia obligatoriamente una `ConfiguracionBeacon` de su misma
   sede mediante la FK compuesta por configuración y sede.
 - La regla impide asignar a un beacon la política de otra sede.
@@ -142,7 +145,7 @@ Guarda la fotografía final de reservas por menú al consolidar. Tiene clave com
 
 ### `alimentacion.Reserva`
 
-Representa la reserva individual de un colaborador para un servicio. Su clave es `IdReserva`; tiene FKs hacia `rrhh.Colaborador`, contexto de `Planificacion`/sede y contexto de `Menu`.
+Representa la reserva individual de un colaborador para un servicio. Su clave es `IdReserva`; tiene FKs hacia el contexto de `Planificacion`/sede y el de `Menu`. `IdColaboradorCorporativo` conserva el UUID de CO del colaborador, sin FK local.
 
 - Estados: `RESERVADA`, `CANCELADA`, `ENTREGADA`, `NO_RECOGIDA`.
 - El índice filtrado `IN_Reserva_ActivaColaboradorFecha` limita a una reserva con estado `RESERVADA` por colaborador y fecha.
@@ -160,7 +163,7 @@ Representa un QR opaco asociado a una reserva. Su clave es el UUID `IdCodigoQR`;
 
 ### `alimentacion.Entrega`
 
-Confirma el retiro presencial normal. Su clave es `IdEntrega`; tiene FKs compuestas al contexto de reserva y QR, y FK a `rrhh.Colaborador` para el operador.
+Confirma el retiro presencial normal. Su clave es `IdEntrega`; tiene FKs compuestas al contexto de reserva y QR. `IdOperadorColaboradorCorporativo` conserva el UUID de CO del operador, sin FK local.
 
 - Una entrega por reserva, por QR y por correlación.
 - Métodos permitidos: `CAMARA` y `LECTOR_HID`.
@@ -168,7 +171,7 @@ Confirma el retiro presencial normal. Su clave es `IdEntrega`; tiene FKs compues
 
 ### `alimentacion.ValidacionEntrega`
 
-Registra la validación temporal previa al consumo del QR. Su clave es el UUID `ValidationId`; tiene FKs al par QR/reserva, reserva, operador y sede.
+Registra la validación temporal previa al consumo del QR. Su clave es el UUID `ValidationId`; tiene FKs al par QR/reserva y a reserva. `IdOperadorColaboradorCorporativo` conserva el UUID de CO del operador e `IdSede` la referencia a UO, ambos sin FK local.
 
 - Conserva solo `HashCodigo`; no persiste el QR en claro.
 - Métodos permitidos: `CAMARA` y `LECTOR_HID`.
