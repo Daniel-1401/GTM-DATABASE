@@ -11,7 +11,7 @@ GO
 CREATE OR ALTER PROCEDURE [alimentacion].[usp_CrearMenuPlanificacion]
     @IdPlanificacion UNIQUEIDENTIFIER,
     @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
-    @MenuId BIGINT,
+    @IdMenuExterno BIGINT,
     @FechaServicio DATE,
     @TipoServicio NVARCHAR(20),
     @EstaDisponible BIT,
@@ -51,7 +51,7 @@ BEGIN
         SET @Mensaje = N'El colaborador que registra el menú es obligatorio.';
         RETURN;
     END;
-    IF @MenuId IS NULL
+    IF @IdMenuExterno IS NULL
     BEGIN
         SET @Codigo = N'VALIDATION_ERROR';
         SET @Mensaje = N'La referencia externa del menú es obligatoria.';
@@ -141,12 +141,12 @@ BEGIN
 
     INSERT INTO [alimentacion].[Menu]
     (
-        [MenuId], [IdPlanificacion], [IdColaboradorRegistroCorporativo], [FechaServicio], [TipoServicio], [EstaDisponible],
+        [IdMenuExterno], [IdPlanificacion], [IdColaboradorRegistroCorporativo], [FechaServicio], [TipoServicio], [EstaDisponible],
         [Nombre], [Descripcion], [ReferenciaImagen]
     )
     VALUES
     (
-        @MenuId, @IdPlanificacionInterno, @IdColaboradorRegistroCorporativo, @FechaServicio, @TipoServicio, @EstaDisponible,
+        @IdMenuExterno, @IdPlanificacionInterno, @IdColaboradorRegistroCorporativo, @FechaServicio, @TipoServicio, @EstaDisponible,
         @Nombre, @Descripcion, @ReferenciaImagen
     );
 
@@ -187,7 +187,7 @@ GO
 -- EXEC [alimentacion].[usp_CrearMenuPlanificacion]
 --     @IdPlanificacion = '00000000-0000-0000-0000-000000000000',
 --     @IdColaboradorRegistroCorporativo = '00000000-0000-0000-0000-000000000000',
---     @MenuId = 1,
+--     @IdMenuExterno = 1,
 --     @FechaServicio = '2026-09-01',
 --     @TipoServicio = N'ALMUERZO',
 --     @EstaDisponible = 1,

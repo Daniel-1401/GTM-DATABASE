@@ -12,7 +12,7 @@ Script fuente: `db/migrations/alimentacion/Stores Procedures/005_crear_menu_plan
 ```sql
 @IdPlanificacion UNIQUEIDENTIFIER,
 @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
-@MenuId BIGINT,
+@IdMenuExterno BIGINT,
 @FechaServicio DATE,
 @TipoServicio NVARCHAR(20),
 @EstaDisponible BIT,
@@ -48,7 +48,7 @@ La creación del menú es atómica con `SET XACT_ABORT ON` y `TRY/CATCH`; todo e
 |---|---|---:|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | Sí | UUID público devuelto al crear la planificación. |
 | `@IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` | Sí | UUID corporativo de quien registra el menú. |
-| `@MenuId` | `BIGINT` | Sí | Referencia externa que se persiste en `[alimentacion].[Menu].[MenuId]`. No se valida su existencia localmente porque pertenece a otra base de datos. |
+| `@IdMenuExterno` | `BIGINT` | Sí | Referencia externa que se persiste en `[alimentacion].[Menu].[IdMenuExterno]`. No se valida su existencia localmente porque pertenece a otra base de datos. |
 | `@FechaServicio` | `DATE` | Sí | Debe estar dentro del período de la planificación. |
 | `@TipoServicio` | `NVARCHAR(20)` | Sí | Código activo de `alimentacion.TipoServicio`. |
 | `@EstaDisponible` | `BIT` | Sí | `1` para menú disponible; `0` para servicio sin atención. |

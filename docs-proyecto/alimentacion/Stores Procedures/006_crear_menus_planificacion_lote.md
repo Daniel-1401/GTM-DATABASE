@@ -13,7 +13,7 @@ Script fuente: `db/migrations/alimentacion/Stores Procedures/006_crear_menus_pla
 ```sql
 @IdPlanificacion UNIQUEIDENTIFIER,
 @IdColaboradorRegistroCorporativo UNIQUEIDENTIFIER,
-@MenuId BIGINT,
+@IdMenuExterno BIGINT,
 @FechaInicio DATE,
 @FechaFin DATE,
 @TipoServicio NVARCHAR(20),
@@ -46,7 +46,7 @@ DECLARE @Codigo NVARCHAR(50), @Mensaje NVARCHAR(500);
 EXEC [alimentacion].[usp_CrearMenusPlanificacionLote]
     @IdPlanificacion = @IdPlanificacion,
     @IdColaboradorRegistroCorporativo = @IdColaboradorRegistroCorporativo,
-    @MenuId = @MenuId,
+    @IdMenuExterno = @IdMenuExterno,
     @FechaInicio = '2026-09-08',
     @FechaFin = '2026-09-13',
     @TipoServicio = N'ALMUERZO',
@@ -64,7 +64,7 @@ EXEC [alimentacion].[usp_CrearMenusPlanificacionLote]
 |---|---|---|
 | `@IdPlanificacion` | `UNIQUEIDENTIFIER` | UUID público de una planificación en `BORRADOR`. |
 | `@IdColaboradorRegistroCorporativo` | `UNIQUEIDENTIFIER` | UUID corporativo de quien registra los menús creados. |
-| `@MenuId` | `BIGINT` | Referencia externa que se persiste en `[alimentacion].[Menu].[MenuId]` para cada fecha creada. No se valida su existencia localmente porque pertenece a otra base de datos. |
+| `@IdMenuExterno` | `BIGINT` | Referencia externa que se persiste en `[alimentacion].[Menu].[IdMenuExterno]` para cada fecha creada. No se valida su existencia localmente porque pertenece a otra base de datos. |
 | `@FechaInicio`, `@FechaFin` | `DATE` | Rango inclusivo a configurar; debe pertenecer íntegramente al período de la planificación. |
 | `@TipoServicio` | `NVARCHAR(20)` | Código activo de `alimentacion.TipoServicio`; se normaliza a mayúsculas. |
 | `@EstaDisponible` | `BIT` | `1` para registrar el menú indicado; `0` para registrar el servicio sin atención. |

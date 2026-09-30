@@ -118,7 +118,7 @@ Agrupa días de servicio elegidos libremente para una sede y controla su estado.
 
 Define un menú —o la indisponibilidad— para una planificación, fecha y tipo de servicio. Su clave es `IdMenu`; tiene FK a `Planificacion` e identificador público único.
 
-- `MenuId` es una referencia obligatoria a un menú gestionado en otra base de datos. No tiene FK local y debe ser provista por `usp_CrearMenuPlanificacion` y `usp_CrearMenusPlanificacionLote`.
+- `IdMenuExterno` es una referencia obligatoria a un menú gestionado en otra base de datos. No tiene FK local y debe ser provista por `usp_CrearMenuPlanificacion` y `usp_CrearMenusPlanificacionLote`.
 - `IdColaboradorRegistroCorporativo` conserva el UUID de CO de quien registra el menú, sin FK local.
 - La combinación `IdPlanificacion`, `FechaServicio`, `TipoServicio` es única.
 - El tipo de servicio debe existir en `alimentacion.TipoServicio`.
