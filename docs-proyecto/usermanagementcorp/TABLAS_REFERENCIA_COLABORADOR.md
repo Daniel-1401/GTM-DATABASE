@@ -6,8 +6,8 @@ procedimientos legacy, roles, permisos, sistemas ni locales.
 
 ```text
 Backend autenticado
-  → valida identidad externa y obtiene UsuarioAcceso legacy fuera de UMC
-  → dbo.usp_ResolverContextoUsuarioNucleoPorAcceso (búsqueda exacta)
+  → valida identidad externa y obtiene UsuarioAcceso o UsuarioId fuera de UMC
+  → dbo.usp_ResolverContextoUsuarioNucleoPorAcceso (búsqueda por identificador)
   → USERMANAGEMENTCORP.dbo.UsuarioReferenciaColaborador
   → IdUsuarioCorporativo / IdColaboradorCorporativo lógico
   → CO.rrhh.Colaborador, si corresponde
@@ -20,8 +20,8 @@ externa, tokens ni crea una equivalencia entre una identidad externa y
 
 El único procedure API nuevo es
 `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso`. Recibe un `UsuarioAcceso`
-legacy ya obtenido por el backend, no recibe ni resuelve `tid`, `oid`, UPN ni
-tokens. Su contrato está en
+legacy o un `UsuarioId` ya obtenido por el backend, no recibe ni resuelve `tid`,
+`oid`, UPN ni tokens. Su contrato está en
 `docs-proyecto/usermanagementcorp/Stores Procedures/001_resolver_contexto_usuario_nucleo_por_acceso.md`.
 
 La auditoría `auditoria.ErrorProcedimiento` y su logger interno se crean solo

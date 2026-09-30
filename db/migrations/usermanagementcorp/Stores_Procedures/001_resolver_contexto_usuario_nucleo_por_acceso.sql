@@ -1,6 +1,6 @@
 -- Procedimiento: dbo.usp_ResolverContextoUsuarioNucleoPorAcceso
 -- Referencia: migrations/usermanagementcorp/002_crear_resolucion_contexto_usuario_nucleo.sql
--- Motivo: resolver un usuario legacy activo por acceso exacto y su vinculo logico al nucleo.
+-- Motivo: resolver un usuario legacy activo por acceso exacto o UsuarioId y su vinculo logico al nucleo.
 
 SET ANSI_NULLS ON;
 GO
@@ -8,16 +8,22 @@ SET QUOTED_IDENTIFIER ON;
 GO
 
 CREATE OR ALTER PROCEDURE [dbo].[usp_ResolverContextoUsuarioNucleoPorAcceso]
-    @UsuarioAcceso VARCHAR(100),
+    @UsuarioAcceso VARCHAR(100) = NULL,
+    @UsuarioId INT = NULL,
     @Codigo NVARCHAR(50) OUTPUT,
     @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
     /**
       DECLARE @UsuarioAcceso VARCHAR(100) = 'CAVALOS',
+              @UsuarioId INT = NULL,
               @Codigo NVARCHAR(50),
               @Mensaje NVARCHAR(500);
-      EXEC [dbo].[usp_ResolverContextoUsuarioNucleoPorAcceso] @UsuarioAcceso, @Codigo output, @Mensaje output;
+      EXEC [dbo].[usp_ResolverContextoUsuarioNucleoPorAcceso]
+          @UsuarioAcceso = @UsuarioAcceso,
+          @UsuarioId = @UsuarioId,
+          @Codigo = @Codigo OUTPUT,
+          @Mensaje = @Mensaje OUTPUT;
 
      */
 
@@ -27,10 +33,20 @@ BEGIN
     SET @Mensaje = NULL;
 
     BEGIN TRY
-        IF NULLIF(LTRIM(RTRIM(@UsuarioAcceso)), '') IS NULL
+        DECLARE @TieneUsuarioAcceso BIT =
+            CASE WHEN NULLIF(LTRIM(RTRIM(@UsuarioAcceso)), '') IS NULL THEN 0 ELSE 1 END;
+
+        IF @TieneUsuarioAcceso = 0 AND @UsuarioId IS NULL
         BEGIN
             SET @Codigo = N'BAD_REQUEST';
-            SET @Mensaje = N'UsuarioAcceso es obligatorio.';
+            SET @Mensaje = N'UsuarioAcceso o UsuarioId es obligatorio.';
+            RETURN;
+        END;
+
+        IF @UsuarioId IS NOT NULL AND @UsuarioId <= 0
+        BEGIN
+            SET @Codigo = N'BAD_REQUEST';
+            SET @Mensaje = N'UsuarioId debe ser mayor que cero.';
             RETURN;
         END;
 
@@ -39,7 +55,8 @@ BEGIN
 
         SELECT @CantidadUsuario = COUNT_BIG(1)
         FROM [dbo].[Usuario] AS [u]
-        WHERE [u].[UsuarioAcceso] = @UsuarioAcceso;
+        WHERE (@UsuarioId IS NULL OR [u].[UsuarioId] = @UsuarioId)
+          AND (@TieneUsuarioAcceso = 0 OR [u].[UsuarioAcceso] = @UsuarioAcceso);
 
         IF @CantidadUsuario = 0
         BEGIN
@@ -57,7 +74,8 @@ BEGIN
 
         SELECT @EsActivoUsuario = [u].[EsActivoUsuario]
         FROM [dbo].[Usuario] AS [u]
-        WHERE [u].[UsuarioAcceso] = @UsuarioAcceso;
+        WHERE (@UsuarioId IS NULL OR [u].[UsuarioId] = @UsuarioId)
+          AND (@TieneUsuarioAcceso = 0 OR [u].[UsuarioAcceso] = @UsuarioAcceso);
 
         IF ISNULL(@EsActivoUsuario, 0) = 0
         BEGIN
@@ -79,7 +97,8 @@ BEGIN
         FROM [dbo].[Usuario] AS [u]
         LEFT JOIN [dbo].[UsuarioReferenciaColaborador] AS [r]
             ON [r].[UsuarioId] = [u].[UsuarioId]
-        WHERE [u].[UsuarioAcceso] = @UsuarioAcceso;
+        WHERE (@UsuarioId IS NULL OR [u].[UsuarioId] = @UsuarioId)
+          AND (@TieneUsuarioAcceso = 0 OR [u].[UsuarioAcceso] = @UsuarioAcceso);
     END TRY
     BEGIN CATCH
         DECLARE @NumeroError INT = ERROR_NUMBER();

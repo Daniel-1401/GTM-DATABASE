@@ -4,7 +4,7 @@
 -- auditoria.usp_RegistrarErrorProcedimiento,
 -- dbo.usp_ResolverContextoUsuarioNucleoPorAcceso
 -- Referencia: docs-proyecto/usermanagementcorp/TABLAS_REFERENCIA_COLABORADOR.md
--- Motivo: resolver un usuario legacy activo por acceso exacto y su vínculo lógico al núcleo.
+-- Motivo: soportar la auditoría del resolver de usuario legacy por acceso exacto o UsuarioId y su vínculo lógico al núcleo.
 
 -- CREATE SCHEMA requiere su propio batch; no reutiliza ni oculta objetos homónimos.
 IF SCHEMA_ID(N'auditoria') IS NULL

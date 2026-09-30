@@ -181,10 +181,10 @@ Quedan fuera de esta fase:
 ### FLU-008 — Vincular usuario legacy con núcleo
 
 1. El backend autentica y autoriza al operador mediante su mecanismo externo y
-   obtiene su `UsuarioAcceso` legacy por el flujo vigente.
-2. `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` resuelve por igualdad exacta
-   el usuario legacy y su referencia corporativa, sin recibir datos de identidad
-   externa.
+   obtiene su `UsuarioAcceso` legacy o `UsuarioId` por el flujo vigente.
+2. `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` resuelve por igualdad
+   exacta de `UsuarioAcceso` o por `UsuarioId` el usuario legacy y su referencia
+   corporativa, sin recibir datos de identidad externa.
 3. Un proceso administrativo controlado crea o actualiza la referencia
    `UsuarioId` → `IdUsuarioCorporativo` y, si aplica,
    `IdColaboradorCorporativo`.
@@ -437,8 +437,9 @@ permisos legacy. CO y UO continúan sin tablas de seguridad.
   excepciones ambiguas para revisión, sin asociación automática por correo,
   nombre o código SAP.
 - **CA-UMC-006:** `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` devuelve el
-  contexto de un usuario activo único por `UsuarioAcceso` exacto y emplea el
-  contrato estándar de códigos, mensajes y auditoría de errores inesperados.
+  contexto de un usuario activo único por `UsuarioAcceso` exacto o `UsuarioId` y
+  emplea el contrato estándar de códigos, mensajes y auditoría de errores
+  inesperados.
 
 ## Decisiones confirmadas para implementación
 
@@ -446,7 +447,7 @@ permisos legacy. CO y UO continúan sin tablas de seguridad.
   resolución de identidad externa queda fuera de la base de datos. UMC agrega
   únicamente `dbo.UsuarioReferenciaColaborador`, la auditoría local acotada y
   `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` para leer un
-  `UsuarioAcceso` legacy exacto.
+  `UsuarioAcceso` legacy exacto o un `UsuarioId`.
 
 ## Plataformas de frontend requeridas
 

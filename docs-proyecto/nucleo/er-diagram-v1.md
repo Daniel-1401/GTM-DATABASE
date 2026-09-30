@@ -406,8 +406,8 @@ Restricciones previstas:
   vigentes, permitiendo cuentas sin colaborador mediante valor `NULL`.
 - No existe en UMC una tabla, auditoría o procedure para Microsoft Entra ID.
 - `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` consulta el usuario legacy
-  por `UsuarioAcceso` exacto y su referencia, sin crear equivalencias de
-  identidad externa.
+  por `UsuarioAcceso` exacto o `UsuarioId` y su referencia, sin crear
+  equivalencias de identidad externa.
 - `auditoria.ErrorProcedimiento` es una bitácora local usada solo por el
   `CATCH` de ese procedure nuevo; ningún procedure legacy la invoca.
 
@@ -415,7 +415,7 @@ Límite de identidad y responsabilidades:
 
 ```text
 Proveedor de identidad externo
-    └── backend valida y obtiene UsuarioAcceso legacy fuera de UMC
+    └── backend valida y obtiene UsuarioAcceso o UsuarioId fuera de UMC
     └── UMC.dbo.usp_ResolverContextoUsuarioNucleoPorAcceso
     └── UMC.dbo.Usuario / tablas legacy de roles y permisos
     └── UMC.dbo.UsuarioReferenciaColaborador

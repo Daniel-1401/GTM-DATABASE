@@ -43,12 +43,13 @@ las usa para seleccionar agentes de ejecución.
 - Web, móvil y otros clientes no se conectan directamente a SQL Server.
 - El backend es responsable de autenticación, autorización y coordinación
   entre instancias; el núcleo no contiene tablas de seguridad.
-- Entra ID autentica y el backend obtiene el `UsuarioAcceso` legacy antes de
-  acceder a SQL Server. `USERMANAGEMENTCORP` no recibe ni persiste datos de
-  identidad externa, tokens, refresh tokens, contraseñas ni secretos nuevos.
-- `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` resuelve solo un
-  `UsuarioAcceso` legacy mediante igualdad exacta. Su auditoría local se usa
-  exclusivamente en el `CATCH` de ese procedure nuevo.
+- Entra ID autentica y el backend obtiene el `UsuarioAcceso` legacy o el
+  `UsuarioId` antes de acceder a SQL Server. `USERMANAGEMENTCORP` no recibe ni
+  persiste datos de identidad externa, tokens, refresh tokens, contraseñas ni
+  secretos nuevos.
+- `dbo.usp_ResolverContextoUsuarioNucleoPorAcceso` resuelve un usuario legacy
+  por `UsuarioAcceso` mediante igualdad exacta o por `UsuarioId`. Su auditoría
+  local se usa exclusivamente en el `CATCH` de ese procedure nuevo.
 - `USERMANAGEMENTCORP` conserva la autoridad de usuarios, roles y permisos.
   Los GUID hacia CO son referencias lógicas sin FK entre bases y se validan por
   el backend durante el aprovisionamiento.

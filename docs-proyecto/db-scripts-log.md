@@ -25,7 +25,7 @@ Alcance: reestructuración del núcleo GTM; SQL Server 2017.
 | 18 | `db/data_prueba/limpieza/limpiar_datos_usermanagementcorp_referencia_colaborador.sql` | Datos de prueba UMC | Eliminar exclusivamente la referencia creada por la semilla. |
 | 19 | `db/reversiones/revertir_usermanagementcorp_referencia_colaborador.sql` | Objeto nuevo UMC | Revertir en forma protegida la referencia sin tocar objetos legacy. |
 | 20 | `db/pruebas/usermanagementcorp/001_probar_usuario_referencia_colaborador.sql` | Pruebas SQL UMC | Verificar FK, unicidad, vigencia, semilla y limpieza en una base desechable. |
-| 21 | `db/migrations/usermanagementcorp/002_crear_resolucion_contexto_usuario_nucleo.sql` | Auditoría UMC y procedure de resolución | Resolver por acceso legacy exacto y registrar solo sus errores inesperados. |
+| 21 | `db/migrations/usermanagementcorp/002_crear_resolucion_contexto_usuario_nucleo.sql` | Auditoría UMC y procedure de resolución | Resolver por acceso legacy exacto o UsuarioId y registrar solo sus errores inesperados. |
 | 22 | `docs-proyecto/alimentacion/Stores Procedures/umc_usp_ResolverContextoUsuarioNucleoPorAcceso.md` | Contrato del SP UMC | Definir firma, resultado, códigos seguros y alcance de auditoría. |
 | 23 | `db/pruebas/usermanagementcorp/002_probar_instalacion_auditoria_preexistente.sql` | Instalación UMC con schema existente | Verificar creación de 002 sin recrear ni eliminar `auditoria`. |
 
