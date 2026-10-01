@@ -40,6 +40,7 @@ BEGIN
     DECLARE @IdPlanificacion BIGINT;
     DECLARE @IdCodigoQR UNIQUEIDENTIFIER;
     DECLARE @IdReservaPublico UNIQUEIDENTIFIER;
+    DECLARE @IdColaboradorReservaCorporativo UNIQUEIDENTIFIER;
     DECLARE @IdSedeReserva INT;
     DECLARE @FechaServicio DATE;
     DECLARE @TipoServicio NVARCHAR(20);
@@ -59,6 +60,8 @@ BEGIN
     DECLARE @IdMenu BIGINT;
     DECLARE @NombreMenu NVARCHAR(200);
     DECLARE @ReferenciaImagenMenu NVARCHAR(500);
+    DECLARE @NombreColaborador NVARCHAR(200);
+    DECLARE @CargoColaborador NVARCHAR(150);
     DECLARE @NuevaValidacion TABLE
     (
         [ValidationId] UNIQUEIDENTIFIER NOT NULL
@@ -78,9 +81,21 @@ BEGIN
             RETURN;
         END;
 
-        SELECT @IdPlanificacion = [Reserva].[IdPlanificacion]
+        SELECT
+            @IdPlanificacion = [Reserva].[IdPlanificacion],
+            @IdColaboradorReservaCorporativo = [Reserva].[IdColaboradorCorporativo],
+            @IdSedeReserva = [Reserva].[IdSede]
         FROM [alimentacion].[Reserva] AS [Reserva]
         WHERE [Reserva].[IdReserva] = @IdReserva;
+
+        SELECT @NombreColaborador = [Colaborador].[NombreCompleto]
+        FROM [GSBEDEV01\CO].[PERSONALMANEGEMENTCORP].[rrhh].[vw_ColaboradorConsulta] AS [Colaborador]
+        WHERE [Colaborador].[IdColaboradorCorporativo] = @IdColaboradorReservaCorporativo;
+
+        SELECT @CargoColaborador = [ContextoOrganizacional].[NombreCargo]
+        FROM [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[rrhh].[vw_ContextoOrganizacionalColaborador] AS [ContextoOrganizacional]
+        WHERE [ContextoOrganizacional].[IdColaboradorCorporativo] = @IdColaboradorReservaCorporativo
+          AND [ContextoOrganizacional].[IdSede] = @IdSedeReserva;
 
         BEGIN TRANSACTION;
 
@@ -91,6 +106,7 @@ BEGIN
         SELECT
             @IdReservaPublico = [Reserva].[IdentificadorPublico],
             @IdMenu = [Reserva].[IdMenu],
+            @IdColaboradorReservaCorporativo = [Reserva].[IdColaboradorCorporativo],
             @IdSedeReserva = [Reserva].[IdSede],
             @FechaServicio = [Reserva].[FechaServicio],
             @TipoServicio = [Reserva].[TipoServicio],
@@ -269,7 +285,10 @@ BEGIN
             @FechaVencimientoValidacion AS [FechaVencimiento],
             @NombreMenu AS [NombreMenu],
             @TipoServicio AS [TipoServicio],
-            @ReferenciaImagenMenu AS [ReferenciaImagenMenu];
+            @ReferenciaImagenMenu AS [ReferenciaImagenMenu],
+            @IdColaboradorReservaCorporativo AS [IdColaboradorCorporativo],
+            @NombreColaborador AS [NombreColaborador],
+            @CargoColaborador AS [CargoColaborador];
     END TRY
     BEGIN CATCH
         IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;

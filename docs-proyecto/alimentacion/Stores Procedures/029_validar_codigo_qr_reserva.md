@@ -46,9 +46,17 @@ En `CREATED` o `IDEMPOTENT_REPLAY` retorna exactamente una fila.
 | `NombreMenu` | `NVARCHAR(200)` o `null` | Nombre del menu reservado. |
 | `TipoServicio` | `NVARCHAR(20)` | Tipo de servicio reservado. |
 | `ReferenciaImagenMenu` | `NVARCHAR(500)` o `null` | Referencia de imagen del menu. |
+| `IdColaboradorCorporativo` | `UNIQUEIDENTIFIER` | Identificador corporativo del titular de la reserva. |
+| `NombreColaborador` | `NVARCHAR(200)` o `null` | Nombre completo del titular, aportado por la proyeccion corporativa autorizada. |
+| `CargoColaborador` | `NVARCHAR(150)` o `null` | Cargo del titular en la sede de la reserva. |
 
-No se devuelve informacion personal del colaborador. Si se requiere para la
-pantalla operativa, el backend la obtiene de CO bajo su propia autorizacion.
+El nombre se consulta antes de abrir la transaccion en la proyeccion corporativa
+`[GSBEDEV01\CO].[PERSONALMANEGEMENTCORP].[rrhh].[vw_ColaboradorConsulta]`. El
+cargo se obtiene de
+`[PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[rrhh].[vw_ContextoOrganizacionalColaborador]`
+para el UUID y la sede de la reserva. Si una proyeccion no tiene una fila,
+devuelve el campo respectivo como `null`; si una dependencia no esta disponible,
+se registra el detalle y se devuelve `INTERNAL_ERROR`.
 
 ## Codigos y mensajes seguros
 

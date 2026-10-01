@@ -72,7 +72,7 @@ total de reservas.
 | `CantidadServiciosSinAtencion` | integer | Registros con `EstaDisponible = 0`. |
 | `FechaCreacion` | `DATETIME2(3)` / timestamp local | Fecha de creación. |
 | `FechaModificacion` | `DATETIME2(3)` / timestamp local o `null` | Fecha de última modificación. |
-| `CantidadReservasRegistradas` | integer | Todas las filas de `Reserva` de la planificación, sin excluir estados. |
+| `CantidadReservasRegistradas` | integer | Reservas vigentes de la planificación: filas con `Estado = RESERVADA`. Excluye canceladas, entregadas y no recogidas. |
 
 El segundo recordset devuelve una fila por tipo de servicio activo, incluso si
 no existen menús ni reservas para ese tipo:
@@ -83,9 +83,11 @@ no existen menús ni reservas para ese tipo:
 | `CantidadMenusRegistrados` | integer | Filas existentes en `Menu` para el servicio. |
 | `CantidadMenusConfigurados` | integer | Menús con `EstaDisponible = 1`. |
 | `CantidadServiciosSinAtencion` | integer | Registros con `EstaDisponible = 0`. |
-| `CantidadReservasRegistradas` | integer | Todas las filas de `Reserva` del servicio, sin excluir estados. |
+| `CantidadReservasRegistradas` | integer | Reservas vigentes del servicio: filas con `Estado = RESERVADA`. Excluye canceladas, entregadas y no recogidas. |
 
 ## Reglas de lectura
 
 La ausencia del identificador se comunica mediante `VALIDATION_ERROR`. Los
+conteos de reservas consideran exclusivamente el estado persistido `RESERVADA`,
+por lo que cancelar y volver a reservar no incrementa el total mostrado. Los
 números internos de SQL Server no forman parte del contrato API.

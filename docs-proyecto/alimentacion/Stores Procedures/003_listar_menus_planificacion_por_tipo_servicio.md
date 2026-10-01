@@ -66,7 +66,7 @@ cuando no existe un menú. No devuelve recordset ante un error funcional.
 | `Nombre`, `Descripcion`, `ReferenciaImagen` | string o `null` | Datos del menú. |
 | `VersionRegistro` | `BIGINT` o `null` | Versión del menú. |
 | `FechaCreacion`, `FechaModificacion` | `DATETIME2(3)` o `null` | Fechas de creación y modificación. |
-| `CantidadReservasRegistradas` | integer | Total de filas `Reserva` vinculadas al menú, sin excluir estados; es `0` si no hay menú o reservas. |
+| `CantidadReservasRegistradas` | integer | Reservas vigentes vinculadas al menú (`Estado = RESERVADA`); excluye canceladas, entregadas y no recogidas. Es `0` si no hay menú o reservas vigentes. |
 
 ## Estados de una fecha
 
@@ -79,5 +79,6 @@ cuando no existe un menú. No devuelve recordset ante un error funcional.
 ## Reglas de lectura
 
 Un identificador de planificación ausente o un tipo de servicio inválido se
-comunican mediante `VALIDATION_ERROR`. Los números internos de SQL Server no
-forman parte del contrato API.
+comunican mediante `VALIDATION_ERROR`. El conteo no acumula intentos cancelados:
+solo considera filas con estado persistido `RESERVADA`. Los números internos de
+SQL Server no forman parte del contrato API.

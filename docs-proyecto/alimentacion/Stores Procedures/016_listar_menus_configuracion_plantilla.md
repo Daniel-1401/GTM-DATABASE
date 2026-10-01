@@ -7,8 +7,8 @@ planificación, ordenada por día y tipo de servicio, con el total de reservas
 asociadas a cada menú.
 
 Solo devuelve filas existentes en `alimentacion.Menu`; por ello no incluye días
-o tipos de servicio aún no configurados. El conteo incluye todas las reservas,
-sin filtrar por estado.
+o tipos de servicio aún no configurados. El conteo incluye exclusivamente las
+reservas vigentes con estado `RESERVADA`.
 
 Script fuente: `db/migrations/alimentacion/Stores Procedures/016_listar_menus_configuracion_plantilla.sql`.
 
@@ -48,7 +48,7 @@ no tiene menús configurados, el recordset es vacío.
 | `TipoServicio` | `NVARCHAR(20)` | Tipo de servicio del menú. |
 | `IdMenu` | `UNIQUEIDENTIFIER` | UUID público del menú. |
 | `NombreMenu` | `NVARCHAR(200)` o `null` | Nombre del menú; es nulo para un servicio sin atención. |
-| `CantidadReservas` | `BIGINT` | Total de reservas asociadas al menú, incluso canceladas, entregadas o no recogidas. |
+| `CantidadReservas` | `BIGINT` | Reservas vigentes asociadas al menú (`Estado = RESERVADA`). Excluye canceladas, entregadas y no recogidas. |
 
 ## Códigos de salida
 

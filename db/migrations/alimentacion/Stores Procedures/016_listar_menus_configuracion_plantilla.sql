@@ -58,6 +58,7 @@ BEGIN
             INNER JOIN [MenusObjetivo] AS [Menu]
                 ON [Menu].[IdPlanificacion] = [Reserva].[IdPlanificacion]
                AND [Menu].[IdMenu] = [Reserva].[IdMenu]
+            WHERE [Reserva].[Estado] = N'RESERVADA'
             GROUP BY [Reserva].[IdPlanificacion], [Reserva].[IdMenu]
         )
         SELECT

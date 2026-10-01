@@ -109,6 +109,7 @@ BEGIN
         FROM [alimentacion].[Reserva] AS [Reserva]
         INNER JOIN [PeriodoPlanificacion] AS [Planificacion]
             ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
+        WHERE [Reserva].[Estado] = N'RESERVADA'
         GROUP BY [Reserva].[IdPlanificacion], [Reserva].[IdMenu]
     )
     SELECT
