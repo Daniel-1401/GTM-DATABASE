@@ -26,7 +26,7 @@
     Por ello Correo Electronico, Telefono Fijo y Telefono Celular pueden requerir
     un ajuste posterior cuando se confirmen los valores de USRTY.
 */
-DECLARE @Mandante NVARCHAR(3) = N'400';
+DECLARE @Mandante NVARCHAR(3) = NULL; --N'400'
 DECLARE @Colaborador NVARCHAR(8) = NULL;
 DECLARE @FechaDesde NVARCHAR(8) = NULL; -- YYYYMMDD; filtra PA0000.BEGDA.
 DECLARE @FechaHasta NVARCHAR(8) = NULL; -- YYYYMMDD; filtra PA0000.BEGDA.

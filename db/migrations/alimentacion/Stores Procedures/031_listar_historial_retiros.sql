@@ -56,6 +56,7 @@ BEGIN
         (
             SELECT
                 [Reserva].[IdentificadorPublico] AS [IdReserva],
+                [Reserva].[IdReserva] AS [IdReservaInterno],
                 [Entrega].[IdentificadorPublico] AS [IdEntrega],
                 [Reserva].[FechaServicio],
                 [Reserva].[TipoServicio],
@@ -73,7 +74,8 @@ BEGIN
                 [Reserva].[IdColaboradorCorporativo] AS [IdColaboradorCorporativo],
                 [Colaborador].[NombreCompleto] AS [NombreColaborador],
                 [Menu].[Nombre] AS [NombreMenu],
-                [Menu].[ReferenciaImagen] AS [ReferenciaImagenMenu]
+                [Menu].[ReferenciaImagen] AS [ReferenciaImagenMenu],
+                [Reserva].[FechaCreacion]
             FROM [alimentacion].[Reserva] AS [Reserva]
             INNER JOIN [PERSONAL_MANAGEMENT_UNIDAD_ORGANIZATIVA].[organizacion].[Sede] AS [Sede]
                 ON [Sede].[IdSede] = [Reserva].[IdSede]
@@ -86,25 +88,37 @@ BEGIN
                 ON [Entrega].[IdReserva] = [Reserva].[IdReserva]
             LEFT JOIN [GSBEDEV01\CO].[PERSONALMANEGEMENTCORP].[rrhh].[vw_ColaboradorConsulta] AS [Colaborador]
                 ON [Colaborador].[IdColaboradorCorporativo] = [Reserva].[IdColaboradorCorporativo]
-            WHERE (@IdSede IS NULL OR [Reserva].[IdSede] = @IdSede)
-              AND (@TipoServicio IS NULL OR [Reserva].[TipoServicio] = @TipoServicio)
-              AND (@Fecha IS NULL OR [Reserva].[FechaServicio] = @Fecha)
-              AND (@FechaDesde IS NULL OR [Reserva].[FechaServicio] >= @FechaDesde)
-              AND (@FechaHasta IS NULL OR [Reserva].[FechaServicio] <= @FechaHasta)
-              AND
-              (
-                  @PatronNombreColaborador IS NULL
-                  OR [Colaborador].[NombreCompleto] COLLATE DATABASE_DEFAULT
-                      LIKE @PatronNombreColaborador ESCAPE N'\'
-              )
+        ),
+        [HistorialOperativo] AS
+        (
+            SELECT
+                [Historial].*,
+                ROW_NUMBER() OVER
+                (
+                    PARTITION BY [IdColaboradorCorporativo], [FechaServicio]
+                    ORDER BY [FechaCreacion] DESC, [IdReservaInterno] DESC
+                ) AS [NumeroReservaOperativa]
+            FROM [Historial]
         )
         SELECT
             [IdReserva], [IdEntrega], [FechaServicio], [TipoServicio], [EstadoReserva], [EstadoRetiro],
             [FechaEntrega], [MecanismoLectura], [IdSede], [CodigoSede], [NombreSede],
             [IdColaboradorCorporativo], [NombreColaborador], [NombreMenu], [ReferenciaImagenMenu],
             COUNT_BIG(*) OVER () AS [TotalRegistros]
-        FROM [Historial]
-        WHERE @EstadoRetiro IS NULL OR [EstadoRetiro] = @EstadoRetiro
+        FROM [HistorialOperativo]
+        WHERE [NumeroReservaOperativa] = 1
+          AND (@IdSede IS NULL OR [IdSede] = @IdSede)
+          AND (@TipoServicio IS NULL OR [TipoServicio] = @TipoServicio)
+          AND (@Fecha IS NULL OR [FechaServicio] = @Fecha)
+          AND (@FechaDesde IS NULL OR [FechaServicio] >= @FechaDesde)
+          AND (@FechaHasta IS NULL OR [FechaServicio] <= @FechaHasta)
+          AND
+          (
+              @PatronNombreColaborador IS NULL
+              OR [NombreColaborador] COLLATE DATABASE_DEFAULT
+                  LIKE @PatronNombreColaborador ESCAPE N'\'
+          )
+          AND (@EstadoRetiro IS NULL OR [EstadoRetiro] = @EstadoRetiro)
         ORDER BY [FechaServicio] DESC, [FechaEntrega] DESC, [IdReserva] DESC
         OFFSET CASE WHEN @Exportar = 1 THEN 0 ELSE (@NumeroPagina - 1) * @TamanoPagina END ROWS
         FETCH NEXT CASE WHEN @Exportar = 1 THEN 2147483647 ELSE @TamanoPagina END ROWS ONLY

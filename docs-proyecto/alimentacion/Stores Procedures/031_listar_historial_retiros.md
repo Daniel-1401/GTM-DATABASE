@@ -2,8 +2,8 @@
 
 ## Proposito
 
-Lista reservas y su resultado de retiro con los mismos filtros para el listado
-paginado y la exportacion completa.
+Lista el estado operativo final del menu reservado por cada colaborador y dia,
+con los mismos filtros para el listado paginado y la exportacion completa.
 
 ## Firma
 
@@ -34,6 +34,11 @@ paginado y la exportacion completa.
 - Con `@Exportar = 0`, pagina usando `@NumeroPagina` (desde uno) y
   `@TamanoPagina` (1 a 100). Con `@Exportar = 1`, ignora ambos valores y
   devuelve todas las filas que cumplen los mismos filtros.
+- Si un colaborador cancela y vuelve a reservar para la misma fecha, devuelve
+  solo la reserva mas reciente para ese colaborador y dia. La antiguedad se
+  determina por `Reserva.FechaCreacion` y, ante empate, por su identificador
+  interno. La consolidacion ocurre antes de aplicar los filtros, contar y
+  paginar; por tanto, los filtros se evaluan sobre el menu final mostrado.
 
 ## Recordset
 
@@ -44,7 +49,8 @@ sede, `IdColaboradorCorporativo`, `NombreColaborador`, datos del menu y
 
 `EstadoRetiro` se deriva sin alterar datos: es `ENTREGADO` cuando existe
 `Entrega`, `CANCELADO` cuando la reserva esta cancelada y `SIN_ENTREGAR` en los
-demas casos sin entrega.
+demas casos sin entrega. Corresponde a la unica reserva operativa mostrada para
+cada colaborador y dia.
 
 ## Filtro corporativo
 

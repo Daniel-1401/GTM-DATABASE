@@ -14,6 +14,15 @@ CREATE OR ALTER PROCEDURE [alimentacion].[usp_ObtenerResumenServicioHoyColaborad
     @Mensaje NVARCHAR(500) OUTPUT
 AS
 BEGIN
+    /**
+      DECLARE @IdColaboradorCorporativo UNIQUEIDENTIFIER = '4D43C4D1-834A-4FC0-811C-7B4A7FF2FF77',
+              @Codigo NVARCHAR(50) ,
+              @Mensaje NVARCHAR(500) ;
+      EXEC [alimentacion].[usp_ObtenerResumenServicioHoyColaborador] @IdColaboradorCorporativo, @Codigo OUTPUT, @Mensaje OUTPUT;
+      SELECT @Codigo, @Mensaje
+
+
+     */
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
@@ -53,7 +62,7 @@ BEGIN
                 [Sede].[IdSedePublico] AS [IdSedePublico],
                 [Sede].[NombreSede]
             FROM [alimentacion].[Reserva] AS [Reserva]
-            LEFT JOIN [alimentacion].[Planificacion] AS [Planificacion]
+            INNER JOIN [alimentacion].[Planificacion] AS [Planificacion]
                 ON [Planificacion].[IdPlanificacion] = [Reserva].[IdPlanificacion]
             LEFT JOIN [alimentacion].[Menu] AS [Menu]
                 ON [Menu].[IdMenu] = [Reserva].[IdMenu]
@@ -65,6 +74,7 @@ BEGIN
             WHERE [Reserva].[IdColaboradorCorporativo] = @IdColaboradorCorporativo
               AND [Reserva].[FechaServicio] = @FechaOficial
               AND [Reserva].[Estado] = N'RESERVADA'
+              AND [Planificacion].[Estado] = N'CONSOLIDADA'
         )
         SELECT
             @FechaOficial AS [FechaOficial],

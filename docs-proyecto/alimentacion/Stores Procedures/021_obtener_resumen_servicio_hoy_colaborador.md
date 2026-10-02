@@ -4,8 +4,9 @@
 
 Entrega el resumen del servicio correspondiente a la fecha oficial del servidor
 SQL para la pantalla inicial movil del colaborador. Busca exclusivamente su
-reserva activa (`Estado = RESERVADA`) y devuelve siempre exactamente una fila,
-incluyendo cuando no exista reserva para hoy.
+reserva activa (`Estado = RESERVADA`) asociada a una planificacion consolidada
+(`Estado = CONSOLIDADA`) y devuelve siempre exactamente una fila, incluyendo
+cuando no exista una reserva que cumpla esas condiciones para hoy.
 
 El procedimiento es de lectura: no abre transacciones de negocio, no usa locks
 de actualizacion, no ejecuta DML ni emite QR, valida proximidad o cambia estados.
@@ -44,9 +45,11 @@ SELECT @Codigo AS [Codigo], @Mensaje AS [Mensaje];
 ## Recordset
 
 Con entrada valida devuelve exactamente una fila, ordenada de forma
-determinista. Si no hay reserva activa, los campos contextuales de reserva,
-menu, planificacion y sede son `NULL`; `TieneReservaHoy`, `PuedeCancelar`,
-`PuedeGenerarQR` y `PuedeRecoger` valen `0`.
+determinista. Si no hay una reserva activa de hoy asociada a una planificacion
+consolidada, los campos contextuales de reserva, menu, planificacion y sede son
+`NULL`; `TieneReservaHoy`, `PuedeCancelar`, `PuedeGenerarQR` y `PuedeRecoger`
+valen `0`. Una reserva cuya planificacion siga en otro estado no se muestra y
+se trata como ausencia de reserva para este resumen.
 
 | Columna | Tipo | Nulo | Descripcion |
 |---|---|---:|---|
@@ -65,10 +68,10 @@ menu, planificacion y sede son `NULL`; `TieneReservaHoy`, `PuedeCancelar`,
 | `NombreMenu` | `NVARCHAR(200)` | Si | Nombre del menu para presentacion. |
 | `DescripcionMenu` | `NVARCHAR(1000)` | Si | Descripcion del menu para presentacion. |
 | `ReferenciaImagen` | `NVARCHAR(500)` | Si | Referencia persistida de imagen del menu. |
-| `TieneReservaHoy` | `BIT` | No | `1` solo si existe reserva propia activa para la fecha oficial. |
-| `PuedeCancelar` | `BIT` | No | `1` unicamente si existe la reserva y su planificacion esta `PUBLICADA_ABIERTA`. |
-| `PuedeGenerarQR` | `BIT` | No | `1` unicamente si existe reserva activa de hoy y su planificacion esta `CONSOLIDADA`. Es elegibilidad preliminar; no valida ventana, proximidad ni emite QR. |
-| `PuedeRecoger` | `BIT` | No | `1` unicamente si existe reserva activa de hoy y su planificacion esta `CONSOLIDADA`. No valida/crea QR ni modifica estado. |
+| `TieneReservaHoy` | `BIT` | No | `1` solo si existe reserva propia activa para la fecha oficial y su planificacion esta `CONSOLIDADA`. |
+| `PuedeCancelar` | `BIT` | No | Siempre `0` para las filas devueltas: el resumen solo incluye planificaciones `CONSOLIDADA`, mientras que la cancelacion requiere `PUBLICADA_ABIERTA`. |
+| `PuedeGenerarQR` | `BIT` | No | `1` si existe la reserva devuelta. La planificacion ya fue filtrada como `CONSOLIDADA`; el flag no valida ventana ni proximidad y no emite QR. |
+| `PuedeRecoger` | `BIT` | No | `1` si existe la reserva devuelta. La planificacion ya fue filtrada como `CONSOLIDADA`; no valida/crea QR ni modifica estado. |
 
 Los identificadores publicos se exponen para reserva, planificacion, menu y
 sede; `IdSede` se conserva adicionalmente como identificador numerico por la
@@ -95,7 +98,12 @@ convertir esa zona IANA en esta instancia; por ello el resultado depende de
 que el reloj del servidor SQL mantenga la hora oficial del proyecto. La fecha
 no se recibe del cliente.
 
-La reserva se filtra por `IdColaboradorCorporativo`, `FechaServicio = FechaOficial` y
-`Estado = RESERVADA`. La unicidad filtrada existente garantiza como maximo una
-reserva activa por colaborador y fecha. El backend entrega el UUID corporativo autenticado y autorizado; el SP no consulta la base de datos CO ni `rrhh`. Nunca se consultan ni exponen reservas de otros colaboradores. Cuando existe la reserva, sus relaciones determinan
-el menu, la planificacion y la sede devueltos.
+La reserva se filtra por `IdColaboradorCorporativo`, `FechaServicio = FechaOficial`,
+`Estado = RESERVADA` y `Planificacion.Estado = CONSOLIDADA`. Si hay una reserva
+activa hoy pero su planificacion no esta consolidada, el procedimiento no la
+incluye y devuelve la fila sin datos contextuales de reserva. La unicidad
+filtrada existente garantiza como maximo una reserva activa por colaborador y
+fecha. El backend entrega el UUID corporativo autenticado y autorizado; el SP
+no consulta la base de datos CO ni `rrhh`. Nunca se consultan ni exponen reservas
+de otros colaboradores. Cuando existe una reserva que cumple los filtros, sus
+relaciones determinan el menu, la planificacion y la sede devueltos.
